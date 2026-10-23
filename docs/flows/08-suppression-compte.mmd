@@ -1,14 +1,15 @@
+%%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
 %% Suppression de son compte et de ses données (F-11, RG-04, RG-11)
 %% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus
 flowchart TD
     classDef error fill:#fde2e2,stroke:#dc2626,color:#111
 
-    M["Menu du prénom"] -->|"Clic « Supprimer mon compte »"| A{"Dernier administrateur ? (RG-04)"}
-    A -->|"Oui"| A1["Refus immédiat, sans écran de confirmation : Nomme d'abord un autre administrateur, compte conservé"]:::error
+    M["Menu du prénom"] -->|"Clic « Supprimer mon<br/>compte »"| A{"Dernier administrateur ? (RG-04)"}
+    A -->|"Oui"| A1["Refus immédiat, sans écran de<br/>confirmation : Nomme d'abord un<br/>autre administrateur, compte<br/>conservé"]:::error
     A -->|"Non"| C["Écran de confirmation"]
-    C -->|"Clic « Annuler »"| K["Compte et inscriptions inchangés"]
-    C -->|"Confirme"| D["Nom, prénom et e-mail effacés (RG-11)"]
-    D --> D1["Inscriptions futures libérées, inscriptions passées anonymisées sous « ancien membre »"]
-    D1 --> D2["Utilisateur déconnecté, page de connexion"]
+    C -->|"Clic « Annuler »"| K["Compte et inscriptions inchangés"]
+    C -->|"Confirme"| D["Nom, prénom et e-mail effacés<br/>(RG-11)"]
+    D --> D1["Inscriptions futures libérées,<br/>inscriptions passées anonymisées<br/>sous « ancien membre »"]
+    D1 --> D2["Utilisateur déconnecté, page de<br/>connexion"]
 
-    X(["Ancien titulaire tente de se connecter"]) --> X1["Échec : E-mail ou mot de passe incorrect (flux 02)"]:::error
+    X(["Ancien titulaire tente de se<br/>connecter"]) --> X1["Échec : E-mail ou mot de passe<br/>incorrect (flux 02)"]:::error

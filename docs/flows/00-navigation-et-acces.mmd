@@ -1,29 +1,31 @@
+%%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
 %% Navigation globale et contrôle d'accès (F-03, RG-04)
 %% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
 flowchart TD
     classDef error fill:#fde2e2,stroke:#dc2626,color:#111
     classDef todo fill:#fff1d6,stroke:#d97706,color:#111
 
-    V(["Ouverture d'une URL du club"]) --> G{"Utilisateur connecté ?"}
-    G -->|"Non"| LOGIN["Page de connexion (flux 02)"]
-    G -->|"Oui"| R{"Page réservée aux administrateurs ?"}
+    V(["Ouverture d'une URL du club"]) --> G{"Utilisateur connecté ?"}
+    G -->|"Non"| MEM["Mémorisation de l'URL demandée<br/>dans l'état temporaire du<br/>navigateur"]
+    MEM --> LOGIN["Page de connexion (flux 02), puis<br/>retour à l'URL mémorisée"]
+    G -->|"Oui"| R{"Page réservée aux<br/>administrateurs ?"}
     R -->|"Non"| PAGE["Page demandée"]
-    R -->|"Oui"| ADM{"Est administrateur ?"}
+    R -->|"Oui"| ADM{"Est administrateur ?"}
     ADM -->|"Oui"| PAGE
-    ADM -->|"Non"| DENY["Accès refusé : Tu n'as pas le droit d'accéder à cette page"]:::error
+    ADM -->|"Non"| DENY["Accès refusé : Tu n'as pas le<br/>droit d'accéder à cette page"]:::error
 
-    API(["Requête d'administration envoyée directement au serveur"]) --> ADM2{"Est administrateur ?"}
+    API(["Requête d'administration envoyée<br/>directement au serveur"]) --> ADM2{"Est administrateur ?"}
     ADM2 -->|"Oui"| OK["Action exécutée"]
-    ADM2 -->|"Non"| DENY2["Requête refusée, rien n'est modifié"]:::error
+    ADM2 -->|"Non"| DENY2["Requête refusée, rien n'est<br/>modifié"]:::error
 
-    subgraph HEADER["En-tête, visible sur toutes les pages une fois connecté"]
+    subgraph HEADER["En-tête, visible sur toutes les<br/>pages une fois connecté"]
         direction TB
         H1["Navigation : Événements"]
-        H2["Navigation, administrateur uniquement : Événements passés, Membres"]
-        H3["Menu du prénom, en haut à droite : Se déconnecter, Supprimer mon compte"]
+        H2["Navigation, administrateur<br/>uniquement : Événements passés,<br/>Membres"]
+        H3["Menu du prénom, en haut à droite :<br/>Se déconnecter, Supprimer mon<br/>compte"]
     end
 
     H3 -->|"Se déconnecter"| LOGIN
     H3 -->|"Supprimer mon compte"| DEL["Suppression du compte (flux 08)"]
     H1 --> LIST["Liste des événements (flux 04)"]
-    H2 --> ADMP["Pages d'administration (flux 06 et 07)"]
+    H2 --> ADMP["Pages d'administration (flux 06 et<br/>07)"]

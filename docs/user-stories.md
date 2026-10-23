@@ -22,7 +22,7 @@ Scénario 1 : génération du lien (RG-02)
 Scénario 2 : création de compte réussie (RG-01, RG-02)
 - Given : une personne sans compte qui ouvre un lien d'invitation valide
 - When : elle saisit son nom, son prénom, son e-mail `mail.ex@exemple.fr` et un mot de passe de 10 caractères ou plus, puis clique sur « Créer mon compte »
-- Then : son compte est actif, elle est connectée, arrive sur la liste des événements du club et son prénom s'affiche en haut à droite
+- Then : son compte est actif, elle est connectée, arrive sur la page de l'événement dont provient le lien et son prénom s'affiche en haut à droite
 
 Scénario 3 : mot de passe trop court (RG-01)
 - Given : une personne sur le formulaire de création de compte
@@ -38,6 +38,11 @@ Scénario 5 : e-mail déjà utilisé (RG-01)
 - Given : une personne qui possède déjà un compte avec `mail.ex@exemple.fr` et ouvre un lien d'invitation valide
 - When : elle saisit cet e-mail dans le formulaire de création
 - Then : aucun second compte n'est créé et un message lui propose de se connecter
+
+Scénario 5 bis : connexion après une invitation (RG-02)
+- Given : la personne du scénario précédent, sur la page de connexion après avoir ouvert un lien d'invitation valide
+- When : elle se connecte avec ses identifiants
+- Then : elle arrive sur la page de l'événement dont provient le lien
 
 Scénario 6 : champ manquant ou invalide (RG-01)
 - Given : une personne sur le formulaire de création de compte
@@ -67,6 +72,11 @@ Scénario 3 : blocage après trop d'essais (RG-03)
 - Given : un utilisateur qui a déjà échoué 5 fois de suite
 - When : il tente une 6e connexion, même avec le bon mot de passe
 - Then : l'accès est bloqué 15 minutes et un message l'indique
+
+Scénario 1 bis : retour à la page demandée
+- Given : une personne non connectée qui a ouvert l'URL d'un événement et a été redirigée vers la page de connexion
+- When : elle se connecte avec des identifiants corrects
+- Then : elle arrive sur la page de cet événement et non sur la liste des événements
 
 Scénario 4 : déconnexion
 - Given : un utilisateur connecté

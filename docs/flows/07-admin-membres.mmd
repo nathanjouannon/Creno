@@ -1,21 +1,22 @@
+%%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
 %% Administrateur : gestion des membres (F-10, F-03, RG-04, RG-12)
 %% Pas de désactivation de compte au MVP (RG-05 abandonnée).
 %% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus
 flowchart TD
     classDef error fill:#fde2e2,stroke:#dc2626,color:#111
 
-    N["Navigation administrateur"] -->|"Clic « Membres »"| M["Page Membres : liste avec nom, prénom, e-mail, rôle"]
-    M -->|"Clic sur un membre"| FICHE{"Fiche de quel membre ?"}
+    N["Navigation administrateur"] -->|"Clic « Membres »"| M["Page Membres : liste avec nom,<br/>prénom, e-mail, rôle"]
+    M -->|"Clic sur un membre"| FICHE{"Fiche de quel membre ?"}
 
     FICHE -->|"Un utilisateur"| U["Fiche utilisateur"]
-    FICHE -->|"Un autre administrateur"| AA["Fiche d'un autre administrateur : aucune action pour lui retirer son droit (RG-04)"]
+    FICHE -->|"Un autre administrateur"| AA["Fiche d'un autre administrateur :<br/>aucune action pour lui retirer son<br/>droit (RG-04)"]
     FICHE -->|"Moi-même, administrateur"| ME["Ma fiche"]
 
-    U -->|"Clic « Donner le droit administrateur »"| U1["Le membre devient administrateur, plusieurs administrateurs coexistent"]
-    U -->|"Clic « Générer un lien de réinitialisation »"| U2["Lien à usage unique avec date de fin de validité (3 jours) et bouton Copier (flux 03)"]
-    AA -->|"Clic « Générer un lien de réinitialisation »"| U2
+    U -->|"Clic « Donner le droit<br/>administrateur »"| U1["Le membre devient administrateur,<br/>plusieurs administrateurs<br/>coexistent"]
+    U -->|"Clic « Générer un lien de<br/>réinitialisation »"| U2["Lien à usage unique avec date de<br/>fin de validité (3 jours) et<br/>bouton Copier (flux 03)"]
+    AA -->|"Clic « Générer un lien de<br/>réinitialisation »"| U2
 
-    ME -->|"Clic « Retirer mon droit administrateur »"| ME1{"Autre administrateur ? (RG-04)"}
-    ME1 -->|"Non, je suis le dernier"| ME2["Refus : Nomme d'abord un autre administrateur, rôle inchangé"]:::error
-    ME1 -->|"Oui"| ME3["Je deviens utilisateur, l'autre administrateur reste administrateur"]
-    ME3 --> ME4["Liste des événements avec un toast de confirmation, plus d'accès aux pages d'administration"]
+    ME -->|"Clic « Retirer mon droit<br/>administrateur »"| ME1{"Autre administrateur ? (RG-04)"}
+    ME1 -->|"Non, je suis le dernier"| ME2["Refus : Nomme d'abord un autre<br/>administrateur, rôle inchangé"]:::error
+    ME1 -->|"Oui"| ME3["Je deviens utilisateur, l'autre<br/>administrateur reste<br/>administrateur"]
+    ME3 --> ME4["Liste des événements avec un toast<br/>de confirmation, plus d'accès aux<br/>pages d'administration"]

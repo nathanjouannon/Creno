@@ -1,30 +1,33 @@
+%%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
 %% Connexion et déconnexion (F-02, RG-03)
 %% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
 flowchart TD
     classDef error fill:#fde2e2,stroke:#dc2626,color:#111
     classDef todo fill:#fff1d6,stroke:#d97706,color:#111
 
-    S(["Ouvre une page protégée sans être connecté"]) --> L["Page de connexion : e-mail, mot de passe"]
-    S2(["Ouvre directement la page de connexion"]) --> L
+    S(["Ouvre une page protégée sans être<br/>connecté"]) --> L["Page de connexion : e-mail, mot de<br/>passe"]
+    S2(["Ouvre directement la page de<br/>connexion"]) --> L
 
-    L -->|"Clic « Se connecter »"| C{"Connexion bloquée ? (RG-03)"}
-    C -->|"Oui : 5 échecs consécutifs, 15 minutes"| E1["Message indiquant le blocage de 15 minutes, même avec le bon mot de passe"]:::error
+    L -->|"Clic « Se connecter »"| C{"Connexion bloquée ? (RG-03)"}
+    C -->|"Oui : 5 échecs consécutifs,<br/>15 minutes"| E1["Message indiquant le blocage de 15<br/>minutes, même avec le bon mot de<br/>passe"]:::error
     E1 --> L
-    C -->|"Non"| D{"Identifiants corrects ?"}
-    D -->|"Non (y compris compte supprimé)"| E2["Reste sur la page : E-mail ou mot de passe incorrect, champ mot de passe vidé, un échec de plus"]:::error
+    C -->|"Non"| D{"Identifiants corrects ?"}
+    D -->|"Non (y compris compte<br/>supprimé)"| E2["Reste sur la page : E-mail ou mot<br/>de passe incorrect, champ mot de<br/>passe vidé, un échec de plus"]:::error
     E2 --> L
     D -->|"Oui"| OK["Utilisateur connecté"]
-    OK --> T{"Arrivée depuis une URL précise ?"}
-    T -->|"Oui"| P1["Page initialement demandée"]
-    T -->|"Non"| P2["Liste des événements, prénom en haut à droite"]
+    OK --> T{"Destination mémorisée dans l'état<br/>temporaire du navigateur ?"}
+    T -->|"Oui : URL demandée ou<br/>événement d'une invitation"| P1["Redirection vers cette page, puis<br/>état temporaire effacé"]
+    T -->|"Non"| P2["Liste des événements, prénom en<br/>haut à droite"]
 
-    %% Redirection vers la page demandée : souhaitée « si possible » (décision de l'auteur).
-    %% À défaut, retomber sur la liste des événements, seul comportement écrit dans les user stories.
-    NOTE["Redirection vers la page demandée : à valider en phase architecture, sinon liste des événements"]:::todo
+    %% La destination est mémorisée avant d'arriver sur la page de connexion :
+    %% - URL protégée ouverte sans être connecté (flux 00)
+    %% - événement d'une invitation (flux 01)
+    %% L'état temporaire est une mémoire du navigateur (par exemple un store de type Zustand), choix technique laissé à la phase architecture.
+    NOTE["Si la destination mémorisée<br/>n'existe plus ou n'est plus<br/>accessible : comportement à<br/>CONFIRMER"]:::todo
     T -.- NOTE
 
     subgraph OUT["Déconnexion"]
         direction TB
-        O1["Menu du prénom"] -->|"Clic « Se déconnecter »"| O2["Page de connexion"]
-        O2 --> O3["Les pages protégées redemandent la connexion"]
+        O1["Menu du prénom"] -->|"Clic « Se déconnecter »"| O2["Page de connexion"]
+        O2 --> O3["Les pages protégées redemandent la<br/>connexion"]
     end
