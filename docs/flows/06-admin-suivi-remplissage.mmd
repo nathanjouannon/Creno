@@ -1,0 +1,25 @@
+%% Administrateur : suivi du remplissage et événements passés (F-09, F-03, RG-07, RG-09)
+%% La vue de remplissage est la page de l'événement côté administrateur (même écran). La vue calendrier (F-18) viendra plus tard.
+%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
+flowchart TD
+    classDef error fill:#fde2e2,stroke:#dc2626,color:#111
+    classDef future fill:#e8eefc,stroke:#2563eb,stroke-dasharray: 4 3,color:#111
+
+    L["Liste des événements"] -->|"Clic sur un événement"| W{"Est administrateur ?"}
+    W -->|"Non"| USR["Page de l'événement côté utilisateur (flux 04)"]
+    W -->|"Oui"| LOAD["Chargement de la page"]
+    LOAD --> VUE["Page de l'événement côté administrateur : tous les créneaux sur un seul écran, avec leurs inscrits"]
+
+    VUE --> T{"Type de créneau"}
+    T -->|"Limité"| T1["Compteur « inscrits / limite », par exemple 3 / 4"]
+    T -->|"Illimité"| T2["Mention « N inscrits »"]
+    T1 --> Z{"Aucun inscrit ?"}
+    Z -->|"Oui"| Z1["Créneau mis en évidence : alerte « Aucun inscrit »"]
+    Z -->|"Non"| Z2["Affichage normal"]
+
+    VUE -.-> CAL["Vue calendrier : qui est sur quel créneau (F-18, versions futures)"]:::future
+
+    ACC(["Utilisateur sans droit ouvre l'URL d'une page d'administration"]) --> DENY["Accès refusé (flux 00)"]:::error
+
+    ADM["Navigation administrateur"] -->|"Clic « Événements passés »"| P1["Liste des événements passés (date de fin dépassée, RG-09)"]
+    P1 -->|"Clic sur un événement"| P2["Même page en lecture seule avec les inscrits finaux"]

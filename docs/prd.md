@@ -40,13 +40,13 @@ Note : les personas viennent de l'expérience de l'auteur, aucun entretien n'a e
 | F-01 | Lien d'invitation généré depuis un événement (réutilisable, valable jusqu'au début de l'événement) et création de compte pour rejoindre le club | Must | v1 (MVP) | Un invité crée son compte en moins de 2 minutes depuis son téléphone |
 | F-02 | Connexion et déconnexion par e-mail + mot de passe | Must | v1 (MVP) | Un utilisateur inscrit se connecte en moins de 3 clics ; blocage temporaire après 5 échecs |
 | F-03 | Rôles et permissions (administrateur, utilisateur) | Must | v1 (MVP) | Un bénévole ne peut accéder à aucune action d'administration, y compris par URL directe |
-| F-04 | Créer, modifier, supprimer un événement | Must | v1 (MVP) | L'administrateur publie un événement avec titre, description, lieu et date en moins de 3 minutes |
+| F-04 | Créer, modifier, supprimer un événement | Must | v1 (MVP) | L'administrateur publie un événement avec titre, description, lieu et dates de début et de fin en moins de 3 minutes ; un événement peut être enregistré sans créneau |
 | F-05 | Définir des créneaux (shifts) par événement avec horaires et nombre de places. Par défaut, le nombre de places est illimité ; l'administrateur peut le limiter à la création du créneau | Must | v1 (MVP) | Un créneau sans limite accepte toute inscription ; un créneau limité complet n'accepte plus d'inscription et sa limite n'est jamais dépassée |
 | F-06 | Consulter la liste des événements et leurs créneaux | Must | v1 (MVP) | Un bénévole voit, pour chaque créneau, les noms des inscrits et, si le créneau est limité, les places restantes |
 | F-07 | S'inscrire à un créneau | Must | v1 (MVP) | L'inscription est enregistrée immédiatement et visible sans recharger manuellement l'écran de confirmation |
 | F-08 | Se désinscrire ou changer de créneau | Must | v1 (MVP) | Le bénévole modifie sa réponse seul ; la place libérée est aussitôt disponible |
 | F-09 | Vue administrateur : remplissage des créneaux (qui est inscrit, places restantes des créneaux limités) | Must | v1 (MVP) | L'administrateur voit en un seul écran les inscrits de chaque créneau et repère les créneaux limités vides ou presque vides |
-| F-10 | Gestion des membres : lister, donner le droit administrateur (seul l'intéressé peut retirer le sien), désactiver un compte non administrateur, générer un lien de réinitialisation de mot de passe | Must | v1 (MVP) | Un compte désactivé ne peut plus se connecter et ses inscriptions futures sont libérées ; il reste toujours au moins un administrateur |
+| F-10 | Gestion des membres : lister, donner le droit administrateur (seul l'intéressé peut retirer le sien), générer un lien de réinitialisation de mot de passe | Must | v1 (MVP) | L'administrateur retrouve un membre et lui donne le droit administrateur ou un lien de réinitialisation en moins de 3 clics ; il reste toujours au moins un administrateur |
 | F-11 | Suppression de son compte et de ses données personnelles (RGPD) | Must | v1 (MVP) | Après suppression, plus aucune donnée nominative n'est conservée |
 | F-12 | Inscription d'un bénévole par l'administrateur | Should | v1.1 | L'administrateur ajoute ou retire un bénévole d'un créneau, même complet, avec avertissement |
 | F-13 | Historique des changements (qui a changé quoi, quand) | Should | v1.1 | Chaque création, modification, inscription et désinscription apparaît dans un journal consultable par l'administrateur |
@@ -54,6 +54,7 @@ Note : les personas viennent de l'expérience de l'auteur, aucun entretien n'a e
 | F-15 | Notifications par e-mail (confirmation, rappel, créneaux non pourvus) | Could | v2 | Un rappel est envoyé avant le créneau sans doublon |
 | F-16 | Suivi des heures et classement des contributeurs | Could | v2 | Le total d'heures d'un bénévole correspond à la somme de ses créneaux validés |
 | F-17 | Export des inscriptions (CSV / impression) | Could | v2 | Le fichier exporté reflète exactement l'écran de l'événement |
+| F-18 | Vue calendrier d'un événement côté administrateur (qui est sur quel créneau, d'un coup d'œil), en plus de la liste de F-09 | Could | Versions futures | L'administrateur voit sur un calendrier les inscrits de chaque créneau, identiques à la liste de F-09 |
 
 Principe directeur (retour du test d'ephios) : réduire les options au strict minimum pour ne pas perdre l'utilisateur.
 
@@ -83,6 +84,7 @@ Le MVP regroupe F-01 à F-11.
 - Plusieurs associations sur une même instance (multi-tenant).
 - Interface multilingue.
 - Notifications automatiques (F-15 reporté).
+- Désactivation d'un compte par un administrateur (et donc réactivation). À ajouter seulement si les administrateurs en expriment le besoin.
 
 Les décisions d'exclusion ne sont pas définitives : elles pourront être revues après le premier événement réel.
 
@@ -122,7 +124,6 @@ Les cibles chiffrées sont des propositions à confirmer. La référence « avan
 - Qui administre l'instance en production : l'auteur seul, ou plusieurs personnes du bureau ?
 - Faut-il une liste d'attente quand un créneau limité est complet ? (non traité dans les user stories)
 - Faut-il un nombre minimum de bénévoles par créneau (pour repérer les créneaux sous-pourvus) ? Retiré pour l'instant : seule une limite maximale optionnelle existe.
-- Durée de validité du lien de réinitialisation de mot de passe.
 - Hébergement à 0 € (à trancher en phase architecture).
 
 Décisions prises lors des user stories (détail dans `user-stories.md`, règles RG-01 à RG-13) :
@@ -132,3 +133,9 @@ Décisions prises lors des user stories (détail dans `user-stories.md`, règles
 - Suppression d'un événement ou créneau avec inscrits : confirmation indiquant le nombre d'inscrits.
 - Mot de passe oublié : lien de réinitialisation généré par l'administrateur (aucun e-mail au MVP).
 - Premier administrateur créé à l'installation ; événements passés masqués aux utilisateurs.
+
+Décisions prises lors des flows (2026-10-23) :
+- Un événement a sa propre date et heure de début et de fin (RG-06) ; il peut exister sans créneau.
+- Lien de réinitialisation de mot de passe valable 3 jours (RG-12).
+- Pas de désactivation de compte par l'administrateur au MVP (RG-05 abandonnée).
+- Désinscription avec confirmation ; suppression d'un événement ou créneau sans inscrit sans confirmation (RG-10).

@@ -1,0 +1,40 @@
+%% Bénévole : consulter, s'inscrire, se désinscrire, changer de créneau (F-06, F-07, F-08, RG-07, RG-08, RG-09)
+%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
+flowchart TD
+    classDef error fill:#fde2e2,stroke:#dc2626,color:#111
+    classDef todo fill:#fff1d6,stroke:#d97706,color:#111
+
+    H(["Utilisateur connecté ouvre la page d'accueil"]) --> LOAD["Chargement de la liste"]
+    LOAD --> Q{"Événements à venir ?"}
+    Q -->|"Aucun"| EMPTY["Aucun événement à venir pour le moment"]
+    Q -->|"Oui"| LIST["Liste par date de début croissante : titre, lieu, date (événements passés masqués, RG-09)"]
+    LIST -->|"Clic sur un événement"| EV["Page de l'événement : description, lieu, dates, créneaux"]
+
+    EV --> NS{"L'événement a des créneaux ?"}
+    NS -->|"Non"| NS1["Affichage d'un événement sans créneau : texte à CONFIRMER"]:::todo
+    NS -->|"Oui"| SL["Pour chaque créneau : horaires, noms des inscrits (RG-09)"]
+    SL --> ST{"État du créneau pour cet utilisateur"}
+
+    ST -->|"Commencé, utilisateur non inscrit (RG-08)"| S1["Ce créneau a commencé : inscription impossible"]:::error
+    ST -->|"Commencé, utilisateur inscrit (RG-08)"| S2["Pas de bouton Me désinscrire : Contacte un administrateur pour modifier ton inscription"]:::error
+    ST -->|"À venir, utilisateur inscrit"| S3["Bouton « Me désinscrire »"]
+    ST -->|"À venir, limité et complet, non inscrit"| S4["Mention « Complet », inscription indisponible"]
+    ST -->|"À venir, avec places, non inscrit"| S5["Bouton « Je m'inscris », places restantes affichées si le créneau est limité"]
+
+    S5 -->|"Clic « Je m'inscris »"| R{"Place encore disponible ? (RG-07)"}
+    R -->|"Non : dernière place prise entre-temps"| R1["Ce créneau vient d'être complété, limite non dépassée"]:::error
+    R1 --> SL
+    R -->|"Oui"| R2["Inscription enregistrée : nom dans la liste, bouton « Me désinscrire », places restantes moins 1 si limité"]
+    R2 --> S3
+
+    S3 -->|"Clic « Me désinscrire »"| U0{"Confirmation de la désinscription"}
+    U0 -->|"Refuse"| U2["Inscription conservée"]
+    U2 --> S3
+    U0 -->|"Confirme"| U1["Nom retiré de la liste, place libérée, bouton « Je m'inscris »"]
+    U1 --> S5
+
+    CH(["Changer de créneau : se désinscrire de A (avec confirmation), puis s'inscrire à B"]) -.-> S3
+    CH -.-> S5
+    S4 -.->|"Si B est complet : inscription à B refusée, inscription à A conservée"| S3
+
+    %% Plusieurs inscriptions sur des créneaux qui se chevauchent sont autorisées sans avertissement (RG-08).

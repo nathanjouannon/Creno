@@ -1,0 +1,45 @@
+%% Administrateur : créer, modifier, supprimer un événement et ses créneaux (F-04, F-05, RG-06, RG-07, RG-10)
+%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
+flowchart TD
+    classDef error fill:#fde2e2,stroke:#dc2626,color:#111
+    classDef todo fill:#fff1d6,stroke:#d97706,color:#111
+
+    L["Liste des événements (administrateur)"] -->|"Clic « Créer un événement »"| F
+    EV["Page de l'événement"] -->|"Clic « Modifier »"| F
+    EV -->|"Clic « Supprimer »"| D1
+
+    F["Formulaire événement : titre, description, lieu, début (jour, heure), fin (jour, heure), créneaux facultatifs"] -->|"Clic « Ajouter un créneau »"| C
+    C["Formulaire créneau : date, début, fin, limite de places facultative (vide = illimité)"] -->|"Valider le créneau"| CV{"Fin après début ?"}
+    CV -->|"Non"| CE["La fin doit être après le début"]:::error
+    CE --> C
+    CV -->|"Oui"| LIM{"Créneau existant : nouvelle limite inférieure au nombre d'inscrits ? (RG-07)"}
+    LIM -->|"Oui"| LE["Refus : N personnes sont déjà inscrites, retire des inscrits avant de baisser la limite, limite inchangée"]:::error
+    LE --> C
+    LIM -->|"Non (ou nouveau créneau)"| F
+    CV -.- CD["Créneau hors des dates de l'événement : comportement à CONFIRMER"]:::todo
+
+    F -->|"Clic « Enregistrer »"| V{"Titre renseigné ?"}
+    V -->|"Non"| VE1["Le titre est obligatoire"]:::error
+    VE1 --> F
+    V -->|"Oui"| V2{"Fin de l'événement après son début ? (RG-06)"}
+    V2 -->|"Non"| VE2["La fin doit être après le début"]:::error
+    VE2 --> F
+    V2 -->|"Oui"| OK["Événement enregistré (avec ou sans créneau), inscriptions conservées en cas de modification"]
+    OK --> EV
+
+    D1{"L'événement a des inscrits ? (RG-10)"}
+    D1 -->|"Oui"| D2["Confirmation : N inscriptions seront supprimées"]
+    D2 -->|"Confirmer"| D3["Événement et inscriptions supprimés, retour à la liste"]
+    D3 --> L
+    D2 -->|"Annuler"| EV
+    D1 -->|"Non"| D4["Événement supprimé immédiatement, sans confirmation"]
+    D4 --> L
+
+    EV -->|"Clic « Supprimer » sur un créneau"| K1{"Le créneau a des inscrits ? (RG-10)"}
+    K1 -->|"Oui"| K2["Confirmation : N inscriptions seront supprimées"]
+    K2 -->|"Confirmer"| K3["Créneau et inscriptions supprimés, les autres créneaux sont inchangés"]
+    K3 --> EV
+    K2 -->|"Annuler"| EV
+    K1 -->|"Non"| K4["Créneau supprimé immédiatement, sans confirmation"]
+    K4 --> EV
+    K3 -.- K5["Si c'était le dernier créneau : l'événement est conservé sans créneau (RG-06)"]

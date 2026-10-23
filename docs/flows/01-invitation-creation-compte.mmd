@@ -1,0 +1,29 @@
+%% Invitation et création de compte (F-01, RG-01, RG-02)
+%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
+flowchart TD
+    classDef error fill:#fde2e2,stroke:#dc2626,color:#111
+    classDef todo fill:#fff1d6,stroke:#d97706,color:#111
+
+    subgraph ADMIN["Administrateur"]
+        A1["Page d'un événement"] --> A2{"Événement commencé ? (RG-02)"}
+        A2 -->|"Oui"| A3["Bouton « Inviter des bénévoles » masqué"]
+        A2 -->|"Non"| A4["Bouton « Inviter des bénévoles » affiché"]
+        A4 -->|"Clic"| A5["Lien affiché, avec date de fin de validité (début de l'événement) et bouton Copier"]
+    end
+
+    A5 -.->|"Diffusé hors application (canal habituel du club)"| B0
+
+    subgraph INVITE["Personne invitée"]
+        B0(["Ouvre le lien d'invitation"]) --> B1{"Lien valide ? (RG-02)"}
+        B1 -->|"Non : événement commencé"| B2["Aucun compte créé : Ce lien n'est plus valide, demande un nouveau lien à un administrateur"]:::error
+        B1 -->|"Oui"| B3["Formulaire : nom, prénom, e-mail, mot de passe"]
+        B3 -->|"Clic « Créer mon compte »"| B4{"Données valides ?"}
+        B4 -->|"Nom, prénom ou e-mail vide ou mal formé"| B8["Toast : Renseigne ton nom, ton prénom et une adresse e-mail valide, champs conservés"]:::error
+        B8 --> B3
+        B4 -->|"Mot de passe de moins de 10 caractères (RG-01)"| B5["Le mot de passe doit contenir au moins 10 caractères, autres champs conservés"]:::error
+        B5 --> B3
+        B4 -->|"E-mail déjà utilisé (RG-01)"| B6["Aucun second compte : message qui propose de se connecter"]:::error
+        B6 --> B7["Page de connexion (flux 02)"]
+        B4 -->|"Oui"| B9["Compte actif et utilisateur connecté"]
+        B9 --> B10["Liste des événements du club, prénom en haut à droite"]
+    end

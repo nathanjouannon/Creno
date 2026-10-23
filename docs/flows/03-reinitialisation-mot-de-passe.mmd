@@ -1,0 +1,24 @@
+%% Mot de passe oublié : réinitialisation par lien généré par l'administrateur (F-02, F-10, RG-01, RG-12, RG-13)
+%% Aucun e-mail n'est envoyé au MVP (RG-13) : l'administrateur transmet lui-même le lien.
+%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
+flowchart TD
+    classDef error fill:#fde2e2,stroke:#dc2626,color:#111
+
+    M(["Un membre a oublié son mot de passe"]) -.->|"Contacte l'administrateur hors application"| A1
+
+    subgraph ADMIN["Administrateur"]
+        A1["Fiche du membre (flux 07)"] -->|"Clic « Générer un lien de réinitialisation »"| A2["Lien à usage unique affiché, avec date de fin de validité (3 jours) et bouton Copier"]
+    end
+
+    A2 -.->|"Transmis par l'administrateur au membre"| B0
+
+    subgraph MEMBRE["Membre"]
+        B0(["Ouvre le lien de réinitialisation"]) --> B1{"Lien valide ? (non utilisé, moins de 3 jours, RG-12)"}
+        B1 -->|"Non"| B2["Ce lien n'est plus valide, demande un nouveau lien à un administrateur"]:::error
+        B1 -->|"Oui"| B3["Formulaire : nouveau mot de passe"]
+        B3 -->|"Valide"| B4{"10 caractères ou plus ? (RG-01)"}
+        B4 -->|"Non"| B5["Le mot de passe doit contenir au moins 10 caractères"]:::error
+        B5 --> B3
+        B4 -->|"Oui"| B6["Mot de passe changé, lien désormais inutilisable"]
+        B6 --> B7["Page de connexion : connexion avec le nouveau mot de passe (flux 02)"]
+    end

@@ -1,0 +1,30 @@
+%% Connexion et déconnexion (F-02, RG-03)
+%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
+flowchart TD
+    classDef error fill:#fde2e2,stroke:#dc2626,color:#111
+    classDef todo fill:#fff1d6,stroke:#d97706,color:#111
+
+    S(["Ouvre une page protégée sans être connecté"]) --> L["Page de connexion : e-mail, mot de passe"]
+    S2(["Ouvre directement la page de connexion"]) --> L
+
+    L -->|"Clic « Se connecter »"| C{"Connexion bloquée ? (RG-03)"}
+    C -->|"Oui : 5 échecs consécutifs, 15 minutes"| E1["Message indiquant le blocage de 15 minutes, même avec le bon mot de passe"]:::error
+    E1 --> L
+    C -->|"Non"| D{"Identifiants corrects ?"}
+    D -->|"Non (y compris compte supprimé)"| E2["Reste sur la page : E-mail ou mot de passe incorrect, champ mot de passe vidé, un échec de plus"]:::error
+    E2 --> L
+    D -->|"Oui"| OK["Utilisateur connecté"]
+    OK --> T{"Arrivée depuis une URL précise ?"}
+    T -->|"Oui"| P1["Page initialement demandée"]
+    T -->|"Non"| P2["Liste des événements, prénom en haut à droite"]
+
+    %% Redirection vers la page demandée : souhaitée « si possible » (décision de l'auteur).
+    %% À défaut, retomber sur la liste des événements, seul comportement écrit dans les user stories.
+    NOTE["Redirection vers la page demandée : à valider en phase architecture, sinon liste des événements"]:::todo
+    T -.- NOTE
+
+    subgraph OUT["Déconnexion"]
+        direction TB
+        O1["Menu du prénom"] -->|"Clic « Se déconnecter »"| O2["Page de connexion"]
+        O2 --> O3["Les pages protégées redemandent la connexion"]
+    end
