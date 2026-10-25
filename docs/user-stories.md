@@ -1,4 +1,4 @@
-# User stories – openBenevola
+# User stories – Créno
 
 Statut : brouillon v0.1 (2026-10-22). Chaque histoire porte l'identifiant de la fonctionnalité du tableau MoSCoW de `prd.md` (F-01, F-02…). Les règles de gestion (RG-xx) sont définies dans [`domain/business-rules.md`](domain/business-rules.md) et référencées dans les scénarios.
 

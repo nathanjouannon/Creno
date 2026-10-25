@@ -1,4 +1,4 @@
-# Règles de gestion – openBenevola
+# Règles de gestion – Créno
 
 Statut : brouillon v0.1 (2026-10-22). Les règles sont numérotées (RG-01, RG-02…) afin d'être citées dans le code, les user stories, les tickets et les tests. Un numéro n'est jamais réutilisé : une règle abandonnée est barrée, pas renumérotée.
 

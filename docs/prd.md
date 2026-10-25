@@ -1,10 +1,10 @@
-# PRD – openBenevola
+# PRD – Créno
 
 Statut : brouillon v0.1 (2026-10-22). Fait suite à `00-vision.md` et `research/99-decision.md` (GO, développement from scratch).
 
 ## 1. Résumé
 
-openBenevola est une application web open source qui permet à une association d'organiser ses bénévoles : l'organisateur publie des événements découpés en créneaux avec une capacité, les bénévoles s'inscrivent, se désinscrivent et modifient leur réponse eux-mêmes. Elle remplace le Google Form, qui ne permet ni de consulter ni de modifier sa réponse.
+Créno est une application web open source qui permet à une association d'organiser ses bénévoles : l'organisateur publie des événements découpés en créneaux avec une capacité, les bénévoles s'inscrivent, se désinscrivent et modifient leur réponse eux-mêmes. Elle remplace le Google Form, qui ne permet ni de consulter ni de modifier sa réponse.
 
 Terrain d'essai : le club de ski de l'auteur (moins de 30 bénévoles). Le projet a aussi un but éducatif.
 

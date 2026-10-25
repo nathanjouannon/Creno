@@ -1,6 +1,6 @@
 # Research – phase de validation
 
-Objectif : décider **go / pivot / stop** sur openBenevola.
+Objectif : décider **go / pivot / stop** sur Créno.
 
 | Question | Livrable | Statut |
 |---|---|---|
