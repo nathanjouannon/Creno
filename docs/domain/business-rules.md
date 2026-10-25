@@ -1,28 +1,38 @@
 # Règles de gestion – Créno
 
-Statut : brouillon v0.1 (2026-10-22). Les règles sont numérotées (RG-01, RG-02…) afin d'être citées dans le code, les user stories, les tickets et les tests. Un numéro n'est jamais réutilisé : une règle abandonnée est barrée, pas renumérotée.
+Statut : brouillon v0.2 (2026-10-25). Les règles sont numérotées (RG-01, RG-02…) afin d'être citées dans le code, les user stories, les tickets et les tests. Un numéro n'est jamais réutilisé : une règle abandonnée est barrée, pas renumérotée. Les termes suivent `glossary.md` (utilisateur, créneau, inscription…).
+
+Révision v0.2 : vocabulaire aligné sur le glossaire, précisions sur RG-01, RG-03, RG-06 à RG-09, RG-11 et RG-12 ; ajout de RG-14 à RG-16.
 
 ## Comptes
-- **RG-01** : Un compte comporte un nom, un prénom, une adresse e-mail unique et un mot de passe d'au moins 10 caractères (aucune autre règle de complexité).
-- **RG-03** : Après 5 échecs de connexion consécutifs, la connexion est bloquée 15 minutes pour ce compte.
-- **RG-11** : À la suppression d'un compte, les données nominatives sont effacées, les inscriptions futures sont libérées et les inscriptions passées sont anonymisées (« ancien membre »).
-- **RG-12** : Mot de passe oublié : l'administrateur génère pour le compte un lien de réinitialisation à usage unique et le transmet lui-même. Le lien est valable 3 jours.
+- **RG-01** : Un utilisateur comporte un nom, un prénom (non vides), une adresse e-mail et un mot de passe d'au moins 10 caractères (aucune autre règle de complexité). L'adresse e-mail est unique sans tenir compte de la casse ; les espaces autour sont retirés avant enregistrement. Aucun e-mail de vérification n'est envoyé (RG-13) : l'adresse n'est pas confirmée.
+- **RG-03** : Après 5 échecs de connexion consécutifs, la connexion est bloquée 15 minutes pour ce compte, même avec le bon mot de passe. Une connexion réussie remet le compteur à zéro ; les tentatives pendant le blocage ne le prolongent pas.
+- **RG-11** : À la suppression d'un compte, par son titulaire après confirmation, les données nominatives sont effacées. Les inscriptions à des créneaux qui n'ont pas commencé sont libérées ; celles des créneaux déjà commencés sont conservées et anonymisées (« ancien membre »).
+- **RG-12** : Mot de passe oublié : l'administrateur génère pour l'utilisateur un lien de réinitialisation à usage unique et le transmet lui-même. Le lien est valable 3 jours. Générer un nouveau lien invalide les précédents. Une réinitialisation réussie remet à zéro le blocage de RG-03 et ferme toutes les sessions ouvertes de l'utilisateur.
 
 ## Invitations
-- **RG-02** : Un lien d'invitation est généré depuis un événement. Il est réutilisable par plusieurs personnes et valable jusqu'à la date et l'heure de début de cet événement. Il permet de créer un compte, actif immédiatement, et de rejoindre le club, donc d'accéder à tous les événements du club.
+- **RG-02** : Une invitation est un lien généré par un administrateur depuis un événement qui n'a pas commencé. Il est réutilisable par plusieurs personnes et valable jusqu'à la date et l'heure de début actuelles de cet événement (si l'événement est reporté, la validité suit). Il permet de créer un compte, actif immédiatement, et de rejoindre le club, donc d'accéder à tous les événements du club. Supprimer l'événement rend ses invitations invalides.
 
 ## Administration
-- **RG-04** : Il existe toujours au moins un administrateur. Le premier est créé à l'installation. Un administrateur peut donner le droit administrateur à un autre membre, mais seul l'intéressé peut retirer son propre droit. Le dernier administrateur ne peut ni se retirer le droit, ni supprimer son compte.
+- **RG-04** : Il existe toujours au moins un administrateur. Le premier est créé à l'installation. Un administrateur peut donner le droit administrateur à un autre utilisateur, mais seul l'intéressé peut retirer son propre droit. Le dernier administrateur ne peut ni se retirer le droit, ni supprimer son compte. Le contrôle est atomique : deux retraits simultanés ne peuvent pas laisser zéro administrateur.
 - ~~**RG-05**~~ : *abandonnée le 2026-10-23 : la désactivation d'un compte par un administrateur est retirée du MVP. Un compte ne se supprime que par son titulaire (RG-11).*
+- **RG-14** : Seul un administrateur peut effectuer une action d'administration (gérer les événements, créneaux, invitations, utilisateurs, liens de réinitialisation, inscriptions d'autrui). La vérification se fait côté serveur pour chaque requête, jamais seulement dans l'interface.
 
 ## Événements
-- **RG-06** : Un événement comporte un titre, une description, un lieu, une date et heure de début et une date et heure de fin (fin après début). Il peut être enregistré sans créneau : les créneaux s'ajoutent ensuite.
-- **RG-09** : Les utilisateurs voient les noms des inscrits de chaque créneau. Un événement est passé quand sa date et heure de fin sont dépassées ; il est alors masqué pour les utilisateurs et reste visible par les administrateurs.
-- **RG-10** : Supprimer un événement ou un créneau qui a des inscrits exige une confirmation indiquant le nombre d'inscrits concernés. Sans inscrit, la suppression est immédiate. Aucune notification n'est envoyée.
+- **RG-06** : Un événement comporte un titre (obligatoire), une description et un lieu (facultatifs), une date et heure de début et une date et heure de fin (fin après début). Il peut être enregistré sans créneau : les créneaux s'ajoutent ensuite.
+- **RG-09** : Les utilisateurs voient les noms des inscrits de chaque créneau, au format « Prénom N. » (prénom et initiale du nom) ; les inscriptions anonymisées s'affichent « ancien membre ». Un événement est passé quand sa date et heure de fin sont dépassées ; il est alors masqué pour les utilisateurs (une URL directe répond « introuvable ») et reste visible par les administrateurs.
+- **RG-10** : Supprimer un événement ou un créneau qui a des inscrits exige une confirmation indiquant le nombre d'inscrits concernés (pour un événement : tous créneaux confondus). Sans inscrit, la suppression est immédiate. Aucune notification n'est envoyée.
+- **RG-15** : Un événement passé est en lecture seule : ni lui ni ses créneaux ne peuvent être modifiés ou supprimés, et les inscriptions ne changent plus.
 
 ## Créneaux et inscriptions
-- **RG-07** : Un créneau comporte une date, une heure de début, une heure de fin et une limite de places facultative. Sans limite, le nombre de places est illimité. La limite n'est jamais dépassée par une inscription d'utilisateur et ne peut pas être abaissée sous le nombre d'inscrits.
-- **RG-08** : Un utilisateur peut s'inscrire et se désinscrire d'un créneau jusqu'à son heure de début. Il ne peut être inscrit qu'une fois au même créneau. Le chevauchement de deux créneaux n'est pas contrôlé.
+- **RG-07** : Un créneau comporte une date, une heure de début, une heure de fin (après le début) et une limite de places facultative, d'au moins 1. Sans limite, le nombre de places est illimité. La limite n'est jamais dépassée par une inscription d'utilisateur et ne peut pas être abaissée sous le nombre d'inscrits. Un créneau peut sortir des dates de l'événement (par exemple un montage avant le début) : l'administrateur en est averti mais peut valider. L'inscription est atomique : la dernière place ne peut pas être attribuée à deux personnes.
+- **RG-08** : Un utilisateur, administrateur compris, peut s'inscrire et se désinscrire d'un créneau tant que celui-ci n'a pas commencé (heure courante strictement avant son heure de début). Il ne peut être inscrit qu'une fois au même créneau. Le chevauchement de deux créneaux n'est pas contrôlé. Un administrateur peut retirer l'inscription d'un utilisateur à tout moment, même sur un créneau commencé ; l'ajout d'un inscrit par un administrateur est prévu en v1.1 (F-12).
+- **RG-16** : Une instance a un seul fuseau horaire, celui du club, configuré à l'installation. Toutes les dates et heures saisies et affichées sont dans ce fuseau ; elles sont stockées avec leur fuseau (UTC).
 
 ## Notifications
 - **RG-13** : Au MVP, l'application n'envoie aucun e-mail.
+
+## Contraintes pour la phase architecture
+- Atomicité requise : inscription à la dernière place (RG-07) et retrait du droit administrateur (RG-04) ; à traiter par transaction ou verrou, et à couvrir par des tests de concurrence.
+- Écran A7 (« Trop de tentatives ») : le blocage de RG-03 n'est visible que pour un e-mail existant, ce qui révèle l'existence d'un compte. À arbitrer dans `architecture/security.md`.
+- Création du premier administrateur (RG-04) : mécanisme à choisir (commande d'installation ou variables d'environnement).

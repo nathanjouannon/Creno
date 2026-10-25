@@ -27,7 +27,7 @@ Règles d'usage :
 
 | Terme (FR) | Code | Définition | Règles | À ne pas employer |
 | --- | --- | --- | --- | --- |
-| Invitation | `Invitation` | Lien réutilisable, créé par un administrateur depuis un événement, qui permet à plusieurs personnes de créer leur compte. Attributs : jeton (`token`), événement (`eventId`), fin de validité (`expiresAt` = début de l'événement). | RG-02 | « parrainage », « code d'accès » |
+| Invitation | `Invitation` | Lien réutilisable, créé par un administrateur depuis un événement, qui permet à plusieurs personnes de créer leur compte. Attributs : jeton (`token`), événement (`eventId`), la validité n'est pas stockée : le lien est valable jusqu'au début actuel de l'événement. | RG-02 | « parrainage », « code d'accès » |
 | Jeton de réinitialisation | `ResetToken` | Jeton à usage unique, créé par un administrateur pour un utilisateur, qui permet à celui-ci de choisir un nouveau mot de passe. Attributs : jeton (`token`), utilisateur (`userId`), fin de validité (`expiresAt`, 3 jours), date d'utilisation (`usedAt`). Le lien de réinitialisation est l'URL qui contient ce jeton. | RG-12 | `PasswordReset` (nom de fonctionnalité, pas de donnée), « mot de passe temporaire » |
 
 ### Événements, créneaux, inscriptions

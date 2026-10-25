@@ -60,8 +60,7 @@ erDiagram
     Invitation {
         int id PK "auto-incrémenté"
         int eventId FK "supprimée avec l'événement"
-        string token UK "jeton du lien, réutilisable (RG-02)"
-        datetime expiresAt "= Event.startsAt (RG-02)"
+        string token UK "jeton du lien, réutilisable ; validité = Event.startsAt, non stockée (RG-02)"
         datetime createdAt
     }
 
