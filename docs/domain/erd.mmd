@@ -1,0 +1,74 @@
+%% Modèle de données de Créno (MLD simplifié). Noms de code : voir glossary.md.
+%% Légende : PK = clé primaire, FK = clé étrangère, UK = unique. Cardinalités : || un et un seul, o| zéro ou un, o{ zéro ou plusieurs, |{ un ou plusieurs.
+%% États temporels (upcoming, ongoing, past, started), remainingPlaces, full et empty sont calculés, jamais stockés.
+%% Identifiants : entiers auto-incrémentés (identity). Les jetons des invitations et réinitialisations sont des chaînes aléatoires à part, jamais des ID.
+%% Une instance = une association : pas d'entité Club (PRD section 6).
+erDiagram
+    User ||--o{ ResetToken : "a"
+    User |o--o{ Registration : "effectue"
+    Event ||--o{ Slot : "comporte"
+    Event ||--o{ Invitation : "donne lieu à"
+    Slot ||--o{ Registration : "reçoit"
+
+    User {
+        int id PK "auto-incrémenté"
+        string lastName "RG-01"
+        string firstName "RG-01"
+        string email UK "RG-01, unique"
+        string passwordHash "mot de passe 10 caractères min. avant hachage (RG-01)"
+        string role "USER ou ADMIN (RG-04)"
+        int failedLoginCount "échecs consécutifs, remis à 0 après succès (RG-03)"
+        datetime lockedUntil "null si non bloqué (RG-03)"
+        datetime createdAt
+    }
+
+    ResetToken {
+        int id PK "auto-incrémenté"
+        int userId FK "supprimé avec l'utilisateur (RG-11)"
+        string token UK "jeton à usage unique, stocké haché (RG-12)"
+        datetime expiresAt "création + 3 jours (RG-12)"
+        datetime usedAt "null tant que non utilisé"
+        datetime createdAt
+    }
+
+    Event {
+        int id PK "auto-incrémenté"
+        string title "obligatoire (RG-06)"
+        string description
+        string location
+        datetime startsAt "RG-06"
+        datetime endsAt "après startsAt (RG-06)"
+        datetime createdAt
+    }
+
+    Slot {
+        int id PK "auto-incrémenté"
+        int eventId FK "supprimé avec l'événement (RG-10)"
+        datetime startsAt
+        datetime endsAt "après startsAt"
+        int capacity "null = illimité, jamais sous le nombre d'inscrits (RG-07)"
+        datetime createdAt
+    }
+
+    Registration {
+        int id PK "auto-incrémenté"
+        int slotId FK "supprimée avec le créneau (RG-10)"
+        int userId FK "null = ancien membre (RG-11)"
+        datetime createdAt
+    }
+
+    Invitation {
+        int id PK "auto-incrémenté"
+        int eventId FK "supprimée avec l'événement"
+        string token UK "jeton du lien, réutilisable (RG-02)"
+        datetime expiresAt "= Event.startsAt (RG-02)"
+        datetime createdAt
+    }
+
+    %% Contraintes non exprimables dans le diagramme :
+    %% - Registration : unique (slotId, userId) lorsque userId n'est pas null (RG-08).
+    %% - Registration.userId : ON DELETE SET NULL ; les inscriptions futures de l'utilisateur sont supprimées avant, les passées conservées (RG-11).
+    %% - Suppression de compte : la ligne User est supprimée en entier, ce qui efface nom, prénom et e-mail (RG-11).
+    %% - Slot : capacity >= 1 si renseignée ; endsAt > startsAt. Event : endsAt > startsAt (RG-06).
+    %% - Au moins un User avec role = ADMIN en permanence (RG-04), vérifié par le service, pas par le schéma.
+    %% - Les relations vers Event et Slot sont en ON DELETE CASCADE (RG-10).
