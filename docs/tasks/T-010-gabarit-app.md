@@ -18,6 +18,7 @@ Construire les composants réutilisables par toutes les pages et l'accès par r�
 - `architecture/security.md` (section 3)
 
 ## Travail
+- Remplacer les extraits de composants de `examples.md` (sections 6 et 7) par des renvois vers les fichiers réels, qui deviennent la référence.
 - Composants de `design/components.md` : AppHeader, MainNav, UserMenu (sans la suppression de compte), PageContainer, PageTitle, Button, Form, FormField, Input, FieldError, DateTimeRange, Alert, Toast, ConfirmDialog, LinkDialog, Card, EmptyState, Link.
 - Le composant `Form` branche un schéma Zod sur react-hook-form et affiche les erreurs de `VALIDATION_ERROR` sous leur champ ; les messages viennent du catalogue d'erreurs.
 - Garde de pages : visiteur redirigé vers la connexion avec mémorisation de la page ; utilisateur sur une page d'administration reçoit « Tu n'as pas le droit d'accéder à cette page » ; page « introuvable ».

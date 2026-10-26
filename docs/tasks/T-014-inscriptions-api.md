@@ -16,6 +16,7 @@ Inscrire, désinscrire et retirer un inscrit, sans jamais dépasser une limite d
 - `api/errors.md`
 
 ## Travail
+- Fixer et justifier le mécanisme de verrouillage de RG-07 (transaction sérialisable avec nouvelle tentative, verrou de ligne ou verrou consultatif ; un SQL brut demande une exception écrite à `security.md`) en le validant par le test de 50 requêtes, puis remplacer les extraits de `examples.md` (sections 1 à 5) par des renvois vers le code réel.
 - Module `registrations` : `register`, `unregister`, `removeRegistration` (administrateur).
 - Dernière place attribuée une seule fois : verrou de ligne ou contrainte dans une transaction.
 - Refus : `SLOT_FULL`, `SLOT_STARTED` (heure courante supérieure ou égale au début), `REGISTRATION_ALREADY_EXISTS`, `EVENT_PAST` pour un administrateur ; événement passé introuvable pour un utilisateur.
