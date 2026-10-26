@@ -1,8 +1,8 @@
 # User stories – Créno
 
-Statut : brouillon v0.1 (2026-10-22). Chaque histoire porte l'identifiant de la fonctionnalité du tableau MoSCoW de `prd.md` (F-01, F-02…). Les règles de gestion (RG-xx) sont définies dans [`domain/business-rules.md`](domain/business-rules.md) et référencées dans les scénarios.
+Statut : brouillon v0.2 (2026-10-26, aligné sur la revue des règles de gestion et le glossaire). Chaque histoire porte l'identifiant de la fonctionnalité du tableau MoSCoW de `prd.md` (F-01, F-02…). Les règles de gestion (RG-xx) sont définies dans [`domain/business-rules.md`](domain/business-rules.md) et référencées dans les scénarios.
 
-Rôles : **administrateur** et **utilisateur** (bénévole). Un administrateur dispose aussi de toutes les actions d'un utilisateur.
+Rôles : **administrateur** (`ADMIN`) et **utilisateur** (`USER`, appelé « bénévole » ou « membre » dans l'interface, voir `glossary.md`). Un administrateur dispose aussi de toutes les actions d'un utilisateur, y compris s'inscrire à un créneau (RG-08).
 
 ---
 
@@ -16,6 +16,11 @@ Scénario 1 : génération du lien (RG-02)
 - Given : un administrateur connecté sur la page d'un événement qui n'a pas encore commencé
 - When : il clique sur « Inviter des bénévoles »
 - Then : un lien est affiché avec sa date de fin de validité (le début de l'événement) et un bouton pour le copier
+
+Scénario 1 bis : événement reporté (RG-02)
+- Given : un lien d'invitation généré pour un événement qui commence le 14 mars à 08:00
+- When : l'administrateur reporte le début de l'événement au 21 mars à 08:00
+- Then : le même lien reste valable jusqu'au 21 mars à 08:00
 
 **Histoire 2.** En tant que **personne invitée**, je veux créer mon compte à partir du lien reçu afin de rejoindre le club et voir ses événements.
 
@@ -36,7 +41,7 @@ Scénario 4 : lien expiré (RG-02)
 
 Scénario 5 : e-mail déjà utilisé (RG-01)
 - Given : une personne qui possède déjà un compte avec `mail.ex@exemple.fr` et ouvre un lien d'invitation valide
-- When : elle saisit cet e-mail dans le formulaire de création
+- When : elle saisit cet e-mail dans le formulaire de création, quelle que soit la casse (`Mail.Ex@exemple.fr`)
 - Then : aucun second compte n'est créé et un message lui propose de se connecter
 
 Scénario 5 bis : connexion après une invitation (RG-02)
@@ -73,6 +78,11 @@ Scénario 3 : blocage après trop d'essais (RG-03)
 - When : il tente une 6e connexion, même avec le bon mot de passe
 - Then : l'accès est bloqué 15 minutes et un message l'indique
 
+Scénario 3 bis : compteur remis à zéro (RG-03)
+- Given : un utilisateur qui a échoué 4 fois de suite
+- When : il se connecte avec le bon mot de passe puis échoue une fois de plus plus tard
+- Then : cet échec compte pour le premier, l'accès n'est pas bloqué
+
 Scénario 1 bis : retour à la page demandée
 - Given : une personne non connectée qui a ouvert l'URL d'un événement et a été redirigée vers la page de connexion
 - When : elle se connecte avec des identifiants corrects
@@ -86,7 +96,7 @@ Scénario 4 : déconnexion
 Scénario 5 : réinitialisation du mot de passe (RG-12, RG-01)
 - Given : un utilisateur qui a reçu de l'administrateur un lien de réinitialisation valide (moins de 3 jours)
 - When : il ouvre le lien, saisit un nouveau mot de passe de 10 caractères ou plus et valide
-- Then : son mot de passe est changé, le lien ne fonctionne plus et il peut se connecter avec le nouveau mot de passe
+- Then : son mot de passe est changé, le lien ne fonctionne plus, ses sessions ouvertes sont fermées, un éventuel blocage de connexion est levé et il peut se connecter avec le nouveau mot de passe
 
 Scénario 6 : lien de réinitialisation expiré ou déjà utilisé (RG-12)
 - Given : un lien de réinitialisation de plus de 3 jours, ou déjà utilisé
@@ -97,12 +107,12 @@ Scénario 6 : lien de réinitialisation expiré ou déjà utilisé (RG-12)
 
 En tant qu'**administrateur**, je veux que les actions d'administration soient réservées aux administrateurs afin que les bénévoles ne puissent pas modifier les événements ni les comptes.
 
-Scénario 1 : accès refusé à un utilisateur (RG-04)
+Scénario 1 : accès refusé à un utilisateur (RG-14)
 - Given : un utilisateur sans droit administrateur, connecté
 - When : il ouvre directement l'URL de la page de création d'événement ou de gestion des membres
 - Then : l'accès est refusé avec le message « Tu n'as pas le droit d'accéder à cette page » et rien n'est modifié
 
-Scénario 2 : action d'administration refusée côté serveur
+Scénario 2 : action d'administration refusée côté serveur (RG-14)
 - Given : un utilisateur sans droit administrateur, connecté
 - When : il envoie directement une requête de suppression d'événement
 - Then : la requête est refusée et l'événement n'est pas supprimé
@@ -124,7 +134,7 @@ En tant qu'**administrateur**, je veux créer et gérer des événements afin de
 Scénario 1 : création réussie (RG-06)
 - Given : un administrateur sur la page de création d'événement
 - When : il saisit le titre « Course de ski du 15 janvier », une description, le lieu « Station des Arcs », un début le 15 janvier à 08:00, une fin le 15 janvier à 17:00, ajoute un créneau et clique sur « Enregistrer »
-- Then : l'événement apparaît dans la liste des événements à venir, visible par tous les membres, et l'administrateur arrive sur la page de l'événement
+- Then : l'événement apparaît dans la liste des événements à venir, visible par tous les utilisateurs, et l'administrateur arrive sur la page de l'événement
 
 Scénario 2 : titre manquant
 - Given : un administrateur sur le formulaire de création
@@ -144,7 +154,7 @@ Scénario 3 bis : dates incohérentes (RG-06)
 Scénario 4 : modification
 - Given : un administrateur sur la page d'un événement existant
 - When : il change le lieu et enregistre
-- Then : le nouveau lieu s'affiche pour tous les membres et les inscriptions sont conservées
+- Then : le nouveau lieu s'affiche pour tous les utilisateurs et les inscriptions sont conservées
 
 Scénario 5 : suppression avec inscrits (RG-10)
 - Given : un administrateur sur un événement dont les créneaux totalisent 6 inscrits
@@ -155,6 +165,16 @@ Scénario 6 : suppression sans inscrit (RG-10)
 - Given : un administrateur sur un événement dont aucun créneau n'a d'inscrit
 - When : il clique sur « Supprimer »
 - Then : l'événement est supprimé immédiatement, sans confirmation
+
+Scénario 7 : événement passé en lecture seule (RG-15)
+- Given : un administrateur sur la page d'un événement dont la date de fin est dépassée
+- When : il consulte la page
+- Then : les boutons « Modifier », « Supprimer », « Ajouter un créneau » et ceux des créneaux ne sont pas proposés, et les inscriptions ne peuvent plus changer
+
+Scénario 8 : fuseau horaire du club (RG-16)
+- Given : une instance configurée sur le fuseau « Europe/Paris »
+- When : l'administrateur saisit un début à 08:00 pour un événement
+- Then : l'événement s'affiche à 08:00 pour tous les utilisateurs, quel que soit le fuseau de leur appareil
 
 ### « Créneaux et nombre de places » (F-05)
 
@@ -170,10 +190,20 @@ Scénario 2 : créneau limité (RG-07)
 - When : un cinquième utilisateur tente de s'inscrire
 - Then : l'inscription est refusée, le créneau est marqué « Complet » et il reste 4 inscrits
 
-Scénario 3 : horaires incohérents
+Scénario 3 : horaires incohérents (RG-07)
 - Given : un administrateur qui ajoute un créneau
 - When : il saisit une heure de fin antérieure ou égale à l'heure de début
 - Then : le créneau n'est pas créé et le message « La fin doit être après le début » s'affiche
+
+Scénario 3 bis : limite inférieure à 1 (RG-07)
+- Given : un administrateur qui ajoute un créneau
+- When : il saisit une limite de 0 place
+- Then : le créneau n'est pas créé et un message indique que la limite doit être d'au moins 1 (ou vide pour illimité)
+
+Scénario 3 ter : créneau hors des dates de l'événement (RG-07)
+- Given : un événement du 14 mars de 08:00 à 18:00 et un administrateur qui ajoute un créneau le 14 mars de 07:00 à 08:00
+- When : il valide le créneau
+- Then : un avertissement « Ce créneau est hors des dates de l'événement » s'affiche mais le créneau est créé
 
 Scénario 4 : limite inférieure aux inscrits (RG-07)
 - Given : un créneau avec 5 inscrits
@@ -210,9 +240,9 @@ Scénario 1 : liste des événements à venir (RG-09)
 - Then : les deux événements sont listés par date de début croissante, avec titre, lieu et date
 
 Scénario 2 : détail d'un créneau limité (RG-07, RG-09)
-- Given : un créneau limité à 4 places avec 3 inscrits : Léa, Marc et Sofia
+- Given : un créneau limité à 4 places avec 3 inscrits : Léa Bernard, Marc Dupont et Sofia Thomas
 - When : l'utilisateur ouvre l'événement
-- Then : le créneau affiche les horaires, les noms « Léa, Marc, Sofia » et « 1 place restante »
+- Then : le créneau affiche les horaires, les noms « Léa B., Marc D., Sofia T. » (prénom et initiale du nom, RG-09) et « 1 place restante »
 
 Scénario 3 : détail d'un créneau illimité (RG-07)
 - Given : un créneau sans limite avec 2 inscrits
@@ -223,6 +253,11 @@ Scénario 4 : événement passé masqué (RG-09)
 - Given : un événement dont la date de fin est dépassée
 - When : un utilisateur ouvre la liste des événements
 - Then : cet événement n'apparaît pas, alors qu'un administrateur le retrouve dans une section « Événements passés »
+
+Scénario 4 bis : URL d'un événement passé (RG-09)
+- Given : un événement dont la date de fin est dépassée
+- When : un utilisateur sans droit administrateur ouvre directement son URL
+- Then : la page répond « introuvable » comme pour un événement qui n'existe pas
 
 Scénario 5 : aucun événement
 - Given : aucun événement à venir
@@ -252,6 +287,16 @@ Scénario 4 : créneau commencé (RG-08)
 - Given : un créneau dont l'heure de début est passée
 - When : un utilisateur ouvre l'événement
 - Then : il ne peut plus s'inscrire et le message « Ce créneau a commencé » s'affiche
+
+Scénario 4 bis : frontière exacte (RG-08)
+- Given : un créneau qui commence à 09:00 et un utilisateur non inscrit
+- When : il clique sur « Je m'inscris » à 09:00 précises
+- Then : l'inscription est refusée, le créneau étant commencé
+
+Scénario 4 ter : un administrateur s'inscrit (RG-08)
+- Given : un administrateur sur la page d'un événement, devant un créneau à venir avec des places
+- When : il clique sur « Je m'inscris »
+- Then : son nom apparaît dans la liste, avec les mêmes règles de limite et d'horaire que pour un utilisateur
 
 Scénario 5 : chevauchement autorisé (RG-08)
 - Given : un utilisateur déjà inscrit au créneau 09:00-12:00
@@ -311,6 +356,21 @@ Scénario 4 : accès refusé à un utilisateur (F-03)
 - When : il ouvre l'URL de la vue de remplissage
 - Then : l'accès est refusé
 
+Scénario 5 : retrait d'un inscrit par l'administrateur (RG-08)
+- Given : un administrateur sur la vue de remplissage d'un créneau limité à 4 avec 4 inscrits, dont Marie D.
+- When : il clique sur « Retirer » à côté de Marie D. et confirme « Marie D. ne sera plus inscrite à ce créneau »
+- Then : Marie D. disparaît de la liste, le compteur passe à « 3 / 4 » et la place est de nouveau disponible ; sans confirmation, rien n'est retiré
+
+Scénario 6 : retrait sur un créneau commencé (RG-08)
+- Given : un créneau dont l'heure de début est passée, dans un événement en cours, avec Marie D. inscrite
+- When : l'administrateur retire Marie D. et confirme
+- Then : Marie D. disparaît de la liste, alors qu'un utilisateur ne peut pas se désinscrire
+
+Scénario 7 : retrait impossible sur un événement passé (RG-15)
+- Given : un événement terminé
+- When : l'administrateur ouvre sa vue de remplissage
+- Then : aucun bouton « Retirer » n'est proposé
+
 ### « Gestion des membres » (F-10)
 
 En tant qu'**administrateur**, je veux gérer les membres du club afin de contrôler qui a accès à l'application et avec quels droits.
@@ -321,9 +381,9 @@ Scénario 1 : liste des membres
 - Then : la liste affiche nom, prénom, e-mail et rôle de chaque membre
 
 Scénario 2 : donner le droit administrateur (RG-04)
-- Given : un administrateur et un membre utilisateur
-- When : il clique sur « Donner le droit administrateur » pour ce membre
-- Then : ce membre devient administrateur ; les deux administrateurs coexistent
+- Given : un administrateur et un utilisateur
+- When : il clique sur « Donner le droit administrateur » sur la fiche de cet utilisateur
+- Then : cet utilisateur devient administrateur ; les deux administrateurs coexistent
 
 Scénario 3 : retirer son propre droit (RG-04)
 - Given : deux administrateurs, A et B
@@ -350,14 +410,19 @@ Scénario 7 : lien de réinitialisation de mot de passe (RG-12)
 - When : l'administrateur clique sur « Générer un lien de réinitialisation » sur sa fiche
 - Then : un lien à usage unique est affiché avec sa date de fin de validité (3 jours) et un bouton pour le copier
 
+Scénario 8 : un nouveau lien invalide le précédent (RG-12)
+- Given : un lien de réinitialisation déjà généré pour un membre, non utilisé
+- When : l'administrateur génère un nouveau lien pour ce membre
+- Then : l'ancien lien affiche « Ce lien n'est plus valide, demande un nouveau lien à un administrateur » et seul le nouveau fonctionne
+
 ### « Suppression de son compte » (F-11)
 
 En tant qu'**utilisateur**, je veux supprimer mon compte et mes données afin de quitter le club en maîtrisant mes données personnelles.
 
 Scénario 1 : suppression réussie (RG-11)
-- Given : un utilisateur connecté, inscrit à un créneau futur et à un créneau passé
+- Given : un utilisateur connecté, inscrit à un créneau qui n'a pas commencé et à un créneau déjà commencé (RG-11)
 - When : il clique sur « Supprimer mon compte » puis confirme
-- Then : il est déconnecté et arrive sur la page de connexion, son nom, son prénom et son e-mail sont effacés, l'inscription future est libérée et l'inscription passée apparaît sous « ancien membre »
+- Then : il est déconnecté et arrive sur la page de connexion, son nom, son prénom et son e-mail sont effacés, l'inscription au créneau qui n'a pas commencé est libérée et l'autre apparaît sous « ancien membre »
 
 Scénario 2 : abandon
 - Given : un utilisateur sur l'écran de confirmation de suppression
@@ -380,7 +445,7 @@ Scénario 4 : connexion impossible après suppression
 
 ### « Inscription d'un bénévole par l'administrateur » (F-12)
 
-En tant qu'**administrateur**, je veux inscrire ou retirer un bénévole d'un créneau afin de corriger une situation sans passer par lui.
+En tant qu'**administrateur**, je veux inscrire un bénévole à un créneau afin de corriger une situation sans passer par lui. Le retrait d'un inscrit est déjà disponible au MVP (F-09).
 
 Scénario 1 : ajout sur un créneau avec place
 - Given : un administrateur sur la vue de remplissage d'un créneau avec une place libre
@@ -392,15 +457,10 @@ Scénario 2 : ajout sur un créneau complet (exception à RG-07)
 - When : l'administrateur inscrit un membre supplémentaire et confirme l'avertissement « Ce créneau est complet, la limite sera dépassée »
 - Then : le membre est inscrit et le créneau affiche « 5 / 4 » ; sans confirmation, rien n'est ajouté
 
-Scénario 3 : retrait
-- Given : un membre inscrit à un créneau
-- When : l'administrateur clique sur « Retirer »
-- Then : le membre disparaît de la liste et la place est libérée
-
-Scénario 4 : créneau déjà commencé (RG-08)
-- Given : un créneau dont l'heure de début est passée
-- When : l'administrateur ajoute ou retire un membre
-- Then : la modification est possible, alors qu'elle l'est refusée pour un utilisateur
+Scénario 3 : créneau déjà commencé (RG-08)
+- Given : un créneau dont l'heure de début est passée, dans un événement en cours
+- When : l'administrateur ajoute un membre
+- Then : l'ajout est possible, alors qu'il est refusé pour un utilisateur qui s'inscrit lui-même
 
 ### « Historique des changements » (F-13)
 

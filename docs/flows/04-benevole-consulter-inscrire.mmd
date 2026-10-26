@@ -1,5 +1,6 @@
 %%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
-%% Bénévole : consulter, s'inscrire, se désinscrire, changer de créneau (F-06, F-07, F-08, RG-07, RG-08, RG-09)
+%% Utilisateur : consulter, s'inscrire, se désinscrire, changer de créneau (F-06, F-07, F-08, RG-07, RG-08, RG-09)
+%% Un administrateur voit les mêmes boutons « Je m'inscris » et « Me désinscrire » sur sa page de l'événement (flux 06, RG-08).
 %% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
 flowchart TD
     classDef error fill:#fde2e2,stroke:#dc2626,color:#111
@@ -10,6 +11,7 @@ flowchart TD
     Q -->|"Aucun"| EMPTY["Aucun événement à venir pour le<br/>moment"]
     Q -->|"Oui"| LIST["Liste par date de début croissante<br/>: titre, lieu, date (événements<br/>passés masqués, RG-09)"]
     LIST -->|"Clic sur un événement"| EV["Page de l'événement : description,<br/>lieu, dates, créneaux"]
+    URL(["URL directe d'un événement passé<br/>(utilisateur sans droit administrateur)"]) --> URLR["Page introuvable (RG-09)"]:::error
 
     EV --> NS{"L'événement a des créneaux ?"}
     NS -->|"Non"| NS1["Affichage d'un événement sans<br/>créneau : texte à CONFIRMER"]:::todo
@@ -17,7 +19,7 @@ flowchart TD
     SL --> ST{"État du créneau pour cet<br/>utilisateur"}
 
     ST -->|"Commencé, utilisateur non<br/>inscrit (RG-08)"| S1["Ce créneau a commencé :<br/>inscription impossible"]:::error
-    ST -->|"Commencé, utilisateur<br/>inscrit (RG-08)"| S2["Pas de bouton Me désinscrire :<br/>Contacte un administrateur pour<br/>modifier ton inscription"]:::error
+    ST -->|"Commencé, utilisateur<br/>inscrit (RG-08)"| S2["Pas de bouton Me désinscrire :<br/>Contacte un administrateur pour<br/>modifier ton inscription (il peut<br/>retirer l'inscription, flux 06)"]:::error
     ST -->|"À venir, utilisateur inscrit"| S3["Bouton « Me désinscrire »"]
     ST -->|"À venir, limité et complet,<br/>non inscrit"| S4["Mention « Complet », inscription<br/>indisponible"]
     ST -->|"À venir, avec places, non<br/>inscrit"| S5["Bouton « Je m'inscris », places<br/>restantes affichées si le créneau<br/>est limité"]

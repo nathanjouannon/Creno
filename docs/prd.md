@@ -45,10 +45,10 @@ Note : les personas viennent de l'expérience de l'auteur, aucun entretien n'a e
 | F-06 | Consulter la liste des événements et leurs créneaux | Must | v1 (MVP) | Un bénévole voit, pour chaque créneau, les noms des inscrits et, si le créneau est limité, les places restantes |
 | F-07 | S'inscrire à un créneau | Must | v1 (MVP) | L'inscription est enregistrée immédiatement et visible sans recharger manuellement l'écran de confirmation |
 | F-08 | Se désinscrire ou changer de créneau | Must | v1 (MVP) | Le bénévole modifie sa réponse seul ; la place libérée est aussitôt disponible |
-| F-09 | Vue administrateur : remplissage des créneaux (qui est inscrit, places restantes des créneaux limités) | Must | v1 (MVP) | L'administrateur voit en un seul écran les inscrits de chaque créneau et repère les créneaux limités vides ou presque vides |
+| F-09 | Vue administrateur : remplissage des créneaux (qui est inscrit, places restantes des créneaux limités) ; l'administrateur peut s'inscrire comme un utilisateur et retirer l'inscription d'un utilisateur | Must | v1 (MVP) | L'administrateur voit en un seul écran les inscrits de chaque créneau, repère les créneaux limités vides ou presque vides et peut retirer un inscrit, même sur un créneau commencé |
 | F-10 | Gestion des membres : lister, donner le droit administrateur (seul l'intéressé peut retirer le sien), générer un lien de réinitialisation de mot de passe | Must | v1 (MVP) | L'administrateur retrouve un membre et lui donne le droit administrateur ou un lien de réinitialisation en moins de 3 clics ; il reste toujours au moins un administrateur |
 | F-11 | Suppression de son compte et de ses données personnelles (RGPD) | Must | v1 (MVP) | Après suppression, plus aucune donnée nominative n'est conservée |
-| F-12 | Inscription d'un bénévole par l'administrateur | Should | v1.1 | L'administrateur ajoute ou retire un bénévole d'un créneau, même complet, avec avertissement |
+| F-12 | Inscription d'un bénévole par l'administrateur (le retrait est déjà au MVP, F-09) | Should | v1.1 | L'administrateur ajoute un bénévole à un créneau, même complet ou commencé, avec avertissement |
 | F-13 | Historique des changements (qui a changé quoi, quand) | Should | v1.1 | Chaque création, modification, inscription et désinscription apparaît dans un journal consultable par l'administrateur |
 | F-14 | Mon planning : liste de mes prochaines inscriptions | Should | v1.1 | Le bénévole voit toutes ses inscriptions à venir sur un seul écran |
 | F-15 | Notifications par e-mail (confirmation, rappel, créneaux non pourvus) | Could | v2 | Un rappel est envoyé avant le créneau sans doublon |
@@ -139,3 +139,10 @@ Décisions prises lors des flows (2026-10-23) :
 - Lien de réinitialisation de mot de passe valable 3 jours (RG-12).
 - Pas de désactivation de compte par l'administrateur au MVP (RG-05 abandonnée).
 - Désinscription avec confirmation ; suppression d'un événement ou créneau sans inscrit sans confirmation (RG-10).
+
+Décisions prises lors de la revue des règles de gestion (2026-10-26, détail dans `domain/business-rules.md`, RG-01 à RG-16) :
+- L'administrateur peut s'inscrire et se désinscrire comme un utilisateur (RG-08).
+- L'administrateur peut retirer un inscrit, même sur un créneau commencé, avec confirmation ; seul l'ajout d'un inscrit reste en v1.1 (F-12).
+- Un créneau peut sortir des dates de l'événement, avec avertissement (RG-07).
+- Un nouveau lien de réinitialisation invalide les précédents ; une réinitialisation réussie remet à zéro le blocage et ferme les sessions (RG-12).
+- Un événement passé est en lecture seule (RG-15) ; un seul fuseau horaire par instance (RG-16) ; permissions vérifiées côté serveur (RG-14).

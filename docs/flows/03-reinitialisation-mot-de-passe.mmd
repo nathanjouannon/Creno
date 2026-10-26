@@ -8,7 +8,7 @@ flowchart TD
     M(["Un membre a oublié son mot de<br/>passe"]) -.->|"Contacte l'administrateur<br/>hors application"| A1
 
     subgraph ADMIN["Administrateur"]
-        A1["Fiche du membre (flux 07)"] -->|"Clic « Générer un lien de<br/>réinitialisation »"| A2["Lien à usage unique affiché, avec<br/>date de fin de validité (3 jours)<br/>et bouton Copier"]
+        A1["Fiche du membre (flux 07)"] -->|"Clic « Générer un lien de<br/>réinitialisation »"| A2["Lien à usage unique affiché, avec<br/>date de fin de validité (3 jours)<br/>et bouton Copier ; les liens<br/>précédents du membre sont<br/>invalidés (RG-12)"]
     end
 
     A2 -.->|"Transmis par<br/>l'administrateur au membre"| B0
@@ -20,6 +20,6 @@ flowchart TD
         B3 -->|"Valide"| B4{"10 caractères ou plus ? (RG-01)"}
         B4 -->|"Non"| B5["Le mot de passe doit contenir au<br/>moins 10 caractères"]:::error
         B5 --> B3
-        B4 -->|"Oui"| B6["Mot de passe changé, lien<br/>désormais inutilisable"]
+        B4 -->|"Oui"| B6["Mot de passe changé, lien<br/>désormais inutilisable, sessions<br/>ouvertes fermées, blocage de<br/>connexion levé (RG-12, RG-03)"]
         B6 --> B7["Page de connexion : connexion avec<br/>le nouveau mot de passe (flux 02)"]
     end

@@ -151,8 +151,8 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 - Contenu : horaires (`font.weight-bold`), `SlotStatusTag`, `AttendeeList`, zone d'actions.
 - Variantes :
   - `volunteer` : action unique « Je m'inscris » ou « Me désinscrire ».
-  - `admin` : compteur « inscrits / limite » ou « N inscrits », boutons Modifier et Supprimer, alerte « Aucun inscrit » si limité et vide.
-  - `readonly` : événement passé, sans action (flux 06).
+  - `admin` : compteur « inscrits / limite » ou « N inscrits », boutons Modifier et Supprimer, alerte « Aucun inscrit » si limité et vide, et `AttendeeChip removable` pour retirer un inscrit (C2, RG-08). L'administrateur s'inscrit comme un utilisateur : le créneau affiche aussi « Je m'inscris » ou « Me désinscrire » selon les états du tableau ci-dessous.
+  - `readonly` : événement passé (RG-15), sans aucune action ni bouton « Retirer » (flux 06).
 - États (côté bénévole, flux 04) :
 
 | État | `Card` | Tag | Action | Message |
@@ -165,7 +165,7 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 | `just-filled` | default | « Complet » | `Button disabled` | Toast « Ce créneau vient d'être complété. » (B7, RG-07) |
 | `loading` | default | inchangé | `Button loading` | — |
 
-- États (côté admin, flux 06) : `normal` · `empty-alert` (limité à 0 inscrit, `Card alert`, message « (!) Aucun inscrit » en `color.danger`) · `unlimited` (« N inscrits », jamais d'alerte).
+- États (côté admin, flux 06) : `normal` · `empty-alert` (limité à 0 inscrit, `Card alert`, message « (!) Aucun inscrit » en `color.danger`) · `unlimited` (« N inscrits », jamais d'alerte). Un administrateur peut retirer un inscrit même sur un créneau `started` ; l'ajout d'un inscrit par l'administrateur n'existe pas au MVP (F-12, v1.1).
 
 ### SlotStatusTag
 - Rôle : pastille d'état en haut à droite d'un créneau ; `radius.tag`, `font.size-small`, `font.weight-medium`.
@@ -174,7 +174,7 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 
 ### AttendeeList / AttendeeChip
 - Rôle : noms des inscrits d'un créneau (« Prénom N. »), visibles de tous (RG-09). Chip : fond `color.surface`, `radius.tag`, `font.size-small`.
-- Variantes : `default` · `me` (fond `color.primary`, texte `color.on-primary`, « Alex M. (toi) ») · `former-member` (« ancien membre », RG-11).
+- Variantes : `default` · `me` (fond `color.primary`, texte `color.on-primary`, « Alex M. (toi) ») · `former-member` (« ancien membre », RG-11) · `removable` (vue administrateur : ajoute une croix « × » ; un clic ouvre `ConfirmDialog remove-registration`, absent sur un événement passé, RG-15).
 - États de la liste : `filled` · `empty` (texte `color.text-muted`, absent côté bénévole si le créneau est vide).
 
 ### EventHeader
@@ -219,6 +219,7 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 | --- | --- | --- |
 | `unregister` | `primary` « Me désinscrire » | B6, RG-08 |
 | `delete` | `danger` « Supprimer » | C8 (événement ou créneau avec inscrits, indique N, RG-10), E2 (compte, RG-11) |
+| `remove-registration` | `danger` « Retirer » | C10 (l'administrateur retire un inscrit, « Marie D. ne sera plus inscrite au créneau… », RG-08) |
 
 - États : `open` · `submitting` (boutons `loading`) · `error`. Fermeture : Échap, clic sur « Annuler », clic sur le voile. Le focus est piégé dans la fenêtre.
 - Règle : suppression d'un événement ou créneau sans inscrit : aucune fenêtre (RG-10).
@@ -250,11 +251,12 @@ Ces besoins n'ont pas de token ; à ajouter avant de coder (règle « jamais de 
 | B5 | EventHeader `no-slot` |
 | B6 | ConfirmDialog `unregister` |
 | C1, C9 | EventListItem, Button, MainNav `admin` |
-| C2 | EventHeader `admin`, SlotCard `admin` |
+| C2 | EventHeader `admin`, SlotCard `admin`, AttendeeChip `removable` |
 | C3 | LinkDialog `invitation` |
 | C4, C5 | EventForm (Form, FormField, DateTimeRange), SlotCard `admin` en liste |
-| C6, C7 | SlotForm (Form, FormField, DateTimeRange) |
+| C6, C7 | SlotForm (Form, FormField, DateTimeRange) ; C6 : texte d'avertissement « Ce créneau est hors des dates de l'événement » (`Alert warning`, validation possible, RG-07) |
 | C8 | ConfirmDialog `delete` |
+| C10 | ConfirmDialog `remove-registration` |
 | D1 | MemberListItem |
 | D2, D4, D5 | MemberProfile |
 | D3 | LinkDialog `reset` |
@@ -265,5 +267,4 @@ Ces besoins n'ont pas de token ; à ajouter avant de coder (règle « jamais de 
 ## 8. Points à confirmer
 
 - Texte de l'événement sans créneau (B5, flux 04).
-- Comportement d'un créneau hors des dates de l'événement (C6, flux 05) : si un avertissement est retenu, il utilise `Alert warning`.
 - Vue calendrier (F-18) : hors MVP, aucun composant prévu.

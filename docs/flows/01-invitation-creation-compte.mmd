@@ -9,7 +9,7 @@ flowchart TD
         A1["Page d'un événement"] --> A2{"Événement commencé ? (RG-02)"}
         A2 -->|"Oui"| A3["Bouton « Inviter des bénévoles »<br/>masqué"]
         A2 -->|"Non"| A4["Bouton « Inviter des bénévoles »<br/>affiché"]
-        A4 -->|"Clic"| A5["Lien affiché, avec date de fin de<br/>validité (début de l'événement) et<br/>bouton Copier"]
+        A4 -->|"Clic"| A5["Lien affiché, avec date de fin de<br/>validité (début de l'événement, suit un<br/>report éventuel, RG-02) et<br/>bouton Copier"]
     end
 
     A5 -.->|"Diffusé hors application<br/>(canal habituel du club)"| B0

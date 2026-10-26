@@ -1,23 +1,31 @@
 %%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
-%% Administrateur : créer, modifier, supprimer un événement et ses créneaux (F-04, F-05, RG-06, RG-07, RG-10)
-%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
+%% Administrateur : créer, modifier, supprimer un événement et ses créneaux (F-04, F-05, RG-06, RG-07, RG-10, RG-15)
+%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = avertissement
 flowchart TD
     classDef error fill:#fde2e2,stroke:#dc2626,color:#111
-    classDef todo fill:#fff1d6,stroke:#d97706,color:#111
+    classDef warn fill:#fff1d6,stroke:#d97706,color:#111
 
     L["Liste des événements<br/>(administrateur)"] -->|"Clic « Créer un événement »"| F
-    EV["Page de l'événement"] -->|"Clic « Modifier »"| F
-    EV -->|"Clic « Supprimer »"| D1
+    EV["Page de l'événement"] --> PAST{"Événement passé ? (RG-15)"}
+    PAST -->|"Oui"| PAST1["Lecture seule : ni Modifier, ni<br/>Supprimer, ni créneaux modifiables"]
+    PAST -->|"Non"| EVA["Boutons Modifier, Supprimer,<br/>Ajouter un créneau"]
+    EVA -->|"Clic « Modifier »"| F
+    EVA -->|"Clic « Supprimer »"| D1
 
     F["Formulaire événement : titre,<br/>description, lieu, début (jour,<br/>heure), fin (jour, heure),<br/>créneaux facultatifs"] -->|"Clic « Ajouter un créneau »"| C
     C["Formulaire créneau : date, début,<br/>fin, limite de places facultative<br/>(vide = illimité)"] -->|"Valider le créneau"| CV{"Fin après début ?"}
     CV -->|"Non"| CE["La fin doit être après le début"]:::error
     CE --> C
-    CV -->|"Oui"| LIM{"Créneau existant : nouvelle limite<br/>inférieure au nombre d'inscrits ?<br/>(RG-07)"}
+    CV -->|"Oui"| MIN{"Limite renseignée inférieure à 1 ?<br/>(RG-07)"}
+    MIN -->|"Oui"| ME["La limite doit être d'au moins 1<br/>(ou vide pour illimité)"]:::error
+    ME --> C
+    MIN -->|"Non"| LIM{"Créneau existant : nouvelle limite<br/>inférieure au nombre d'inscrits ?<br/>(RG-07)"}
     LIM -->|"Oui"| LE["Refus : N personnes sont déjà<br/>inscrites, retire des inscrits<br/>avant de baisser la limite, limite<br/>inchangée"]:::error
     LE --> C
-    LIM -->|"Non (ou nouveau créneau)"| F
-    CV -.- CD["Créneau hors des dates de<br/>l'événement : comportement à<br/>CONFIRMER"]:::todo
+    LIM -->|"Non (ou nouveau créneau)"| OUT{"Créneau hors des dates de<br/>l'événement ? (RG-07)"}
+    OUT -->|"Oui"| OUT1["Avertissement : Ce créneau est hors<br/>des dates de l'événement, la<br/>validation reste possible"]:::warn
+    OUT1 --> F
+    OUT -->|"Non"| F
 
     F -->|"Clic « Enregistrer »"| V{"Titre renseigné ?"}
     V -->|"Non"| VE1["Le titre est obligatoire"]:::error
@@ -25,7 +33,7 @@ flowchart TD
     V -->|"Oui"| V2{"Fin de l'événement après son<br/>début ? (RG-06)"}
     V2 -->|"Non"| VE2["La fin doit être après le début"]:::error
     VE2 --> F
-    V2 -->|"Oui"| OK["Événement enregistré (avec ou sans<br/>créneau), inscriptions conservées<br/>en cas de modification"]
+    V2 -->|"Oui"| OK["Événement enregistré (avec ou sans<br/>créneau), inscriptions conservées<br/>en cas de modification ; la validité<br/>des invitations suit le nouveau<br/>début (RG-02)"]
     OK --> EV
 
     D1{"L'événement a des inscrits ?<br/>(RG-10)"}
@@ -36,7 +44,7 @@ flowchart TD
     D1 -->|"Non"| D4["Événement supprimé immédiatement,<br/>sans confirmation"]
     D4 --> L
 
-    EV -->|"Clic « Supprimer » sur un<br/>créneau"| K1{"Le créneau a des inscrits ?<br/>(RG-10)"}
+    EVA -->|"Clic « Supprimer » sur un<br/>créneau"| K1{"Le créneau a des inscrits ?<br/>(RG-10)"}
     K1 -->|"Oui"| K2["Confirmation : N inscriptions<br/>seront supprimées"]
     K2 -->|"Confirmer"| K3["Créneau et inscriptions supprimés,<br/>les autres créneaux sont inchangés"]
     K3 --> EV
