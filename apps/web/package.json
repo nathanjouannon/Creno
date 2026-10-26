@@ -1,0 +1,44 @@
+{
+  "name": "@creno/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:unit": "vitest run --project unit",
+    "test:integration": "vitest run --project integration --passWithNoTests",
+    "postinstall": "prisma generate --schema prisma/schema.prisma",
+    "db:migrate": "tsx --env-file-if-exists=../../.env prisma/tools.ts migrate",
+    "db:rollback": "tsx --env-file-if-exists=../../.env prisma/tools.ts rollback",
+    "db:seed": "tsx --env-file-if-exists=../../.env prisma/seed.ts"
+  },
+  "dependencies": {
+    "@creno/validation": "workspace:*",
+    "@prisma/client": "^6.19.3",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@creno/tokens": "workspace:*",
+    "@eslint/js": "^9.0.0",
+    "@next/eslint-plugin-next": "^15.5.28",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "postcss": "^8.5.31",
+    "prisma": "^6.19.3",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.0.0"
+  }
+}
