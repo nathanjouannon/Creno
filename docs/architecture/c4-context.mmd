@@ -1,0 +1,17 @@
+%% C4 niveau 1 : contexte de Créno. Qui utilise le système et avec quoi il communique.
+%% Voir architecture.md. Éléments « après le MVP » : fournisseurs d'identité externes.
+C4Context
+    title Contexte : Créno
+
+    Person(admin, "Administrateur", "Organise les événements, les créneaux et les membres du club (rôle ADMIN)")
+    Person(user, "Utilisateur", "Bénévole : consulte les événements, s'inscrit et se désinscrit (rôle USER)")
+
+    System(creno, "Créno", "Application web d'organisation des bénévoles d'une association : événements, créneaux, inscriptions")
+
+    System_Ext(idp, "Fournisseurs d'identité", "Google, Facebook, Apple : connexion externe, après le MVP")
+    System_Ext(uptime, "Service de supervision", "Sonde gratuite externe qui interroge /health et alerte en cas d'arrêt")
+
+    Rel(admin, creno, "Installe, crée les événements, invite, gère les membres", "HTTPS")
+    Rel(user, creno, "Consulte, s'inscrit, se désinscrit", "HTTPS, navigateur mobile ou ordinateur")
+    Rel(creno, idp, "Authentifie via OAuth 2.0 / OpenID Connect (après le MVP)", "HTTPS")
+    Rel(uptime, creno, "Vérifie la disponibilité", "HTTPS, /health")

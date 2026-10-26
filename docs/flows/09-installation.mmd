@@ -1,15 +1,14 @@
 %%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
 %% Installation : création du club et du premier administrateur (F-19, RG-17, RG-04, RG-16, RG-01)
-%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
+%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus
+%% Pas de code d'installation (ADR-0012) : l'administrateur installe juste après le déploiement.
 flowchart TD
     classDef error fill:#fde2e2,stroke:#dc2626,color:#111
-    classDef todo fill:#fff1d6,stroke:#d97706,color:#111
 
     S(["Ouverture d'une URL de l'instance<br/>(flux 00)"]) --> I{"Au moins un utilisateur existe ?<br/>(RG-17)"}
     I -->|"Oui : instance installée"| NF["Page d'installation introuvable"]:::error
     I -->|"Non : instance neuve"| F["Page d'installation : nom du club,<br/>fuseau horaire, nom, prénom, e-mail et<br/>mot de passe du premier administrateur"]
 
-    F -.- CODE["Code d'installation affiché dans les<br/>journaux au premier démarrage :<br/>protection à CONFIRMER"]:::todo
 
     F -->|"Clic « Installer »"| V{"Données valides ?"}
     V -->|"Nom du club vide, fuseau absent,<br/>nom, prénom ou e-mail vide ou mal<br/>formé"| VE1["Messages d'erreur sous les champs,<br/>champs conservés, rien n'est créé"]:::error

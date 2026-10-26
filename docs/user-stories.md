@@ -587,6 +587,5 @@ Scénario 1 : calendrier des inscrits
 
 ## Points à confirmer
 
-- Code d'installation affiché dans les journaux pour protéger la page d'installation (F-19) : si retenu, ajouter le scénario « code incorrect : refus ».
 - Délai du rappel de la F-15 et définition de « validés » pour la F-16 (présence réelle ou simple inscription).
 - Le journal (F-13) conserve-t-il les noms après la suppression d'un compte ? Cohérence à vérifier avec RG-11.

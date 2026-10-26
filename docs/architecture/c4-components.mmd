@@ -1,0 +1,32 @@
+%% C4 niveau 3 : composants de l'application web. Où placer chaque logique (sens des dépendances : du haut vers le bas).
+%% Voir architecture.md sections 4 et 5, ADR 0001, 0009, 0011.
+C4Component
+    title Composants : application web Next.js
+
+    Container(browser, "Navigateur", "HTML, JavaScript", "Affiche l'interface et envoie les requêtes")
+    ContainerDb(db, "Base de données", "PostgreSQL", "Données de Créno")
+
+    Container_Boundary(web, "Application web (apps/web)") {
+        Component(ui, "Interface", "Next.js, React, Tailwind, react-hook-form", "Pages, composants (design/components.md), formulaires ; jamais d'accès à la base")
+        Component(validation, "Schémas de validation", "Zod (packages/validation)", "Un schéma par entrée, partagé par l'interface et le serveur")
+        Component(api, "Couche API", "Route Handlers Next.js, /api", "Authentification JWT, validation, format d'erreur commun (api/errors.md), contrat api/openapi.yaml")
+        Component(auth, "Module auth", "Services", "Connexion, JWT, blocage par adresse, réinitialisation (RG-01, RG-03, RG-12)")
+        Component(club, "Module club", "Services", "Installation : club et premier administrateur (RG-04, RG-17)")
+        Component(members, "Modules members et invitations", "Services", "Utilisateurs, rôles, suppression de compte, invitations (RG-02, RG-04, RG-11, RG-14)")
+        Component(events, "Modules events, slots et registrations", "Services", "Événements, créneaux, capacité, inscriptions, retrait par un administrateur (RG-06 à RG-10, RG-15)")
+        Component(data, "Accès aux données", "Prisma, dépôts", "Seule couche qui parle à la base ; transactions pour RG-04 et RG-07")
+    }
+
+    Rel(browser, ui, "Charge et utilise", "HTTPS")
+    Rel(ui, validation, "Valide les formulaires", "resolver react-hook-form")
+    Rel(ui, api, "Appelle", "JSON / REST")
+    Rel(api, validation, "Revalide chaque entrée")
+    Rel(api, auth, "Délègue")
+    Rel(api, club, "Délègue")
+    Rel(api, members, "Délègue")
+    Rel(api, events, "Délègue")
+    Rel(auth, data, "Lit et écrit")
+    Rel(club, data, "Lit et écrit")
+    Rel(members, data, "Lit et écrit")
+    Rel(events, data, "Lit et écrit")
+    Rel(data, db, "SQL", "Prisma")

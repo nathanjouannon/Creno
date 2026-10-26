@@ -1,6 +1,6 @@
 # Architecture – Créno
 
-Statut : version 1.0 (2026-10-26). S'appuie sur `00-vision.md`, `prd.md`, `glossary.md`, `domain/` et `design/`. Chaque décision structurante est consignée dans un ADR (`adr/`, liste en section 7). La section 9 recense les documents à mettre à jour à la suite de ces décisions. Les schémas C4 (`c4-context.mmd`, `c4-containers.mmd`), `security.md` et `environments.md` suivent dans cette phase.
+Statut : version 1.0 (2026-10-26). S'appuie sur `00-vision.md`, `prd.md`, `glossary.md`, `domain/` et `design/`. Chaque décision structurante est consignée dans un ADR (`adr/`, liste en section 7). La section 9 recense les documents à mettre à jour à la suite de ces décisions. Les schémas C4 sont `c4-context.mmd` (niveau 1), `c4-containers.mmd` (niveau 2) et `c4-components.mmd` (niveau 3, application web) ; `security.md` et `environments.md` suivent dans cette phase.
 
 ## 1. Contexte et contraintes
 
@@ -18,7 +18,7 @@ Statut : version 1.0 (2026-10-26). S'appuie sur `00-vision.md`, `prd.md`, `gloss
 | Temps de réponse | 95 % des requêtes serveur en moins de 1 s ; inscription à un créneau en moins de 500 ms | |
 | Chargement | LCP inférieur à 2,5 s sur mobile en 4G | |
 | Disponibilité | 99 % par mois (environ 7 h d'arrêt toléré), sans astreinte | |
-| Sauvegarde | Sauvegarde quotidienne de la base, conservée 7 jours + 1 par mois ; perte de données maximale 24 h, restauration en moins de 4 h | |
+| Sauvegarde | Sauvegarde quotidienne de la base, chiffrée et conservée sur le serveur, 7 jours + 1 par mois ; perte de données maximale 24 h, restauration en moins de 4 h | |
 | Concurrence | Une place de créneau limité n'est jamais attribuée deux fois ; au moins un administrateur en permanence | RG-04, RG-07 |
 | Sécurité | HTTPS partout, mots de passe hachés (argon2id), permissions vérifiées côté serveur, aucun secret dans Git ; blocage de 15 minutes après 5 échecs par adresse saisie, existante ou non, et limite par adresse IP (détails : `security.md`) | RG-01, RG-03, RG-14 |
 | RGPD | Données limitées à nom, prénom, e-mail ; effacement à la suppression du compte ; hébergement dans l'Union européenne ; mentions d'information ; aucun cookie tiers (le cookie de session est strictement nécessaire, donc sans bandeau) | RG-11, PRD section 6 |
@@ -126,7 +126,7 @@ Comparaison qui a conduit au choix ; Convex est l'alternative écartée.
 
 Correspondance estimée : Next.js + Prisma environ 85 %, Convex environ 50 % (écart avec le modèle relationnel de `erd.mmd` et les identifiants `INT` déjà décidés). Retenu : **Next.js + Prisma + PostgreSQL**. Convex pourra être réévalué si le temps réel devient un besoin fort ; la couche de services isolée de l'accès aux données (section 4) limite le coût d'un tel changement.
 
-Conséquences : `schema.sql` reste la référence lisible et `schema.prisma` (`@default(autoincrement())` pour les `INT`) en est la version exécutable, à écrire en phase 5 pour rester cohérents ; les migrations passent par Prisma Migrate (réversibles, `environments.md`) ; les contraintes que le schéma ne peut pas porter (RG-04, RG-07) restent dans les services avec transactions.
+Conséquences : `schema.sql` reste la référence lisible et `schema.prisma` (`@default(autoincrement())` pour les `INT`) en est la version exécutable, à écrire en phase 5 pour rester cohérents ; les migrations sont des scripts SQL versionnés avec un script de retour écrit à la main, l'outil exact étant fixé au squelette (`environments.md`, section 6) ; les contraintes que le schéma ne peut pas porter (RG-04, RG-07) restent dans les services avec transactions.
 
 ### 6.2 Authentification : JWT (décidé le 2026-10-26)
 
@@ -144,7 +144,7 @@ Options étudiées (correspondance estimée à ces critères) :
 | Service hébergé (Clerk…) | Mise en route rapide | Données chez un tiers, incompatible avec l'auto-hébergement à 0 € | environ 25 % |
 
 **Décision** : jeton JWT signé, avec une adaptation indispensable. Un JWT pur ne peut pas être révoqué, or RG-12 (fermer les sessions), RG-11 (compte supprimé) et RG-04 (rôle modifié) exigent un effet immédiat. Le jeton est donc vérifié en base à chaque requête :
-- Contenu : identifiant de l'utilisateur, version de jeton (`tokenVersion`), dates d'émission et d'expiration. Durée de validité : 7 jours (à confirmer).
+- Contenu : identifiant de l'utilisateur, version de jeton (`tokenVersion`), dates d'émission et d'expiration. Durée de validité : 30 jours (décidé le 2026-10-26).
 - Transport : cookie `HttpOnly`, `Secure`, `SameSite=Lax`, jamais dans `localStorage`. Protection CSRF : `SameSite` et contrôle de l'en-tête `Origin` sur les requêtes qui modifient des données.
 - À chaque requête : signature et expiration, puis lecture de l'utilisateur en base. Le jeton est refusé si l'utilisateur n'existe plus (RG-11) ou si `tokenVersion` ne correspond plus. Le rôle utilisé est celui lu en base, jamais celui du jeton (RG-04, RG-14).
 - Réinitialisation de mot de passe réussie : `tokenVersion` augmente, toutes les sessions de l'utilisateur tombent (RG-12).
@@ -163,7 +163,7 @@ Options étudiées (correspondance estimée à ces critères) :
 
 - Une page d'installation, au premier accès à l'instance, crée en une seule transaction le **club** (entité `Club`, une seule ligne : nom, fuseau horaire de l'instance (RG-16), autres informations à préciser) et le **premier administrateur** (RG-04).
 - Elle n'est utilisable qu'une fois : tant qu'aucun utilisateur n'existe, elle est accessible ; ensuite elle répond « introuvable » définitivement. L'unicité est garantie par la base (transaction et contrainte), pas seulement par l'interface.
-- Protection proposée : un code d'installation affiché dans les journaux au premier démarrage doit être saisi sur la page, afin qu'un tiers ne s'empare pas de l'instance entre le déploiement et la première visite. À confirmer.
+- Pas de code d'installation (décision du 2026-10-26) : la personne qui installe crée elle-même le club et l'administrateur, et installe juste après le déploiement. Point à revoir si le produit évolue.
 - Conséquence : le choix du glossaire « le club n'est pas une entité » est remplacé (section 9).
 
 ### 6.5 Blocage de connexion par adresse (décidé le 2026-10-26)
@@ -177,25 +177,24 @@ Options étudiées (correspondance estimée à ces critères) :
 
 | ADR | Sujet | État |
 | --- | --- | --- |
-| 0001 | Monorepo TypeScript, monolithe modulaire, Next.js | Prête à écrire |
-| 0002 | PostgreSQL comme base de données | Prête à écrire |
-| 0003 | Identifiants entiers auto-incrémentés | Prête à écrire |
-| 0004 | Déploiement par Docker sur VPS ou Raspberry | Prête à écrire |
-| 0005 | Next.js + Prisma comme backend et accès aux données (Convex écarté) | Prête à écrire |
-| 0006 | Authentification par JWT vérifié en base, fournisseurs externes après le MVP | Prête à écrire |
-| 0011 | API en routes REST décrites par OpenAPI | Prête à écrire |
-| 0012 | Page d'installation et entité `Club` | Prête à écrire |
-| 0013 | Blocage de connexion par adresse saisie | Prête à écrire |
-| 0007 | Accessibilité : WCAG 2.2 niveau AA | Prête à écrire |
-| 0008 | Pas de temps réel au MVP | Prête à écrire |
-| 0009 | Zod pour la validation, schémas partagés interface et serveur | Prête à écrire |
-| 0010 | Tailwind CSS généré depuis `tokens.json` (Style Dictionary) | Prête à écrire |
+| [0001](../adr/0001-monorepo-typescript-monolithe-modulaire.md) | Monorepo TypeScript, monolithe modulaire, Next.js | Acceptée |
+| [0002](../adr/0002-postgresql-base-de-donnees.md) | PostgreSQL comme base de données | Acceptée |
+| [0003](../adr/0003-identifiants-entiers.md) | Identifiants entiers auto-incrémentés | Acceptée |
+| [0004](../adr/0004-deploiement-docker-vps.md) | Déploiement par Docker sur VPS ou Raspberry | Acceptée |
+| [0005](../adr/0005-nextjs-prisma-backend.md) | Next.js + Prisma comme backend et accès aux données (Convex écarté) | Acceptée |
+| [0006](../adr/0006-authentification-jwt-verifie-en-base.md) | Authentification par JWT vérifié en base, fournisseurs externes après le MVP | Acceptée |
+| [0007](../adr/0007-accessibilite-wcag-22-aa.md) | Accessibilité : WCAG 2.2 niveau AA | Acceptée |
+| [0008](../adr/0008-pas-de-temps-reel-au-mvp.md) | Pas de temps réel au MVP | Acceptée |
+| [0009](../adr/0009-zod-validation-partagee.md) | Zod pour la validation, schémas partagés interface et serveur | Acceptée |
+| [0010](../adr/0010-tailwind-depuis-tokens.md) | Tailwind CSS généré depuis `tokens.json` (Style Dictionary) | Acceptée |
+| [0011](../adr/0011-api-rest-openapi.md) | API en routes REST décrites par OpenAPI | Acceptée |
+| [0012](../adr/0012-page-installation-et-club.md) | Page d'installation et entité `Club` | Acceptée |
+| [0013](../adr/0013-blocage-connexion-par-adresse.md) | Blocage de connexion par adresse saisie | Acceptée |
 
 ## 8. Points à confirmer
 
 - Informations du club saisies à l'installation (nom et fuseau horaire sont retenus ; autres champs éventuels).
-- Durée de vie du JWT (7 jours proposés) et bibliothèque `jose`.
-- Code d'installation affiché dans les journaux pour protéger la page d'installation.
+- Bibliothèque `jose` pour les jetons.
 - Organisation du monorepo proposée en section 3 (`apps/web`, `packages/validation`, `packages/tokens`).
 - Version de Tailwind et correspondance tokens → thème, à fixer au squelette (phase 8).
 

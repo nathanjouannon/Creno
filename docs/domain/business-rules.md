@@ -36,4 +36,3 @@ Révision v0.3 : blocage de connexion par adresse saisie (RG-03), premier admini
 
 ## Contraintes pour la phase architecture
 - Atomicité requise : inscription à la dernière place (RG-07) et retrait du droit administrateur (RG-04) ; à traiter par transaction ou verrou, et à couvrir par des tests de concurrence.
-- Installation (RG-17) : un code d'installation affiché dans les journaux au premier démarrage est proposé pour protéger la page (`architecture/architecture.md`, 6.4).

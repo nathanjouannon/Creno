@@ -1,0 +1,25 @@
+%% C4 niveau 2 : conteneurs de Créno. Ce qui tourne et qui parle à quoi (docker compose sur VPS ou Raspberry).
+%% Voir architecture.md, ADR 0001, 0002, 0004, 0005.
+C4Container
+    title Conteneurs : Créno
+
+    Person(admin, "Administrateur", "Rôle ADMIN")
+    Person(user, "Utilisateur", "Rôle USER")
+
+    System_Boundary(creno, "Créno (docker compose)") {
+        Container(proxy, "Reverse proxy", "Caddy", "Termine le HTTPS, pose les en-têtes de sécurité, transmet les requêtes")
+        Container(web, "Application web", "Next.js, TypeScript, Prisma", "Interface React, routes REST /api, services métier (règles RG-xx), authentification JWT")
+        ContainerDb(db, "Base de données", "PostgreSQL", "Club, utilisateurs, événements, créneaux, inscriptions, invitations, jetons, tentatives de connexion")
+        Container(backup, "Sauvegarde", "pg_dump planifié", "Sauvegarde quotidienne, 7 jours + 1 par mois")
+    }
+
+    System_Ext(idp, "Fournisseurs d'identité", "Google, Facebook, Apple, après le MVP")
+    System_Ext(uptime, "Service de supervision", "Sonde externe sur /health")
+
+    Rel(admin, proxy, "Utilise", "HTTPS")
+    Rel(user, proxy, "Utilise", "HTTPS")
+    Rel(proxy, web, "Transmet", "HTTP")
+    Rel(web, db, "Lit et écrit", "SQL via Prisma")
+    Rel(backup, db, "Exporte", "pg_dump")
+    Rel(web, idp, "Authentifie (après le MVP)", "OAuth 2.0 / OIDC")
+    Rel(uptime, proxy, "Interroge /health", "HTTPS")
