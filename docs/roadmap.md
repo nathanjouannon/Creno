@@ -1,6 +1,6 @@
 # Feuille de route – Créno
 
-Statut : version 1.0 (2026-10-26). Découle de `prd.md` (MVP : F-01 à F-11 et F-19), de `architecture/architecture.md` et de `api/openapi.yaml`. Les tâches sont des tickets GitHub (voir `tasks/README.md`) ; leur contenu est dans `tasks/T-NNN-*.md` jusqu'à la création des tickets.
+Statut : version 1.0 (2026-10-26). Découle de `prd.md` (MVP : F-01 à F-11 et F-19), de `architecture/architecture.md` et de `api/openapi.yaml`. Les tâches sont des tickets GitHub (voir `tasks/README.md`) ; le contenu de chaque tâche est dans son issue.
 
 Principe : un squelette qui tourne de bout en bout d'abord (M0), puis des tranches verticales : chaque jalon livre quelque chose d'utilisable, de la base de données à l'interface. Une tâche tient en une session de travail et cite les fichiers à lire.
 
@@ -21,29 +21,29 @@ Principe : un squelette qui tourne de bout en bout d'abord (M0), puis des tranch
 
 | N° | Ticket | Jalon | Fonctionnalités | Dépend de |
 | --- | --- | --- | --- | --- |
-| T-001 | [Monorepo pnpm, Next.js, outils de qualité](tasks/T-001-monorepo-squelette.md) | M0 | — | — |
-| T-002 | [Base PostgreSQL, schéma Prisma, migrations avec retour, jeu de données](tasks/T-002-base-prisma-migrations.md) | M0 | — | T-001 |
-| T-003 | [Tokens de design vers variables CSS et thème Tailwind](tasks/T-003-tokens-tailwind.md) | M0 | — | T-001 |
-| T-004 | [Socle API : erreurs, validation, journaux, santé](tasks/T-004-socle-api-erreurs.md) | M0 | — | T-001, T-002 |
-| T-005 | [Schémas Zod du contrat et génération d'OpenAPI et du catalogue](tasks/T-005-openapi-genere.md) | M0 | — | T-004 |
-| T-006 | [Image Docker, compose de production et intégration continue](tasks/T-006-ci-docker.md) | M0 | — | T-002, T-003, T-005 |
-| T-007 | [Authentification : mots de passe, JWT, session, protections](tasks/T-007-auth-socle.md) | M1 | F-02, F-03 | T-004 |
-| T-008 | [Installation de l'instance : club et premier administrateur](tasks/T-008-installation.md) | M1 | F-19 | T-002, T-004, T-007 |
-| T-009 | [Connexion, déconnexion et blocage par adresse saisie](tasks/T-009-connexion-blocage.md) | M1 | F-02 | T-007 |
-| T-010 | [Structure de page, composants de base et protection des pages](tasks/T-010-gabarit-app.md) | M1 | F-03 | T-003, T-007 |
-| T-011 | [Événements : services et routes](tasks/T-011-evenements-api.md) | M2 | F-04 | T-004, T-005, T-007 |
-| T-012 | [Créneaux : services et routes](tasks/T-012-creneaux-api.md) | M2 | F-05 | T-011 |
-| T-013 | [Interface administrateur : événements et créneaux](tasks/T-013-admin-evenements-ui.md) | M2 | F-04, F-05 | T-010, T-011, T-012 |
-| T-014 | [Inscriptions : services et routes, concurrence](tasks/T-014-inscriptions-api.md) | M3 | F-06, F-07, F-08 | T-011, T-012 |
-| T-015 | [Interface bénévole : consulter, s'inscrire, se désinscrire](tasks/T-015-benevole-evenements-ui.md) | M3 | F-06, F-07, F-08 | T-010, T-014 |
-| T-016 | [Interface administrateur : suivi du remplissage et retrait d'inscrit](tasks/T-016-admin-remplissage-ui.md) | M3 | F-09 | T-013, T-014, T-015 |
-| T-017 | [Invitations : lien, création de compte](tasks/T-017-invitations.md) | M4 | F-01 | T-008, T-011, T-010 |
-| T-018 | [Membres, rôles, réinitialisation du mot de passe : services et routes](tasks/T-018-membres-reinit-api.md) | M4 | F-10, F-02 | T-007, T-009 |
-| T-019 | [Interface : membres et réinitialisation du mot de passe](tasks/T-019-membres-ui.md) | M4 | F-10, F-02 | T-010, T-018 |
-| T-020 | [Suppression de son compte](tasks/T-020-suppression-compte.md) | M5 | F-11 | T-014, T-018, T-010 |
-| T-021 | [Mentions d'information et accessibilité](tasks/T-021-rgpd-accessibilite.md) | M5 | F-11 | T-015, T-016, T-019, T-020 |
-| T-022 | [Sauvegardes, purges, supervision et mise en production](tasks/T-022-exploitation.md) | M5 | — | T-006, T-009, T-018 |
-| T-023 | [Recette de bout en bout du MVP](tasks/T-023-recette-mvp.md) | M5 | F-01 à F-11, F-19 | T-008, T-009, T-013, T-015, T-016, T-017, T-019, T-020, T-021 |
+| T-001 | [Monorepo pnpm, Next.js, outils de qualité](https://github.com/nathanjouannon/Creno/issues/1) | M0 | — | — |
+| T-002 | [Base PostgreSQL, schéma Prisma, migrations avec retour, jeu de données](https://github.com/nathanjouannon/Creno/issues/2) | M0 | — | T-001 |
+| T-003 | [Tokens de design vers variables CSS et thème Tailwind](https://github.com/nathanjouannon/Creno/issues/3) | M0 | — | T-001 |
+| T-004 | [Socle API : erreurs, validation, journaux, santé](https://github.com/nathanjouannon/Creno/issues/4) | M0 | — | T-001, T-002 |
+| T-005 | [Schémas Zod du contrat et génération d'OpenAPI et du catalogue](https://github.com/nathanjouannon/Creno/issues/5) | M0 | — | T-004 |
+| T-006 | [Image Docker, compose de production et intégration continue](https://github.com/nathanjouannon/Creno/issues/6) | M0 | — | T-002, T-003, T-005 |
+| T-007 | [Authentification : mots de passe, JWT, session, protections](https://github.com/nathanjouannon/Creno/issues/7) | M1 | F-02, F-03 | T-004 |
+| T-008 | [Installation de l'instance : club et premier administrateur](https://github.com/nathanjouannon/Creno/issues/8) | M1 | F-19 | T-002, T-004, T-007 |
+| T-009 | [Connexion, déconnexion et blocage par adresse saisie](https://github.com/nathanjouannon/Creno/issues/9) | M1 | F-02 | T-007 |
+| T-010 | [Structure de page, composants de base et protection des pages](https://github.com/nathanjouannon/Creno/issues/10) | M1 | F-03 | T-003, T-007 |
+| T-011 | [Événements : services et routes](https://github.com/nathanjouannon/Creno/issues/11) | M2 | F-04 | T-004, T-005, T-007 |
+| T-012 | [Créneaux : services et routes](https://github.com/nathanjouannon/Creno/issues/12) | M2 | F-05 | T-011 |
+| T-013 | [Interface administrateur : événements et créneaux](https://github.com/nathanjouannon/Creno/issues/13) | M2 | F-04, F-05 | T-010, T-011, T-012 |
+| T-014 | [Inscriptions : services et routes, concurrence](https://github.com/nathanjouannon/Creno/issues/14) | M3 | F-06, F-07, F-08 | T-011, T-012 |
+| T-015 | [Interface bénévole : consulter, s'inscrire, se désinscrire](https://github.com/nathanjouannon/Creno/issues/15) | M3 | F-06, F-07, F-08 | T-010, T-014 |
+| T-016 | [Interface administrateur : suivi du remplissage et retrait d'inscrit](https://github.com/nathanjouannon/Creno/issues/16) | M3 | F-09 | T-013, T-014, T-015 |
+| T-017 | [Invitations : lien, création de compte](https://github.com/nathanjouannon/Creno/issues/17) | M4 | F-01 | T-008, T-011, T-010 |
+| T-018 | [Membres, rôles, réinitialisation du mot de passe : services et routes](https://github.com/nathanjouannon/Creno/issues/18) | M4 | F-10, F-02 | T-007, T-009 |
+| T-019 | [Interface : membres et réinitialisation du mot de passe](https://github.com/nathanjouannon/Creno/issues/19) | M4 | F-10, F-02 | T-010, T-018 |
+| T-020 | [Suppression de son compte](https://github.com/nathanjouannon/Creno/issues/20) | M5 | F-11 | T-014, T-018, T-010 |
+| T-021 | [Mentions d'information et accessibilité](https://github.com/nathanjouannon/Creno/issues/21) | M5 | F-11 | T-015, T-016, T-019, T-020 |
+| T-022 | [Sauvegardes, purges, supervision et mise en production](https://github.com/nathanjouannon/Creno/issues/22) | M5 | — | T-006, T-009, T-018 |
+| T-023 | [Recette de bout en bout du MVP](https://github.com/nathanjouannon/Creno/issues/23) | M5 | F-01 à F-11, F-19 | T-008, T-009, T-013, T-015, T-016, T-017, T-019, T-020, T-021 |
 
 Fonctionnalités de `prd.md` au MVP et la tâche qui les termine : F-01 → T-017 ; F-02 → T-009 et T-019 ; F-03 → T-010 et chaque tâche de route ; F-04 → T-013 ; F-05 → T-013 ; F-06 à F-08 → T-015 ; F-09 → T-016 ; F-10 → T-019 ; F-11 → T-020 ; F-19 → T-008.
 

@@ -7,7 +7,7 @@ Stack : TypeScript, monorepo pnpm, Next.js (interface et routes REST), Prisma, P
 
 ## Avant d'écrire du code
 
-1. Lis le ticket (issue GitHub ou `docs/tasks/T-NNN-*.md`) et **seulement les fichiers qu'il cite**. Ne charge pas tout `docs/`.
+1. Lis le ticket (issue GitHub `T-NNN`, numéro égal à celui de la tâche) et **seulement les fichiers qu'il cite**. Ne charge pas tout `docs/`.
 2. Les documents sont la source de vérité, pas ta mémoire ni ta supposition. En cas de doute sur un comportement, la story (`docs/user-stories.md`) et la règle (`docs/domain/business-rules.md`) tranchent. Si elles se contredisent ou ne couvrent pas le cas, **pose la question** au lieu d'inventer.
 3. Écris les tests du ticket avec le code, puis déroule `docs/definition-of-done.md`.
 
@@ -85,7 +85,7 @@ Noms indicatifs, fixés par T-001 à T-006 ; mets ce fichier à jour s'ils chang
 | `docs/api/openapi.yaml` | Contrat des routes (généré depuis Zod après T-005) | Toute route, tout appel d'API |
 | `docs/api/errors.md` | Catalogue des erreurs et codes de champ | Toute erreur, tout message |
 | `docs/api/events.md` | Aucun événement au MVP ; noms réservés | Si une notification ou une file est évoquée |
-| `docs/roadmap.md`, `docs/tasks/` | Jalons, tickets, dépendances | Choisir ou comprendre une tâche |
+| `docs/roadmap.md`, issues GitHub | Jalons, tickets, dépendances | Choisir ou comprendre une tâche |
 | `docs/testing.md` | Pyramide, seuils, tests obligatoires, matrice stories → tests | Écrire ou relire des tests |
 | `docs/definition-of-done.md` | Liste de contrôle d'une tâche | Avant de déclarer une tâche terminée |
 | `docs/conventions.md`, `docs/examples.md` | Nommage, structure, git, extraits de référence | Avant d'écrire du code |
