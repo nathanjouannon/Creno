@@ -1,0 +1,27 @@
+# ADR-0014 : Contrat d'API écrit d'abord, puis généré depuis Zod
+
+Statut : acceptée (2026-10-26)
+
+## Contexte
+L'ADR-0009 (Zod) et l'ADR-0011 (OpenAPI) exigent que les schémas Zod et le contrat restent identiques, et renvoyaient la méthode à la phase 7. Le workflow est « documentation d'abord » : le contrat doit exister avant le code. Le porteur du projet préfère à terme un contrat généré depuis le code, et se demande s'il fait doublon avec Prisma.
+
+Prisma décrit les tables (y compris `passwordHash`, `tokenVersion`, jetons hachés). Le contrat décrit ce que l'API expose : champs choisis, états calculés (`remainingPlaces`, `status`), noms affichés (« Prénom N. »), erreurs, authentification. Les deux ne se recouvrent pas ; générer l'un depuis l'autre exposerait des champs internes. La chaîne sans doublon est : `schema.prisma` pour la base, Zod pour les entrées et sorties de l'API, OpenAPI généré depuis Zod.
+
+## Décision
+1. **Phase 7 (maintenant, sans code)** : `api/openapi.yaml` et `api/errors.md` sont écrits à la main. Ils servent de spécification pour le squelette.
+2. **Au squelette (phase 8)** : les routes sont déclarées avec leurs schémas Zod dans `packages/validation` (bibliothèque type `zod-openapi`, ou conversion JSON Schema native de Zod, à choisir à ce moment). `api/openapi.yaml` est alors généré, commité, et la CI échoue si le fichier commité diffère du fichier généré. Plus aucune modification à la main.
+3. Le catalogue d'erreurs devient un fichier TypeScript, source de `api/errors.json` et de `api/errors.md` (générés, commités, même contrôle en CI). Les messages de champ des schémas Zod viennent de ce catalogue (ADR-0009).
+4. Au passage en génération, le contrat écrit à la main sert de test : le fichier généré doit lui être équivalent, ou chaque écart est expliqué dans la pull request.
+
+## Alternatives écartées
+- Contrat écrit à la main pour toujours, avec un test de cohérence : duplication des règles et dérive possible.
+- Décorateurs sur les handlers (style NestJS) : pas de standard avec les Route Handlers Next.js, beaucoup de code maison.
+- Contrat non commité, servi par l'application : illisible par l'IA et les relecteurs sans lancer le projet.
+- Générer le contrat depuis `schema.prisma` : expose la structure interne (voir Contexte).
+
+## Conséquences
+- (+) Une seule source de vérité après le squelette ; le contrat lisible reste dans le dépôt.
+- (+) Le contrat existe avant le code, comme le prévoit le workflow.
+- (-) Pendant la phase 7 à 8, le YAML est écrit à la main : une divergence avec les futurs schémas Zod est possible ; l'étape 4 la détecte.
+- (-) Les règles qui dépendent de la base (e-mail déjà utilisé, dernier administrateur…) ne sont pas dans Zod : elles sont décrites dans les réponses d'erreur du contrat par les déclarations de route, pas par les schémas.
+- `api/events.md` dit qu'il n'y a aucun événement asynchrone au MVP (ADR-0008) et réserve les noms futurs. `api/errors.json` n'est pas créé avant le squelette : seul `errors.md` fait foi jusque-là.

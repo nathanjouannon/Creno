@@ -157,7 +157,7 @@ Options étudiées (correspondance estimée à ces critères) :
 
 - Les routes sont des Route Handlers Next.js sous `/api`, décrites par `api/openapi.yaml` (phase 7), référence unique pour l'interface, les tests et l'IA.
 - Chaque route : authentification (6.2), validation Zod (section 3), appel d'un service, format d'erreur commun de `api/errors.md`.
-- Les schémas Zod et le contrat OpenAPI doivent rester identiques ; générer l'un depuis l'autre ou le vérifier en test sera décidé en phase 7.
+- Les schémas Zod et le contrat OpenAPI doivent rester identiques (ADR-0014) : le contrat est écrit à la main d'abord (documentation d'abord), puis généré depuis Zod au squelette, commité dans `api/openapi.yaml` et vérifié en CI. Prisma ne produit pas l'OpenAPI : le schéma de base décrit les tables, le contrat décrit ce qui est exposé en HTTP.
 
 ### 6.4 Installation : création du club et du premier administrateur (décidé le 2026-10-26)
 
@@ -190,6 +190,7 @@ Options étudiées (correspondance estimée à ces critères) :
 | [0011](../adr/0011-api-rest-openapi.md) | API en routes REST décrites par OpenAPI | Acceptée |
 | [0012](../adr/0012-page-installation-et-club.md) | Page d'installation et entité `Club` | Acceptée |
 | [0013](../adr/0013-blocage-connexion-par-adresse.md) | Blocage de connexion par adresse saisie | Acceptée |
+| [0014](../adr/0014-contrat-api-genere-depuis-zod.md) | Contrat d'API écrit d'abord, puis généré depuis Zod | Acceptée |
 
 ## 8. Points à confirmer
 

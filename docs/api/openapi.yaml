@@ -1,0 +1,980 @@
+openapi: 3.1.0
+info:
+  title: API Créno
+  version: 0.1.0
+  description: |
+    Contrat de l'API REST de Créno pour le MVP (F-01 à F-11, F-19). Référence unique pour l'interface, les tests et l'IA.
+
+    Statut : écrit à la main avant le code (ADR-0014). À la création du squelette (phase 8), ce fichier est généré depuis les schémas Zod
+    (`packages/validation`), commité ici, et la CI échoue si le fichier commité diffère du fichier généré.
+
+    Conventions
+    - Noms des champs en camelCase, noms de domaine du `glossary.md`. Identifiants entiers (ADR-0003).
+    - Dates et heures en ISO 8601 UTC (`2027-01-15T07:00:00Z`) ; l'interface les affiche dans le fuseau du club (RG-16).
+    - Une réponse d'erreur suit toujours le schéma `Error` ; le client se base sur `code`, jamais sur `message` (`errors.md`).
+    - Corps de requête et de réponse en `application/json`, sauf les réponses `204` qui n'ont pas de corps.
+    - Pas de pagination au MVP : un club compte quelques dizaines de membres et d'événements.
+    - Les états calculés (`status`, `started`, `full`, `remainingPlaces`) sont fournis par le serveur, jamais stockés (glossaire).
+    - Le serveur ne renvoie pas d'avertissement de créneau hors des dates de l'événement (RG-07) : c'est l'interface qui l'affiche, la création n'est jamais refusée pour ce motif.
+    - Une requête qui modifie des données est refusée (`403 FORBIDDEN_ORIGIN`) si son en-tête `Origin` n'est pas celui de l'application (`security.md`).
+    - Limites de débit par adresse IP : 10 requêtes par minute sur `/setup`, `/auth/login`, `/password-resets/*` et `/invitations/*` ; 100 par minute sur le reste (`429 RATE_LIMITED` avec `Retry-After`).
+    - Aucun événement asynchrone ni file de messages au MVP (ADR-0008), voir `events.md`.
+
+servers:
+  - url: /api
+    description: Même origine que l'application
+
+tags:
+  - name: Installation
+  - name: Authentification
+  - name: Invitations
+  - name: Événements
+  - name: Créneaux
+  - name: Inscriptions
+  - name: Membres
+  - name: Supervision
+
+security:
+  - cookieAuth: []
+
+paths:
+  /setup:
+    post:
+      tags: [Installation]
+      operationId: setup
+      summary: Installer l'instance (F-19, RG-17)
+      description: |
+        Crée le club et le premier administrateur, atomiquement, puis ouvre sa session.
+        Disponible seulement tant qu'aucun utilisateur n'existe ; ensuite répond `404 NOT_FOUND`.
+        Si deux installations arrivent en même temps, une seule aboutit, l'autre reçoit `404 NOT_FOUND`.
+        Avant l'installation, l'interface redirige toutes ses pages vers la page d'installation (contrôle côté serveur Next.js, pas d'endpoint dédié).
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SetupInput' }
+      responses:
+        '201':
+          description: Club et administrateur créés, session ouverte
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /club:
+    get:
+      tags: [Installation]
+      operationId: getClub
+      summary: Nom et fuseau horaire du club (RG-16)
+      responses:
+        '200':
+          description: Le club
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Club' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  /auth/login:
+    post:
+      tags: [Authentification]
+      operationId: login
+      summary: Se connecter (F-02, RG-03)
+      description: |
+        Après 5 échecs consécutifs avec la même adresse saisie, la connexion avec cette adresse est bloquée 15 minutes, même avec le bon mot de passe.
+        La réponse est identique que l'adresse ait un compte ou non, et le temps de réponse ne doit pas le trahir (`security.md`).
+        Une connexion réussie remet le compteur à zéro. Le retour à la page demandée est géré par l'interface.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginInput' }
+      responses:
+        '200':
+          description: Connecté
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401':
+          description: E-mail ou mot de passe incorrect (`AUTH_INVALID_CREDENTIALS`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '423':
+          description: Adresse bloquée (`AUTH_ACCOUNT_LOCKED`, RG-03). `details.lockedUntil` donne la fin du blocage.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/logout:
+    post:
+      tags: [Authentification]
+      operationId: logout
+      summary: Se déconnecter (F-02)
+      description: Efface le cookie de session. Répond `204` même si la session était déjà expirée.
+      security: []
+      responses:
+        '204':
+          description: Déconnecté
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+
+  /me:
+    get:
+      tags: [Authentification]
+      operationId: getMe
+      summary: Utilisateur connecté
+      description: Le rôle renvoyé est lu en base à chaque requête, pas dans le jeton (ADR-0006).
+      responses:
+        '200':
+          description: L'utilisateur connecté
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    delete:
+      tags: [Authentification]
+      operationId: deleteMe
+      summary: Supprimer son compte (F-11, RG-11)
+      description: |
+        Efface le nom, le prénom et l'e-mail ; libère les inscriptions des créneaux qui n'ont pas commencé ; anonymise celles des créneaux commencés (« ancien membre »).
+        Efface le cookie de session. Refusé pour le dernier administrateur (RG-04). La confirmation est demandée par l'interface, pas par l'API.
+      responses:
+        '204':
+          description: Compte supprimé
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '409':
+          description: Dernier administrateur (`USER_LAST_ADMIN`, RG-04)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /password-resets/{token}:
+    parameters:
+      - $ref: '#/components/parameters/Token'
+    get:
+      tags: [Authentification]
+      operationId: checkPasswordReset
+      summary: Vérifier un lien de réinitialisation (F-02, RG-12)
+      description: Permet à l'interface d'afficher le formulaire ou le message « Ce lien n'est plus valide ».
+      security: []
+      responses:
+        '200':
+          description: Lien valide
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [expiresAt]
+                properties:
+                  expiresAt: { type: string, format: date-time }
+        '410':
+          description: Lien inconnu, expiré, déjà utilisé ou remplacé (`AUTH_RESET_LINK_INVALID`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    post:
+      tags: [Authentification]
+      operationId: resetPassword
+      summary: Choisir un nouveau mot de passe (F-02, RG-12)
+      description: |
+        Le lien devient inutilisable, `tokenVersion` augmente (toutes les sessions de l'utilisateur tombent), le blocage de RG-03 est levé.
+        L'utilisateur n'est pas connecté par cet appel : il se connecte ensuite avec son nouveau mot de passe.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { $ref: '#/components/schemas/Password' }
+      responses:
+        '204':
+          description: Mot de passe changé
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '410':
+          description: Lien inconnu, expiré, déjà utilisé ou remplacé (`AUTH_RESET_LINK_INVALID`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /users/{userId}/password-resets:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    post:
+      tags: [Membres]
+      operationId: createPasswordReset
+      summary: Générer un lien de réinitialisation (F-10, RG-12)
+      description: |
+        Administrateur seulement. Valable 3 jours, à usage unique. Générer un nouveau lien invalide les précédents.
+        Le jeton n'est stocké que haché : l'URL n'est renvoyée qu'ici, une seule fois.
+      responses:
+        '201':
+          description: Lien créé
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ShareableLink' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Utilisateur inconnu (`USER_NOT_FOUND`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /events/{eventId}/invitations:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    post:
+      tags: [Invitations]
+      operationId: createInvitation
+      summary: Générer un lien d'invitation (F-01, RG-02)
+      description: |
+        Administrateur seulement. Réutilisable par plusieurs personnes, valable jusqu'à la date et l'heure de début actuelles de l'événement
+        (reporter l'événement prolonge la validité). Chaque appel crée un nouveau lien ; les liens précédents restent valables.
+        Le jeton n'est stocké que haché : l'URL n'est renvoyée qu'ici, une seule fois.
+      responses:
+        '201':
+          description: Lien créé ; `expiresAt` est le début de l'événement
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ShareableLink' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/EventNotFound' }
+        '409':
+          description: L'événement a déjà commencé (`EVENT_STARTED`, RG-02)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /invitations/{token}:
+    parameters:
+      - $ref: '#/components/parameters/Token'
+    get:
+      tags: [Invitations]
+      operationId: checkInvitation
+      summary: Vérifier un lien d'invitation (F-01, RG-02)
+      security: []
+      responses:
+        '200':
+          description: Invitation valide
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [eventId, eventTitle, clubName]
+                properties:
+                  eventId: { type: integer }
+                  eventTitle: { type: string }
+                  clubName: { type: string }
+        '410':
+          description: Lien inconnu, événement commencé ou supprimé (`INVITATION_INVALID`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+    post:
+      tags: [Invitations]
+      operationId: acceptInvitation
+      summary: Créer son compte depuis une invitation (F-01, RG-01, RG-02)
+      description: |
+        Crée un utilisateur de rôle `USER`, actif immédiatement, et ouvre sa session. `eventId` indique la page où rediriger.
+        L'e-mail est comparé sans tenir compte de la casse et les espaces autour sont retirés.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AcceptInvitationInput' }
+      responses:
+        '201':
+          description: Compte créé, session ouverte
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/SessionCookie' }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user, eventId]
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+                  eventId: { type: integer }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409':
+          description: E-mail déjà utilisé (`USER_EMAIL_TAKEN`) ; l'interface propose de se connecter
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '410':
+          description: Lien inconnu, événement commencé ou supprimé (`INVITATION_INVALID`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /events:
+    get:
+      tags: [Événements]
+      operationId: listEvents
+      summary: Lister les événements (F-06, F-09, RG-09)
+      description: |
+        `upcoming` (défaut) : événements à venir et en cours, par date de début croissante.
+        `past` : événements terminés, par date de fin décroissante ; réservé aux administrateurs (`403 FORBIDDEN` sinon).
+      parameters:
+        - name: scope
+          in: query
+          schema: { type: string, enum: [upcoming, past], default: upcoming }
+      responses:
+        '200':
+          description: Les événements
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/EventSummary' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [Événements]
+      operationId: createEvent
+      summary: Créer un événement (F-04, F-05, RG-06, RG-07)
+      description: Administrateur seulement. Les créneaux sont facultatifs ; un événement peut être créé sans créneau.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventInput' }
+      responses:
+        '201':
+          description: Événement créé
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetail' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /events/{eventId}:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    get:
+      tags: [Événements]
+      operationId: getEvent
+      summary: Détail d'un événement avec ses créneaux et inscrits (F-06, F-09, RG-09)
+      description: Un événement passé répond `404 EVENT_NOT_FOUND` à un utilisateur, comme s'il n'existait pas ; un administrateur le voit en lecture seule.
+      responses:
+        '200':
+          description: L'événement
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetail' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/EventNotFound' }
+    patch:
+      tags: [Événements]
+      operationId: updateEvent
+      summary: Modifier un événement (F-04, RG-06, RG-15)
+      description: Administrateur seulement. Champs facultatifs ; ceux envoyés remplacent les anciens. Les inscriptions sont conservées.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventUpdate' }
+      responses:
+        '200':
+          description: Événement modifié
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventDetail' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/EventNotFound' }
+        '409': { $ref: '#/components/responses/EventPast' }
+    delete:
+      tags: [Événements]
+      operationId: deleteEvent
+      summary: Supprimer un événement (F-04, RG-10, RG-15)
+      description: |
+        Administrateur seulement. Supprime aussi ses créneaux, inscriptions et invitations. La confirmation qui indique le nombre d'inscrits est demandée par l'interface (RG-10), pas par l'API.
+      responses:
+        '204':
+          description: Événement supprimé
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/EventNotFound' }
+        '409': { $ref: '#/components/responses/EventPast' }
+
+  /events/{eventId}/slots:
+    parameters:
+      - $ref: '#/components/parameters/EventId'
+    post:
+      tags: [Créneaux]
+      operationId: createSlot
+      summary: Ajouter un créneau (F-05, RG-07)
+      description: Administrateur seulement. Un créneau peut sortir des dates de l'événement (RG-07).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SlotInput' }
+      responses:
+        '201':
+          description: Créneau créé
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Slot' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/EventNotFound' }
+        '409': { $ref: '#/components/responses/EventPast' }
+
+  /slots/{slotId}:
+    parameters:
+      - $ref: '#/components/parameters/SlotId'
+    patch:
+      tags: [Créneaux]
+      operationId: updateSlot
+      summary: Modifier un créneau (F-05, RG-07, RG-15)
+      description: |
+        Administrateur seulement. Champs facultatifs. `capacity: null` rend le créneau illimité.
+        La limite ne peut pas être abaissée sous le nombre d'inscrits (vérification atomique avec les inscriptions concurrentes).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SlotUpdate' }
+      responses:
+        '200':
+          description: Créneau modifié
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Slot' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/SlotNotFound' }
+        '409':
+          description: |
+            `EVENT_PAST` (RG-15) ou `SLOT_CAPACITY_BELOW_REGISTRATIONS` (RG-07, `details.registeredCount`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    delete:
+      tags: [Créneaux]
+      operationId: deleteSlot
+      summary: Supprimer un créneau (F-05, RG-10, RG-15)
+      description: Administrateur seulement. Supprime ses inscriptions. La confirmation est demandée par l'interface (RG-10). Supprimer le dernier créneau conserve l'événement (RG-06).
+      responses:
+        '204':
+          description: Créneau supprimé
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/SlotNotFound' }
+        '409': { $ref: '#/components/responses/EventPast' }
+
+  /slots/{slotId}/registrations:
+    parameters:
+      - $ref: '#/components/parameters/SlotId'
+    post:
+      tags: [Inscriptions]
+      operationId: register
+      summary: S'inscrire à un créneau (F-07, RG-07, RG-08)
+      description: |
+        Inscrit l'utilisateur connecté, administrateur compris. Sans corps de requête.
+        Refusée si le créneau a commencé (heure courante supérieure ou égale à son début) ou s'il est complet.
+        Atomique : la dernière place n'est attribuée qu'à une personne. Le chevauchement de deux créneaux n'est pas contrôlé.
+        Le changement de créneau (F-08) est une désinscription suivie d'une inscription : deux appels, l'inscription d'origine est conservée si la seconde échoue.
+      responses:
+        '201':
+          description: Inscrit ; renvoie le créneau à jour
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Slot' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/SlotNotFound' }
+        '409':
+          description: |
+            `SLOT_FULL` (RG-07), `SLOT_STARTED` (RG-08), `REGISTRATION_ALREADY_EXISTS` (RG-08) ou `EVENT_PAST` (RG-15, administrateur seulement, un utilisateur reçoit `404`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /slots/{slotId}/registrations/me:
+    parameters:
+      - $ref: '#/components/parameters/SlotId'
+    delete:
+      tags: [Inscriptions]
+      operationId: unregister
+      summary: Se désinscrire d'un créneau (F-08, RG-08)
+      description: Supprime l'inscription de l'utilisateur connecté, tant que le créneau n'a pas commencé. La confirmation est demandée par l'interface.
+      responses:
+        '204':
+          description: Désinscrit
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404':
+          description: Créneau inconnu (`SLOT_NOT_FOUND`) ou utilisateur non inscrit (`REGISTRATION_NOT_FOUND`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409':
+          description: |
+            `SLOT_STARTED` (RG-08) ou `EVENT_PAST` (RG-15, administrateur seulement)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /registrations/{registrationId}:
+    parameters:
+      - name: registrationId
+        in: path
+        required: true
+        schema: { type: integer, minimum: 1 }
+    delete:
+      tags: [Inscriptions]
+      operationId: removeRegistration
+      summary: Retirer l'inscription d'un autre utilisateur (F-09, RG-08)
+      description: |
+        Administrateur seulement. Possible même sur un créneau commencé, tant que l'événement n'est pas passé (RG-15).
+        La confirmation (« Marie D. ne sera plus inscrite à ce créneau ») est demandée par l'interface.
+      responses:
+        '204':
+          description: Inscription retirée
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404':
+          description: Inscription inconnue (`REGISTRATION_NOT_FOUND`)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '409': { $ref: '#/components/responses/EventPast' }
+
+  /users:
+    get:
+      tags: [Membres]
+      operationId: listUsers
+      summary: Lister les membres (F-10)
+      description: Administrateur seulement. Tri par nom puis prénom.
+      responses:
+        '200':
+          description: Les utilisateurs
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /users/{userId}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [Membres]
+      operationId: getUser
+      summary: Fiche d'un membre (F-10)
+      description: Administrateur seulement.
+      responses:
+        '200':
+          description: L'utilisateur
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/UserNotFound' }
+
+  /users/{userId}/role:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    put:
+      tags: [Membres]
+      operationId: setUserRole
+      summary: Changer le rôle d'un membre (F-10, RG-04)
+      description: |
+        Administrateur seulement. Un administrateur peut donner `ADMIN` à un autre utilisateur ; seul l'intéressé peut retirer son propre droit (passer à `USER`).
+        Le dernier administrateur ne peut pas se retirer le droit ; le contrôle est atomique (deux retraits simultanés ne peuvent pas laisser zéro administrateur).
+        Mettre un rôle déjà porté est sans effet et répond `200`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { $ref: '#/components/schemas/Role' }
+      responses:
+        '200':
+          description: Rôle à jour
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403':
+          description: |
+            `FORBIDDEN` (pas administrateur) ou `USER_ROLE_CHANGE_FORBIDDEN` (retirer le droit d'un autre, RG-04)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404': { $ref: '#/components/responses/UserNotFound' }
+        '409':
+          description: Dernier administrateur (`USER_LAST_ADMIN`, RG-04)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /health:
+    servers:
+      - url: /
+        description: À la racine, hors `/api`
+    get:
+      tags: [Supervision]
+      operationId: health
+      summary: Vérification de santé
+      description: Public, sans authentification ni limite de débit. Utilisé par Docker et par la mise en production (`environments.md`, section 4).
+      security: []
+      responses:
+        '200':
+          description: L'application répond et la base est joignable
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { type: string, enum: [ok] }
+        '503':
+          description: Base de données injoignable
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: __Host-session
+      description: |
+        JWT dans un cookie `HttpOnly`, `Secure`, `SameSite=Lax`, chemin `/`, valable 30 jours (ADR-0006).
+        Vérifié en base à chaque requête (utilisateur existant, `tokenVersion` identique). Absent ou refusé : `401 AUTH_REQUIRED`.
+
+  headers:
+    SessionCookie:
+      description: Pose (ou efface) le cookie de session `__Host-session`
+      schema: { type: string }
+
+  parameters:
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+    SlotId:
+      name: slotId
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: integer, minimum: 1 }
+    Token:
+      name: token
+      in: path
+      required: true
+      description: Jeton du lien, tel que contenu dans l'URL transmise
+      schema: { type: string, minLength: 1 }
+
+  responses:
+    ValidationError:
+      description: Données invalides (`VALIDATION_ERROR`) ; `details.fields` liste les champs en cause
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthenticated:
+      description: Non connecté ou session refusée (`AUTH_REQUIRED`)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: Action réservée aux administrateurs (`FORBIDDEN`, RG-14)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Ressource introuvable (`NOT_FOUND`)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    EventNotFound:
+      description: Événement inconnu, ou passé pour un utilisateur (`EVENT_NOT_FOUND`, RG-09)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    SlotNotFound:
+      description: Créneau inconnu, ou d'un événement passé pour un utilisateur (`SLOT_NOT_FOUND`, RG-09)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    UserNotFound:
+      description: Utilisateur inconnu (`USER_NOT_FOUND`)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    EventPast:
+      description: Événement passé, donc en lecture seule (`EVENT_PAST`, RG-15)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    RateLimited:
+      description: Trop de requêtes (`RATE_LIMITED`)
+      headers:
+        Retry-After:
+          description: Secondes à attendre
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message, requestId]
+      properties:
+        code:
+          type: string
+          description: Code stable du catalogue `errors.md`
+          example: SLOT_FULL
+        message:
+          type: string
+          description: Message affichable en français ; peut changer, ne pas s'y fier
+        details:
+          type: object
+          additionalProperties: true
+          description: Informations propres au code (`lockedUntil`, `registeredCount`, `slotId`…)
+          properties:
+            fields:
+              type: array
+              description: Pour `VALIDATION_ERROR` seulement
+              items: { $ref: '#/components/schemas/FieldError' }
+        requestId:
+          type: string
+          description: Pour retrouver l'erreur dans les journaux
+          example: req_8f3a21c4
+
+    FieldError:
+      type: object
+      required: [field, code]
+      properties:
+        field: { type: string, example: password }
+        code: { type: string, example: FIELD_PASSWORD_TOO_SHORT, description: Code de champ du catalogue `errors.md` }
+
+    Role:
+      type: string
+      enum: [USER, ADMIN]
+
+    Password:
+      type: string
+      minLength: 10
+      description: 10 caractères minimum, aucune autre règle de complexité (RG-01). Jamais renvoyé.
+
+    Email:
+      type: string
+      format: email
+      description: Unique sans tenir compte de la casse ; les espaces autour sont retirés (RG-01)
+
+    User:
+      type: object
+      required: [id, firstName, lastName, email, role, createdAt]
+      properties:
+        id: { type: integer }
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { $ref: '#/components/schemas/Email' }
+        role: { $ref: '#/components/schemas/Role' }
+        createdAt: { type: string, format: date-time }
+
+    Club:
+      type: object
+      required: [name, timezone]
+      properties:
+        name: { type: string, minLength: 1 }
+        timezone: { type: string, description: Fuseau horaire IANA, example: Europe/Paris }
+
+    SetupInput:
+      type: object
+      required: [club, admin]
+      properties:
+        club:
+          type: object
+          required: [name, timezone]
+          properties:
+            name: { type: string, minLength: 1 }
+            timezone: { type: string, example: Europe/Paris }
+        admin:
+          type: object
+          required: [firstName, lastName, email, password]
+          properties:
+            firstName: { type: string, minLength: 1 }
+            lastName: { type: string, minLength: 1 }
+            email: { $ref: '#/components/schemas/Email' }
+            password: { $ref: '#/components/schemas/Password' }
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string }
+        password: { type: string }
+
+    AcceptInvitationInput:
+      type: object
+      required: [firstName, lastName, email, password]
+      properties:
+        firstName: { type: string, minLength: 1 }
+        lastName: { type: string, minLength: 1 }
+        email: { $ref: '#/components/schemas/Email' }
+        password: { $ref: '#/components/schemas/Password' }
+
+    ShareableLink:
+      type: object
+      required: [url, expiresAt]
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Construite avec `APP_URL` ; contient le jeton, renvoyée une seule fois
+        expiresAt:
+          type: string
+          format: date-time
+          description: Fin de validité (3 jours pour une réinitialisation, début de l'événement pour une invitation)
+
+    EventStatus:
+      type: string
+      enum: [upcoming, ongoing, past]
+      description: Calculé. `upcoming` avant le début, `ongoing` entre début et fin, `past` après la fin.
+
+    EventSummary:
+      type: object
+      required: [id, title, location, startsAt, endsAt, status, slotCount]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        location: { type: [string, 'null'] }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        status: { $ref: '#/components/schemas/EventStatus' }
+        slotCount: { type: integer, minimum: 0 }
+
+    EventDetail:
+      allOf:
+        - $ref: '#/components/schemas/EventSummary'
+        - type: object
+          required: [description, slots]
+          properties:
+            description: { type: [string, 'null'] }
+            slots:
+              type: array
+              description: Triés par date de début croissante
+              items: { $ref: '#/components/schemas/Slot' }
+
+    EventInput:
+      type: object
+      required: [title, startsAt, endsAt]
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: [string, 'null'] }
+        location: { type: [string, 'null'] }
+        startsAt: { type: string, format: date-time }
+        endsAt:
+          type: string
+          format: date-time
+          description: Après `startsAt` (RG-06)
+        slots:
+          type: array
+          default: []
+          items: { $ref: '#/components/schemas/SlotInput' }
+
+    EventUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 1 }
+        description: { type: [string, 'null'] }
+        location: { type: [string, 'null'] }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+
+    SlotInput:
+      type: object
+      required: [startsAt, endsAt]
+      properties:
+        startsAt: { type: string, format: date-time }
+        endsAt:
+          type: string
+          format: date-time
+          description: Après `startsAt` (RG-07)
+        capacity:
+          type: [integer, 'null']
+          minimum: 1
+          default: null
+          description: Nombre de places ; `null` ou absent = illimité (RG-07)
+
+    SlotUpdate:
+      type: object
+      minProperties: 1
+      properties:
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        capacity: { type: [integer, 'null'], minimum: 1 }
+
+    Slot:
+      type: object
+      required: [id, eventId, startsAt, endsAt, capacity, registeredCount, remainingPlaces, full, started, attendees]
+      properties:
+        id: { type: integer }
+        eventId: { type: integer }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        capacity: { type: [integer, 'null'], description: '`null` = places illimitées' }
+        registeredCount: { type: integer, minimum: 0 }
+        remainingPlaces:
+          type: [integer, 'null']
+          description: '`capacity` moins `registeredCount` ; `null` pour un créneau illimité'
+        full: { type: boolean, description: Vrai seulement pour un créneau limité dont la capacité est atteinte }
+        started: { type: boolean, description: 'Vrai si l''heure courante est supérieure ou égale au début du créneau (RG-08)' }
+        attendees:
+          type: array
+          items: { $ref: '#/components/schemas/Attendee' }
+
+    Attendee:
+      type: object
+      required: [registrationId, displayName, isMe]
+      properties:
+        registrationId: { type: integer, description: Sert à l'administrateur pour retirer l'inscription }
+        displayName:
+          type: [string, 'null']
+          description: '« Prénom N. » (RG-09) ; `null` pour une inscription anonymisée (RG-11), que l''interface affiche « ancien membre »'
+          example: Léa B.
+        isMe: { type: boolean, description: Vrai pour l'inscription de l'utilisateur connecté }

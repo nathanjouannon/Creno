@@ -15,4 +15,4 @@ Zod. Un schéma par entrée (formulaire, requête d'API, paramètre de route), d
 
 ## Conséquences
 - (+) Une seule source de vérité, types garantis.
-- (-) Les schémas Zod et le contrat OpenAPI (ADR-0011) doivent rester identiques ; la méthode (génération ou vérification en test) est à décider en phase 7.
+- (-) Les schémas Zod et le contrat OpenAPI (ADR-0011) doivent rester identiques ; la méthode est fixée par l'ADR-0014 (contrat écrit d'abord, puis généré depuis Zod et vérifié en CI).

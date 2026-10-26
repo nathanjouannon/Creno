@@ -14,4 +14,4 @@ Routes REST sous `/api` (Route Handlers Next.js), décrites par `api/openapi.yam
 
 ## Conséquences
 - (+) Contrat explicite et testable, utilisable par un futur client mobile ou un test automatisé.
-- (-) Plus de code que les actions serveur ; synchronisation entre Zod et OpenAPI à garantir (voir ADR-0009).
+- (-) Plus de code que les actions serveur ; synchronisation entre Zod et OpenAPI à garantir (voir ADR-0009 et ADR-0014).
