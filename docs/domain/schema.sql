@@ -6,7 +6,26 @@
 
 CREATE TYPE user_role AS ENUM ('USER', 'ADMIN');
 
--- Utilisateur (RG-01, RG-03, RG-04). La suppression d'un compte supprime la ligne entière (RG-11).
+-- Club (RG-16, RG-17). Une seule ligne, créée par la page d'installation avec le premier administrateur.
+CREATE TABLE club (
+    id          INTEGER     PRIMARY KEY DEFAULT 1 CHECK (id = 1),  -- une seule ligne possible
+    name        TEXT        NOT NULL CHECK (length(btrim(name)) > 0),
+    timezone    TEXT        NOT NULL,  -- fuseau horaire IANA de l'instance, ex. 'Europe/Paris'
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Échecs de connexion par adresse saisie, que l'adresse ait un compte ou non (RG-03).
+-- Pas de clé étrangère. identifier_hash = empreinte de l'e-mail normalisé, jamais l'adresse en clair.
+-- Les lignes sans blocage et anciennes sont purgées régulièrement.
+CREATE TABLE login_attempts (
+    id               INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    identifier_hash  TEXT        NOT NULL UNIQUE,
+    failed_count     INTEGER     NOT NULL DEFAULT 0 CHECK (failed_count >= 0),
+    locked_until     TIMESTAMPTZ,  -- NULL = non bloqué
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Utilisateur (RG-01, RG-04). La suppression d'un compte supprime la ligne entière (RG-11).
 CREATE TABLE users (
     id                  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     last_name           TEXT        NOT NULL CHECK (length(btrim(last_name)) > 0),
@@ -14,8 +33,7 @@ CREATE TABLE users (
     email               TEXT        NOT NULL,
     password_hash       TEXT        NOT NULL,  -- le mot de passe en clair fait au moins 10 caractères (RG-01), vérifié avant hachage
     role                user_role   NOT NULL DEFAULT 'USER',
-    failed_login_count  INTEGER     NOT NULL DEFAULT 0 CHECK (failed_login_count >= 0),
-    locked_until        TIMESTAMPTZ,           -- NULL = non bloqué (RG-03)
+    token_version       INTEGER     NOT NULL DEFAULT 0,  -- augmente à la réinitialisation du mot de passe : invalide les jetons JWT (RG-12)
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

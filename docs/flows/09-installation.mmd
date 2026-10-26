@@ -1,0 +1,24 @@
+%%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
+%% Installation : création du club et du premier administrateur (F-19, RG-17, RG-04, RG-16, RG-01)
+%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
+flowchart TD
+    classDef error fill:#fde2e2,stroke:#dc2626,color:#111
+    classDef todo fill:#fff1d6,stroke:#d97706,color:#111
+
+    S(["Ouverture d'une URL de l'instance<br/>(flux 00)"]) --> I{"Au moins un utilisateur existe ?<br/>(RG-17)"}
+    I -->|"Oui : instance installée"| NF["Page d'installation introuvable"]:::error
+    I -->|"Non : instance neuve"| F["Page d'installation : nom du club,<br/>fuseau horaire, nom, prénom, e-mail et<br/>mot de passe du premier administrateur"]
+
+    F -.- CODE["Code d'installation affiché dans les<br/>journaux au premier démarrage :<br/>protection à CONFIRMER"]:::todo
+
+    F -->|"Clic « Installer »"| V{"Données valides ?"}
+    V -->|"Nom du club vide, fuseau absent,<br/>nom, prénom ou e-mail vide ou mal<br/>formé"| VE1["Messages d'erreur sous les champs,<br/>champs conservés, rien n'est créé"]:::error
+    VE1 --> F
+    V -->|"Mot de passe de moins de 10<br/>caractères (RG-01)"| VE2["Le mot de passe doit contenir au<br/>moins 10 caractères"]:::error
+    VE2 --> F
+    V -->|"Oui"| T{"Création atomique du club et<br/>de l'administrateur"}
+    T -->|"Une autre installation a abouti<br/>entre-temps (RG-17)"| NF
+    T -->|"Succès"| OK["Club créé (nom, fuseau), premier<br/>administrateur créé (RG-04),<br/>utilisateur connecté"]
+    OK --> L["Liste des événements, vide :<br/>Aucun événement à venir pour le<br/>moment (flux 04)"]
+
+    %% Après l'installation, l'administrateur crée un événement (flux 05) puis invite les bénévoles (flux 01).

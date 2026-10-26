@@ -5,7 +5,9 @@ flowchart TD
     classDef error fill:#fde2e2,stroke:#dc2626,color:#111
     classDef todo fill:#fff1d6,stroke:#d97706,color:#111
 
-    V(["Ouverture d'une URL du club"]) --> G{"Utilisateur connecté ?"}
+    V(["Ouverture d'une URL du club"]) --> INS{"Instance installée ? (RG-17)"}
+    INS -->|"Non"| SETUP["Redirection vers la page<br/>d'installation (flux 09)"]
+    INS -->|"Oui"| G{"Utilisateur connecté ?"}
     G -->|"Non"| MEM["Mémorisation de l'URL demandée<br/>dans l'état temporaire du<br/>navigateur"]
     MEM --> LOGIN["Page de connexion (flux 02), puis<br/>retour à l'URL mémorisée"]
     G -->|"Oui"| R{"Page réservée aux<br/>administrateurs ?"}

@@ -8,8 +8,8 @@ flowchart TD
     S(["Ouvre une page protégée sans être<br/>connecté"]) --> L["Page de connexion : e-mail, mot de<br/>passe"]
     S2(["Ouvre directement la page de<br/>connexion"]) --> L
 
-    L -->|"Clic « Se connecter »"| C{"Connexion bloquée ? (RG-03)"}
-    C -->|"Oui : 5 échecs consécutifs,<br/>15 minutes"| E1["Message indiquant le blocage de 15<br/>minutes, même avec le bon mot de<br/>passe"]:::error
+    L -->|"Clic « Se connecter »"| C{"Connexion bloquée pour cette adresse ?<br/>(RG-03, compte existant ou non)"}
+    C -->|"Oui : 5 échecs consécutifs,<br/>15 minutes"| E1["Message indiquant le blocage de 15<br/>minutes, même avec le bon mot de<br/>passe ; même message<br/>si l'adresse n'a pas de compte"]:::error
     E1 --> L
     C -->|"Non"| D{"Identifiants corrects ?"}
     D -->|"Non (y compris compte<br/>supprimé)"| E2["Reste sur la page : E-mail ou mot<br/>de passe incorrect, champ mot de<br/>passe vidé, un échec de plus"]:::error

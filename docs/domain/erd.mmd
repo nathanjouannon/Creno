@@ -2,13 +2,28 @@
 %% Légende : PK = clé primaire, FK = clé étrangère, UK = unique. Cardinalités : || un et un seul, o| zéro ou un, o{ zéro ou plusieurs, |{ un ou plusieurs.
 %% États temporels (upcoming, ongoing, past, started), remainingPlaces, full et empty sont calculés, jamais stockés.
 %% Identifiants : entiers auto-incrémentés (identity). Les jetons des invitations et réinitialisations sont des chaînes aléatoires à part, jamais des ID.
-%% Une instance = une association : pas d'entité Club (PRD section 6).
+%% Une instance = une association (PRD section 6) : l'entité Club n'a qu'une seule ligne, créée par la page d'installation (RG-17).
 erDiagram
     User ||--o{ ResetToken : "a"
     User |o--o{ Registration : "effectue"
     Event ||--o{ Slot : "comporte"
     Event ||--o{ Invitation : "donne lieu à"
     Slot ||--o{ Registration : "reçoit"
+
+    Club {
+        int id PK "toujours 1 : une seule ligne (RG-17)"
+        string name "nom affiché de l'association"
+        string timezone "fuseau horaire IANA de l'instance, ex. Europe/Paris (RG-16)"
+        datetime createdAt
+    }
+
+    LoginAttempt {
+        int id PK "auto-incrémenté"
+        string identifierHash UK "empreinte de l'e-mail saisi, compte existant ou non (RG-03)"
+        int failedCount "échecs consécutifs, remis à 0 après succès (RG-03)"
+        datetime lockedUntil "null si non bloqué (RG-03)"
+        datetime updatedAt
+    }
 
     User {
         int id PK "auto-incrémenté"
@@ -17,8 +32,7 @@ erDiagram
         string email UK "RG-01, unique"
         string passwordHash "mot de passe 10 caractères min. avant hachage (RG-01)"
         string role "USER ou ADMIN (RG-04)"
-        int failedLoginCount "échecs consécutifs, remis à 0 après succès (RG-03)"
-        datetime lockedUntil "null si non bloqué (RG-03)"
+        int tokenVersion "augmente à la réinitialisation du mot de passe : invalide les jetons JWT (RG-12)"
         datetime createdAt
     }
 
@@ -69,5 +83,7 @@ erDiagram
     %% - Registration.userId : ON DELETE SET NULL ; les inscriptions futures de l'utilisateur sont supprimées avant, les passées conservées (RG-11).
     %% - Suppression de compte : la ligne User est supprimée en entier, ce qui efface nom, prénom et e-mail (RG-11).
     %% - Slot : capacity >= 1 si renseignée ; endsAt > startsAt. Event : endsAt > startsAt (RG-06).
+    %% - Club : une seule ligne (id = 1, contrainte CHECK). Créée avec le premier administrateur dans une même transaction (RG-17).
+    %% - LoginAttempt n'a pas de clé étrangère : elle compte aussi les adresses sans compte. Les lignes anciennes sont purgées.
     %% - Au moins un User avec role = ADMIN en permanence (RG-04), vérifié par le service, pas par le schéma.
     %% - Les relations vers Event et Slot sont en ON DELETE CASCADE (RG-10).

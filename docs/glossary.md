@@ -19,8 +19,9 @@ Règles d'usage :
 | Administrateur | `ADMIN` (valeur de `Role`) | Utilisateur qui gère les événements, créneaux, invitations et utilisateurs. Il y en a toujours au moins un ; seul l'intéressé peut retirer son propre droit. | RG-04 | `Admin` comme entité à part, « super-utilisateur » |
 | Utilisateur (rôle simple) | `USER` (valeur de `Role`) | Utilisateur sans droit d'administration : consulte les événements, s'inscrit et se désinscrit. | | « bénévole » comme valeur de rôle |
 | Connexion | `login` | Ouverture de session par e-mail et mot de passe. | RG-03 | « authentification » dans l'interface |
-| Échec de connexion | `failedLoginCount` | Compteur d'échecs consécutifs d'un utilisateur ; remis à zéro après une connexion réussie. | RG-03 | |
-| Blocage de connexion | `lockedUntil` | Date jusqu'à laquelle un compte ne peut pas se connecter (15 minutes après le 5e échec). Vide si le compte n'est pas bloqué. | RG-03 | « verrouillage », « désactivation » (concept abandonné) |
+| Échec de connexion | `LoginAttempt.failedCount` | Compteur d'échecs consécutifs pour une adresse saisie, qu'elle ait un compte ou non ; remis à zéro après une connexion réussie. | RG-03 | `failedLoginCount` sur `User` (abandonné) |
+| Blocage de connexion | `LoginAttempt.lockedUntil` | Date jusqu'à laquelle la connexion avec cette adresse est refusée (15 minutes après le 5e échec). Vide si l'adresse n'est pas bloquée. La réponse est la même pour une adresse sans compte. | RG-03 | « verrouillage », « désactivation » (concept abandonné), `lockedUntil` sur `User` |
+| Version de jeton | `User.tokenVersion` | Nombre incrémenté à la réinitialisation du mot de passe ; un jeton de connexion émis avec une autre version est refusé. | RG-12 | « numéro de session » |
 | Suppression de compte | `deleteUser` | Effacement du nom, du prénom et de l'e-mail d'un utilisateur, libération de ses inscriptions futures, anonymisation des passées. Seul le titulaire la déclenche. | RG-11, RG-04 | « désactivation », « archivage » |
 
 ### Invitations et réinitialisation
@@ -47,6 +48,13 @@ Règles d'usage :
 | Remplissage | `fill` | Suivi par l'administrateur du nombre d'inscrits de chaque créneau (« 3 / 4 », « 5 inscrits »). Vue = page de l'événement côté administrateur. | RG-07 | « taux de remplissage » comme champ stocké |
 | Créneau vide | `empty` | État calculé d'un créneau limité sans aucune inscription ; mis en évidence côté administrateur (« Aucun inscrit »). | | « créneau non pourvu » (réservé à F-15) |
 
+### Club et installation
+
+| Terme (FR) | Code | Définition | Règles | À ne pas employer |
+| --- | --- | --- | --- | --- |
+| Club | `Club` | L'association propriétaire de l'instance. Une seule ligne par instance, créée à l'installation. Attributs : nom (`name`), fuseau horaire (`timezone`). | RG-16, RG-17 | « organisation », « tenant », « association » comme nom de table |
+| Installation | `setup` | Première configuration d'une instance : une page, utilisable une seule fois, crée le club et le premier administrateur. | RG-04, RG-17 | « configuration initiale », « onboarding » |
+
 ### États dans le temps (calculés, jamais stockés)
 
 | Terme (FR) | Code | Définition | Règles |
@@ -64,7 +72,7 @@ Ces mots s'affichent mais ne sont pas des concepts du modèle.
 | --- | --- | --- |
 | Membre | Un `User` | Onglet « Membres », fiche membre, « ancien membre » |
 | Bénévole | Un `User` considéré dans son rôle de volontaire, ou l'ensemble des utilisateurs | « Inviter des bénévoles », persona du PRD |
-| Club | L'association propriétaire de l'instance. Aucune entité `Club` : le nom est une configuration (voir `architecture/environments.md`, phase 6) | « Rejoindre le club » |
+| Club | L'association propriétaire de l'instance, représentée par l'entité `Club` (voir section 1) | « Rejoindre le club » |
 | Passés | Les événements passés (administrateur) | Onglet de navigation |
 | Créer mon compte | Création d'un `User` depuis une `Invitation` | Formulaire d'invitation |
 
@@ -81,6 +89,7 @@ Noms décidés d'avance pour que les futurs ajouts restent cohérents ; aucun n'
 | Heures de bénévolat | calculées depuis les `Slot` validés | F-16 (v2) |
 | Export | `export` | F-17 (v2) |
 | Liste d'attente | à décider | Question ouverte du PRD |
+| Connexion externe (Google, Facebook, Apple) | `ExternalIdentity` (fournisseur, identifiant chez le fournisseur, utilisateur) | Après le MVP (`architecture/architecture.md` 6.2) ; ne pas nommer « Account » |
 
 ## 4. Points à confirmer
 

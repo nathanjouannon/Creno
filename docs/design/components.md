@@ -110,7 +110,7 @@ Bibliothèque : **react-hook-form** si la stack retenue en phase 6 est React ou 
 
 ### Input
 - Rôle : le contrôle seul, sans libellé ni message ; hauteur `size.control-height`, bordure `color.border-strong` au repos, rayon `radius.button`, police `font.size-base`. Il ne connaît ni le formulaire ni la validation : il reçoit `value`, `onChange`, `onBlur`, `error`, `disabled` (ce qui permet de l'utiliser hors `Form`).
-- Variantes : `TextInput` (nom, prénom, titre, lieu) · `EmailInput` · `PasswordInput` (masqué, option « afficher ») · `NumberInput` (limite de places, vide = illimité) · `Textarea` (description) · `DateInput` · `TimeInput`.
+- Variantes : `SelectInput` (fuseau horaire de l'installation) · `TextInput` (nom, prénom, titre, lieu, nom du club) · `EmailInput` · `PasswordInput` (masqué, option « afficher ») · `NumberInput` (limite de places, vide = illimité) · `Textarea` (description) · `DateInput` · `TimeInput`.
 - États : `default` · `hover` · `focus` · `filled` · `error` (bordure `color.danger`) · `disabled`. Un `PasswordInput` est vidé après un échec de connexion (flux 02).
 
 ### FieldError
@@ -124,6 +124,7 @@ Bibliothèque : **react-hook-form** si la stack retenue en phase 6 est React ou 
 
 | Formulaire | `Form` + `FormField` | Écrans | Particularités |
 | --- | --- | --- | --- |
+| `InstallForm` | nom du club, fuseau horaire (liste), nom, prénom, e-mail, mot de passe | A10, A11 | Deux groupes « Le club » et « Premier administrateur » ; utilisable une seule fois, introuvable ensuite (RG-17) ; création atomique |
 | `InvitationSignupForm` | nom, prénom, e-mail, mot de passe | A1 à A3 | E-mail déjà utilisé : `Alert` + bouton « Aller à la connexion » (RG-01) |
 | `LoginForm` | e-mail, mot de passe | A5 à A7 | Erreur unique non détaillée, mot de passe vidé, blocage 15 min (RG-03) |
 | `ResetPasswordForm` | nouveau mot de passe | A8 | Lien invalide : l'écran remplace le formulaire (A9) |
@@ -243,6 +244,7 @@ Ces besoins n'ont pas de token ; à ajouter avant de coder (règle « jamais de 
 
 | Écran | Composants |
 | --- | --- |
+| A10, A11 | AppHeader `public`, PageContainer `narrow`, InstallForm (Form, FormField, Input), Button, Alert |
 | A1 à A4 | AppHeader `public`, PageContainer `narrow`, InvitationSignupForm (Form, FormField, Input), Button, Alert, Link, Toast |
 | A5 à A7 | AppHeader `public`, LoginForm, Alert `danger` |
 | A8, A9 | ResetPasswordForm, Alert `danger` (A9) |

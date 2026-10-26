@@ -48,6 +48,7 @@ Note : les personas viennent de l'expérience de l'auteur, aucun entretien n'a e
 | F-09 | Vue administrateur : remplissage des créneaux (qui est inscrit, places restantes des créneaux limités) ; l'administrateur peut s'inscrire comme un utilisateur et retirer l'inscription d'un utilisateur | Must | v1 (MVP) | L'administrateur voit en un seul écran les inscrits de chaque créneau, repère les créneaux limités vides ou presque vides et peut retirer un inscrit, même sur un créneau commencé |
 | F-10 | Gestion des membres : lister, donner le droit administrateur (seul l'intéressé peut retirer le sien), générer un lien de réinitialisation de mot de passe | Must | v1 (MVP) | L'administrateur retrouve un membre et lui donne le droit administrateur ou un lien de réinitialisation en moins de 3 clics ; il reste toujours au moins un administrateur |
 | F-11 | Suppression de son compte et de ses données personnelles (RGPD) | Must | v1 (MVP) | Après suppression, plus aucune donnée nominative n'est conservée |
+| F-19 | Installation de l'instance : création du club (nom, fuseau horaire) et du premier administrateur par une page utilisable une seule fois | Must | v1 (MVP) | L'administrateur installe une instance neuve en moins de 3 minutes ; la page n'est plus accessible ensuite et aucune autre personne ne peut devenir administrateur par ce biais |
 | F-12 | Inscription d'un bénévole par l'administrateur (le retrait est déjà au MVP, F-09) | Should | v1.1 | L'administrateur ajoute un bénévole à un créneau, même complet ou commencé, avec avertissement |
 | F-13 | Historique des changements (qui a changé quoi, quand) | Should | v1.1 | Chaque création, modification, inscription et désinscription apparaît dans un journal consultable par l'administrateur |
 | F-14 | Mon planning : liste de mes prochaines inscriptions | Should | v1.1 | Le bénévole voit toutes ses inscriptions à venir sur un seul écran |
@@ -60,7 +61,7 @@ Principe directeur (retour du test d'ephios) : réduire les options au strict mi
 
 ## 5. MVP
 
-Le MVP regroupe F-01 à F-11.
+Le MVP regroupe F-01 à F-11 et F-19.
 
 **Définition de « fini » d'une fonctionnalité** : ses user stories (`user-stories.md`) ont toutes leurs scénarios Given/When/Then passants, testés automatiquement ou manuellement, l'interface est utilisable sur mobile, le texte est en français, et la documentation utilisateur concernée est à jour.
 
@@ -146,3 +147,8 @@ Décisions prises lors de la revue des règles de gestion (2026-10-26, détail d
 - Un créneau peut sortir des dates de l'événement, avec avertissement (RG-07).
 - Un nouveau lien de réinitialisation invalide les précédents ; une réinitialisation réussie remet à zéro le blocage et ferme les sessions (RG-12).
 - Un événement passé est en lecture seule (RG-15) ; un seul fuseau horaire par instance (RG-16) ; permissions vérifiées côté serveur (RG-14).
+
+Décisions prises lors de la phase architecture (2026-10-26, détail dans `architecture/architecture.md`) :
+- Page d'installation (F-19, RG-17) : crée le club (entité `Club`) et le premier administrateur.
+- Blocage de connexion par adresse saisie, existante ou non (RG-03).
+- Connexion par fournisseurs externes (Google, Facebook, Apple) prévue après le MVP.

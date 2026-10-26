@@ -1,12 +1,41 @@
 # User stories – Créno
 
-Statut : brouillon v0.2 (2026-10-26, aligné sur la revue des règles de gestion et le glossaire). Chaque histoire porte l'identifiant de la fonctionnalité du tableau MoSCoW de `prd.md` (F-01, F-02…). Les règles de gestion (RG-xx) sont définies dans [`domain/business-rules.md`](domain/business-rules.md) et référencées dans les scénarios.
+Statut : brouillon v0.3 (2026-10-26, aligné sur la revue des règles de gestion, le glossaire et la phase architecture). Chaque histoire porte l'identifiant de la fonctionnalité du tableau MoSCoW de `prd.md` (F-01, F-02…). Les règles de gestion (RG-xx) sont définies dans [`domain/business-rules.md`](domain/business-rules.md) et référencées dans les scénarios.
 
 Rôles : **administrateur** (`ADMIN`) et **utilisateur** (`USER`, appelé « bénévole » ou « membre » dans l'interface, voir `glossary.md`). Un administrateur dispose aussi de toutes les actions d'un utilisateur, y compris s'inscrire à un créneau (RG-08).
 
 ---
 
 ## MVP (v1)
+
+### « Installation de l'instance » (F-19)
+
+En tant que **personne qui met en place Créno pour son association**, je veux créer le club et son premier administrateur depuis une page d'installation afin de pouvoir ensuite inviter les bénévoles.
+
+Scénario 1 : installation réussie (RG-17, RG-04, RG-16, RG-01)
+- Given : une instance neuve, sans aucun utilisateur
+- When : la personne ouvre l'adresse de l'instance, saisit le nom du club « Ski Club des Arcs », le fuseau horaire « Europe/Paris », son nom, son prénom, son e-mail `mail.ex@exemple.fr` et un mot de passe de 10 caractères ou plus, puis valide
+- Then : le club et l'administrateur sont créés, la personne est connectée en administrateur et arrive sur la liste des événements, qui affiche « Aucun événement à venir pour le moment »
+
+Scénario 2 : champ manquant ou invalide (RG-01, RG-17)
+- Given : la page d'installation
+- When : la personne laisse le nom du club vide, ou saisit un mot de passe de 9 caractères, ou un e-mail mal formé, et valide
+- Then : rien n'est créé, les messages d'erreur s'affichent sous les champs concernés et les autres champs restent remplis
+
+Scénario 3 : page indisponible après l'installation (RG-17)
+- Given : une instance déjà installée
+- When : une personne ouvre l'adresse de la page d'installation
+- Then : la page répond « introuvable » et aucun second administrateur ne peut être créé par ce biais
+
+Scénario 4 : redirection avant installation (RG-17)
+- Given : une instance non installée
+- When : une personne ouvre l'URL d'un événement, de la connexion ou de n'importe quelle autre page
+- Then : elle est redirigée vers la page d'installation
+
+Scénario 5 : deux installations simultanées (RG-17)
+- Given : une instance non installée et deux personnes qui valident la page d'installation en même temps
+- When : les deux demandes arrivent
+- Then : une seule installation aboutit, l'autre voit « introuvable » et il n'existe qu'un club et un administrateur
 
 ### « Invitation et création de compte » (F-01)
 
@@ -77,6 +106,11 @@ Scénario 3 : blocage après trop d'essais (RG-03)
 - Given : un utilisateur qui a déjà échoué 5 fois de suite
 - When : il tente une 6e connexion, même avec le bon mot de passe
 - Then : l'accès est bloqué 15 minutes et un message l'indique
+
+Scénario 3 ter : adresse sans compte (RG-03)
+- Given : une adresse e-mail qui ne correspond à aucun compte, saisie 5 fois de suite avec un mot de passe quelconque
+- When : une personne tente une 6e connexion avec cette adresse
+- Then : le même message de blocage de 15 minutes s'affiche que pour un compte existant, ce qui ne révèle pas si l'adresse a un compte
 
 Scénario 3 bis : compteur remis à zéro (RG-03)
 - Given : un utilisateur qui a échoué 4 fois de suite
@@ -553,5 +587,6 @@ Scénario 1 : calendrier des inscrits
 
 ## Points à confirmer
 
+- Code d'installation affiché dans les journaux pour protéger la page d'installation (F-19) : si retenu, ajouter le scénario « code incorrect : refus ».
 - Délai du rappel de la F-15 et définition de « validés » pour la F-16 (présence réelle ou simple inscription).
 - Le journal (F-13) conserve-t-il les noms après la suppression d'un compte ? Cohérence à vérifier avec RG-11.
