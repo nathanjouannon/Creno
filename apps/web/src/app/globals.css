@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+@import '@creno/tokens/tokens.css';
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: var(--font-line-height);
+  }
+
+  /* components.md section 1: visible keyboard focus. */
+  :focus-visible {
+    outline: var(--border-focus-width) solid var(--color-focus);
+  }
+}
