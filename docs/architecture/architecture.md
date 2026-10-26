@@ -191,6 +191,7 @@ Options étudiées (correspondance estimée à ces critères) :
 | [0012](../adr/0012-page-installation-et-club.md) | Page d'installation et entité `Club` | Acceptée |
 | [0013](../adr/0013-blocage-connexion-par-adresse.md) | Blocage de connexion par adresse saisie | Acceptée |
 | [0014](../adr/0014-contrat-api-genere-depuis-zod.md) | Contrat d'API écrit d'abord, puis généré depuis Zod | Acceptée |
+| [0015](../adr/0015-migrations-sql-versionnees-avec-retour.md) | Migrations SQL versionnées avec script de retour, exécutées par Prisma Migrate | Acceptée |
 
 ## 8. Points à confirmer
 

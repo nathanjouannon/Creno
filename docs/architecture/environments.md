@@ -85,7 +85,7 @@ La procédure complète, avec les commandes exactes, est écrite dans `README.md
 Décision du 2026-10-26 : les migrations de base sont des scripts SQL versionnés avec un script de retour écrit à la main.
 
 - Chaque migration comprend un script d'application et un script de retour (par exemple `up.sql` et `down.sql`), relus ensemble dans la pull request.
-- La commande de retour (`pnpm db:rollback`, nom indicatif) exécute le script de retour de la dernière migration. L'outil de migration exact (Prisma Migrate avec des fichiers SQL personnalisés, ou autre) est fixé au squelette ; Prisma Migrate seul ne sait pas revenir en arrière.
+- La commande de retour (`pnpm db:rollback`, nom indicatif) exécute le script de retour de la dernière migration. Outil : Prisma Migrate avec fichiers SQL personnalisés et `down.sql` écrit à la main (ADR-0015).
 - L'intégration continue applique chaque migration, la défait, puis la rejoue sur une base jetable, pour vérifier que le retour fonctionne.
 - Une migration qui détruit des données (suppression de colonne ou de table) est marquée irréversible : son retour est une restauration de la sauvegarde d'avant la mise à jour.
 - En cas d'incident en production après une mise à jour : défaire la migration si elle est réversible, redéployer l'image de la version précédente, vérifier `/health` ; sinon restaurer la sauvegarde prise avant la mise à jour.
@@ -95,5 +95,4 @@ Décision du 2026-10-26 : les migrations de base sont des scripts SQL versionné
 - Domaine du club et hébergeur du serveur (VPS ou Raspberry).
 - Outil de chiffrement des sauvegardes (`age` proposé) et durée de conservation des sauvegardes mensuelles (12 mois proposés).
 - Fréquence des tests de restauration (tous les 6 mois proposés).
-- Outil exact de migration et de retour arrière, à fixer au squelette.
 - Gestionnaire de paquets : pnpm (proposé dans `architecture.md`).
