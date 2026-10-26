@@ -97,6 +97,8 @@ interface (app/, components/) → couche API (app/api/**/route.ts) → services 
 
 ## 9. Git et pull requests
 
+**Chaîne de livraison** : un ticket GitHub (`T-NNN`) = une branche = un ou plusieurs commits = une pull request. Chaque pull request est **relue et validée à la main** par une personne avant la fusion ; ni l'IA ni la chaîne d'intégration continue ne fusionnent seules.
+
 **Branches** : `type/T-NNN-short-slug` à partir de `main` (`feat/T-014-registrations-api`). `main` est protégée.
 
 **Commits** : Conventional Commits en anglais, impératif, minuscule, sans point final, 72 caractères au plus pour la première ligne. Types : `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `ci`, `build`, `perf`. Portée facultative : un module ou un domaine (`feat(registrations): …`, `docs(api): …`), comme dans l'historique (`docs(archi): …`). Un commit = un changement cohérent ; les fichiers générés (`openapi.yaml`, `errors.*`, tokens) sont commités avec le changement qui les provoque.
@@ -106,6 +108,7 @@ interface (app/, components/) → couche API (app/api/**/route.ts) → services 
 - Corps : *What* (le changement), *Why* (le ticket `Closes #n`, les règles RG-xx), *How tested* (tests automatisés, vérifications manuelles), *Docs* (ADR, contrat, glossaire mis à jour ou « aucun »), et la liste de `definition-of-done.md` cochée.
 - Fusion en *squash* ; un titre de pull request qui suit Conventional Commits devient le message du commit.
 - Aucune pull request avec la chaîne d'intégration continue rouge.
+- Validation manuelle obligatoire : la personne qui relit exécute les vérifications manuelles du corps de la pull request avant de fusionner.
 
 ## 10. Documentation et décisions
 
