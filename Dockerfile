@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Three targets built from one file: `migrate` (applies database migrations once) and `app` (the web server).
 # Base images are pinned (environments.md, section 5): never `latest`.
-FROM node:20.19-slim AS base
+FROM node:26.12-slim AS base
 ENV COREPACK_HOME=/opt/corepack \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 RUN apt-get update \
@@ -29,7 +29,7 @@ FROM build AS migrate
 USER node
 CMD ["pnpm", "db:migrate"]
 
-FROM node:20.19-slim AS app
+FROM node:26.12-slim AS app
 RUN apt-get update \
  && apt-get install -y --no-install-recommends openssl ca-certificates \
  && rm -rf /var/lib/apt/lists/*
