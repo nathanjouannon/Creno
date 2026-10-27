@@ -55,7 +55,7 @@ Noms indicatifs, fixés par T-001 à T-006 ; mets ce fichier à jour s'ils chang
 **Méthode**
 - N'ajoute pas de dépendance sans la justifier dans la pull request (ADR si elle structure l'application).
 - Ne dépasse pas le périmètre du ticket ; ce qui est hors périmètre devient un ticket, pas un commentaire `TODO` sans numéro.
-- Ne commite, ne pousse et n'ouvre de pull request que sur demande de l'utilisateur ; jamais de `--force`, jamais directement sur `main`.
+- Quand l'utilisateur confie un ticket, la livraison fait partie du travail : une fois la liste de `docs/definition-of-done.md` vérifiée, crée la branche du ticket depuis `main` à jour, commite, pousse et ouvre la pull request sans redemander. Hors d'un ticket, ne commite et n'ouvre rien sans demande. Jamais de `--force`, jamais directement sur `main`, jamais de fusion de la pull request.
 
 ## Conventions (résumé de `docs/conventions.md`)
 
