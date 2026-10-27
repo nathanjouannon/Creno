@@ -61,7 +61,7 @@ Noms indicatifs, fixés par T-001 à T-006 ; mets ce fichier à jour s'ils chang
 
 - Code, commentaires, commits, branches, pull requests : **anglais**. `docs/`, issues, interface, messages affichés : **français**.
 - Fichiers en `kebab-case`, composants en `PascalCase.tsx`, variables et champs JSON en `camelCase`, tables SQL en `snake_case` pluriel (Prisma : `@@map`, `@map`). Identifiants entiers.
-- Commits : Conventional Commits (`feat(registrations): add last-seat locking`) ; branche `feat/T-014-registrations-api` ; une pull request = une tâche ; squash.
+- Commits : Conventional Commits (`feat(registrations): add last-seat locking`) ; branche `feat/T-014-registrations-api` ; un ticket = une branche = un ou plusieurs commits = une pull request, validée à la main avant fusion ; squash.
 - Commentaires : ils disent pourquoi et citent la règle (`// RG-07: …`). Tests nommés avec leur scénario (`[F-07 S3] …`) ou leur règle (`RG-07: …`).
 - Exemples de style à imiter : `docs/examples.md`.
 
