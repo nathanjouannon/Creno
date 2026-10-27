@@ -16,7 +16,7 @@
     "eslint": "^9.0.0",
     "style-dictionary": "^5.7.1",
     "typescript-eslint": "^8.0.0",
-    "vitest": "^3.2.7"
+    "vitest": "^4.1.12"
   },
   "exports": {
     "./tokens.css": "./generated/tokens.css",

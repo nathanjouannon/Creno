@@ -1,0 +1,146 @@
+# Continuous integration (docs/architecture/environments.md, section 3).
+# Pull request: every check. Push on main: the same plus the image build (not published).
+# Tag vX.Y.Z: the same, then the image is published on ghcr.io under its version number (never `latest`).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality and unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generated style files are up to date
+        run: |
+          pnpm tokens:build
+          git diff --exit-code -- packages/tokens/generated
+      - name: API contract is up to date
+        run: pnpm api:check
+      - name: API contract is valid OpenAPI
+        run: pnpm api:lint
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:unit
+      - run: pnpm --filter @creno/validation test
+      - run: pnpm --filter @creno/tokens test
+
+  integration:
+    name: Integration tests and migrations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      # Disposable database; same major version as production (environments.md, section 5)
+      postgres:
+        image: postgres:16.4-alpine
+        env:
+          POSTGRES_USER: creno
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: creno
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U creno -d creno"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://creno:ci-only-password@localhost:5432/creno
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply migrations
+        run: pnpm db:migrate
+      # The integration suite also applies, undoes and replays every migration on its own database (environments.md, section 6)
+      - run: pnpm test:integration
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan the history with gitleaks
+        run: >
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.21.2
+          detect --source /repo --no-banner --redact --verbose
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # High and critical advisories fail the build; accepted exceptions are listed in package.json (pnpm.auditConfig)
+      - run: pnpm audit --audit-level high
+
+  image:
+    name: Docker image
+    if: github.event_name == 'push'
+    needs: [quality, integration, secrets, audit]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Image names (the registry requires lower case)
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "APP_IMAGE=ghcr.io/${owner}/creno" >> "$GITHUB_ENV"
+          echo "MIGRATE_IMAGE=ghcr.io/${owner}/creno-migrate" >> "$GITHUB_ENV"
+      # Branch push: build only, to prove the image builds
+      - name: Build (not published)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        run: |
+          docker buildx build --target app --tag "$APP_IMAGE:ci" .
+          docker buildx build --target migrate --tag "$MIGRATE_IMAGE:ci" .
+      # Tag push: publish under the version number, never `latest`
+      - name: Log in to ghcr.io
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          docker buildx build --target app --push --tag "$APP_IMAGE:$version" .
+          docker buildx build --target migrate --push --tag "$MIGRATE_IMAGE:$version" .
+      - name: Release notes
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "$GITHUB_REF_NAME"
