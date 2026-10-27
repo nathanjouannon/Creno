@@ -7,8 +7,8 @@ export interface ErrorDefinition {
   message: string;
   /** Rule or cause (RG-xx, security.md section). */
   cause: string;
-  /** Keys of `details` returned with this code. */
-  details: readonly string[];
+  /** Content of `details` for this code, as documented in errors.md (empty when none). */
+  details: string;
   /** What the client does when it receives this code. */
   clientAction: string;
 }
@@ -18,14 +18,14 @@ export const errorCatalog = {
     status: 400,
     message: 'Certains champs sont invalides.',
     cause: 'Corps ou paramètre non conforme',
-    details: ['fields'],
+    details: '`fields`: liste de `{ field, code }` (section 3)',
     clientAction: 'Afficher le message de chaque champ sous celui-ci, garder les valeurs saisies',
   },
   AUTH_REQUIRED: {
     status: 401,
     message: 'Connecte-toi pour continuer.',
     cause: 'Pas de session, jeton expiré, utilisateur supprimé ou `tokenVersion` périmé',
-    details: [],
+    details: '',
     clientAction: 'Rediriger vers la connexion en mémorisant la page demandée',
   },
   AUTH_INVALID_CREDENTIALS: {
@@ -33,7 +33,7 @@ export const errorCatalog = {
     message: 'E-mail ou mot de passe incorrect.',
     cause:
       "Échec de connexion (F-02) ; identique pour une adresse sans compte, ou d'un compte supprimé",
-    details: [],
+    details: '',
     clientAction: 'Réafficher le formulaire, vider le mot de passe',
   },
   AUTH_ACCOUNT_LOCKED: {
@@ -41,7 +41,7 @@ export const errorCatalog = {
     message: 'Trop de tentatives. Réessaie dans 15 minutes.',
     cause:
       'RG-03 : 5 échecs consécutifs avec la même adresse ; identique pour une adresse sans compte',
-    details: ['lockedUntil'],
+    details: '`lockedUntil` (date-heure)',
     clientAction: 'Afficher le message et la fin du blocage',
   },
   AUTH_RESET_LINK_INVALID: {
@@ -49,70 +49,70 @@ export const errorCatalog = {
     message: "Ce lien n'est plus valide, demande un nouveau lien à un administrateur.",
     cause:
       'RG-12 : lien inconnu, expiré (plus de 3 jours), déjà utilisé ou remplacé par un plus récent',
-    details: [],
+    details: '',
     clientAction: 'Afficher le message à la place du formulaire',
   },
   INVITATION_INVALID: {
     status: 410,
     message: "Ce lien n'est plus valide, demande un nouveau lien à un administrateur.",
     cause: 'RG-02 : lien inconnu, événement commencé ou supprimé',
-    details: [],
+    details: '',
     clientAction: 'Afficher le message à la place du formulaire',
   },
   FORBIDDEN: {
     status: 403,
     message: "Tu n'as pas le droit d'accéder à cette page.",
     cause: 'RG-14 : action réservée aux administrateurs',
-    details: [],
+    details: '',
     clientAction: "Message générique, rien n'est modifié",
   },
   FORBIDDEN_ORIGIN: {
     status: 403,
     message: 'Requête refusée.',
     cause: "En-tête `Origin` différent de l'application (protection CSRF)",
-    details: [],
+    details: '',
     clientAction: "Message générique ; ne devrait pas arriver depuis l'interface",
   },
   NOT_FOUND: {
     status: 404,
     message: 'Page introuvable.',
     cause: "Route inconnue ; page d'installation après l'installation (RG-17)",
-    details: [],
+    details: '',
     clientAction: 'Afficher la page « introuvable »',
   },
   USER_NOT_FOUND: {
     status: 404,
     message: 'Membre introuvable.',
     cause: 'Identifiant inconnu',
-    details: [],
+    details: '',
     clientAction: 'Retour à la liste des membres',
   },
   EVENT_NOT_FOUND: {
     status: 404,
     message: 'Événement introuvable.',
     cause: 'Identifiant inconnu, ou événement passé vu par un utilisateur (RG-09)',
-    details: [],
+    details: '',
     clientAction: 'Retour à la liste des événements',
   },
   SLOT_NOT_FOUND: {
     status: 404,
     message: 'Créneau introuvable.',
     cause: "Identifiant inconnu, ou créneau d'un événement passé vu par un utilisateur (RG-09)",
-    details: [],
+    details: '',
     clientAction: "Recharger l'événement",
   },
   REGISTRATION_NOT_FOUND: {
     status: 404,
     message: 'Inscription introuvable.',
     cause: 'Identifiant inconnu, ou utilisateur non inscrit à ce créneau',
-    details: [],
+    details: '',
     clientAction: "Recharger l'événement",
   },
   USER_EMAIL_TAKEN: {
     status: 409,
     message: 'Un compte existe déjà avec cette adresse. Connecte-toi.',
     cause: 'RG-01 : e-mail déjà utilisé, sans tenir compte de la casse (création par invitation)',
-    details: [],
+    details: '',
     clientAction: 'Proposer le lien vers la connexion',
   },
   USER_LAST_ADMIN: {
@@ -120,35 +120,35 @@ export const errorCatalog = {
     message: "Nomme d'abord un autre administrateur.",
     cause:
       'RG-04 : le dernier administrateur ne peut ni se retirer le droit, ni supprimer son compte',
-    details: [],
+    details: '',
     clientAction: 'Afficher le message, rien ne change',
   },
   USER_ROLE_CHANGE_FORBIDDEN: {
     status: 403,
     message: "Seul l'intéressé peut retirer son droit administrateur.",
     cause: "RG-04 : tentative de retirer le droit d'un autre",
-    details: [],
+    details: '',
     clientAction: "Message générique ; l'interface ne propose pas cette action",
   },
   EVENT_PAST: {
     status: 409,
     message: "Cet événement est terminé, il n'est plus modifiable.",
     cause: 'RG-15 : événement passé en lecture seule (vu par un administrateur)',
-    details: [],
+    details: '',
     clientAction: 'Recharger la page en lecture seule',
   },
   EVENT_STARTED: {
     status: 409,
     message: "Cet événement a déjà commencé : plus d'invitation possible.",
     cause: "RG-02 : génération d'une invitation après le début",
-    details: [],
+    details: '',
     clientAction: 'Masquer « Inviter des bénévoles »',
   },
   SLOT_FULL: {
     status: 409,
     message: "Ce créneau vient d'être complété.",
     cause: 'RG-07 : limite atteinte',
-    details: ['slotId'],
+    details: '`slotId`',
     clientAction: "Recharger l'événement, garder l'inscription précédente",
   },
   SLOT_STARTED: {
@@ -156,7 +156,7 @@ export const errorCatalog = {
     message: 'Ce créneau a commencé. Contacte un administrateur pour modifier ton inscription.',
     cause:
       'RG-08 : inscription ou désinscription après le début (heure courante supérieure ou égale au début)',
-    details: ['slotId'],
+    details: '`slotId`',
     clientAction: "Recharger l'événement",
   },
   SLOT_CAPACITY_BELOW_REGISTRATIONS: {
@@ -164,35 +164,35 @@ export const errorCatalog = {
     message:
       '{registeredCount} personnes sont déjà inscrites : retire des inscrits avant de baisser la limite.',
     cause: "RG-07 : limite abaissée sous le nombre d'inscrits",
-    details: ['registeredCount'],
+    details: '`registeredCount`',
     clientAction: 'Afficher le message, la limite reste inchangée',
   },
   REGISTRATION_ALREADY_EXISTS: {
     status: 409,
     message: 'Tu es déjà inscrit à ce créneau.',
     cause: 'RG-08 : une seule inscription par utilisateur et créneau',
-    details: ['slotId'],
+    details: '`slotId`',
     clientAction: "Recharger l'événement",
   },
   RATE_LIMITED: {
     status: 429,
     message: 'Trop de requêtes, réessaie plus tard.',
     cause: 'Limites de débit (`architecture/security.md`, section 4)',
-    details: [],
+    details: '',
     clientAction: 'Attendre `Retry-After`',
   },
   INTERNAL_ERROR: {
     status: 500,
     message: 'Une erreur est survenue.',
     cause: 'Bug serveur',
-    details: [],
+    details: '',
     clientAction: 'Afficher le `requestId`',
   },
   SERVICE_UNAVAILABLE: {
     status: 503,
     message: 'Le service est momentanément indisponible.',
     cause: '`/health` : base de données injoignable',
-    details: [],
+    details: '',
     clientAction: 'Réessayer plus tard',
   },
 } as const satisfies Record<string, ErrorDefinition>;
