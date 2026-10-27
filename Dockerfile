@@ -17,7 +17,9 @@ COPY apps/web/package.json apps/web/
 COPY apps/web/prisma apps/web/prisma
 COPY packages/tokens/package.json packages/tokens/
 COPY packages/validation/package.json packages/validation/
-RUN corepack enable && corepack prepare --activate \
+# Node 25+ images no longer bundle corepack, so install it first; it then reads the pnpm version from `packageManager`.
+RUN npm install --global corepack \
+ && corepack enable && corepack prepare --activate \
  && pnpm install --frozen-lockfile
 
 FROM deps AS build
