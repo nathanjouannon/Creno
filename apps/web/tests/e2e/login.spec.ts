@@ -101,6 +101,7 @@ test('[F-02 S4] signing out leads back to the sign-in page and protected data is
   await signIn(page);
   await expect(page).toHaveURL(/\/events$/);
 
+  await page.getByRole('button', { name: 'Alex' }).click();
   await page.getByRole('button', { name: 'Se déconnecter' }).click();
   await expect(page).toHaveURL(/\/connexion$/);
   expect((await page.request.get('/api/me')).status()).toBe(401);

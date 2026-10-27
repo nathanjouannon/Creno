@@ -1,27 +1,23 @@
 import Link from 'next/link';
-import { LogoutButton } from '@/components/LogoutButton';
+import { MainNav } from '@/components/MainNav';
+import { UserMenu } from '@/components/UserMenu';
 
 interface Props {
-  /** Signed-in user: shows the first name and the sign-out button. Without it, the `public` variant (logo alone). */
-  user?: { firstName: string } | null;
+  /** Signed-in user: shows the user menu and the navigation. Without it, the `public` variant (logo alone). */
+  user?: { firstName: string; role: 'USER' | 'ADMIN' } | null;
 }
 
-/**
- * `public` variant (A1 to A11) and a provisional `authenticated` one: the user menu with "Supprimer mon compte" and
- * the navigation come with T-010 and T-020.
- */
+/** `public` variant (A1 to A11) and `authenticated` variant (logo, user menu, navigation by role). */
 export function AppHeader({ user }: Props) {
   return (
-    <header className="flex items-center justify-between gap-md border-b border-border bg-surface px-md py-sm">
-      <Link href="/" className="text-large font-bold text-text">
-        Créno
-      </Link>
-      {user ? (
-        <div className="flex items-center gap-sm">
-          <span className="font-medium text-text">{user.firstName}</span>
-          <LogoutButton />
-        </div>
-      ) : null}
-    </header>
+    <>
+      <header className="flex items-center justify-between gap-md border-b border-border bg-surface px-md py-sm">
+        <Link href="/" className="text-large font-bold text-text">
+          Créno
+        </Link>
+        {user ? <UserMenu firstName={user.firstName} /> : null}
+      </header>
+      {user ? <MainNav variant={user.role === 'ADMIN' ? 'admin' : 'user'} /> : null}
+    </>
   );
 }

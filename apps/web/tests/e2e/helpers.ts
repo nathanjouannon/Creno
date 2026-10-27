@@ -1,3 +1,4 @@
+import { hash } from '@node-rs/argon2';
 import { PrismaClient } from '@prisma/client';
 import { test as base, type APIRequestContext, type TestInfo } from '@playwright/test';
 
@@ -52,4 +53,24 @@ export async function installInstance(
     headers: { origin: baseURL, 'x-forwarded-for': address },
   });
   if (response.status() !== 201) throw new Error(`installation failed: ${response.status()}`);
+}
+
+export const member = {
+  firstName: 'Léa',
+  lastName: 'Bernard',
+  email: 'lea@exemple.fr',
+  password: '9876543210',
+};
+
+/** A user without the administrator right, created in the database (the invitation route comes with T-011). */
+export async function createMember() {
+  await database.user.create({
+    data: {
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+      passwordHash: await hash(member.password),
+      role: 'USER',
+    },
+  });
 }
