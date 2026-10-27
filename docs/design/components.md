@@ -230,15 +230,15 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 - Variantes : `invitation` (« valable jusqu'au début de l'événement, réutilisable », RG-02) · `reset` (« à usage unique, valable 3 jours », RG-12).
 - États : `ready` · `copied` (bouton « Lien copié ») · `error` (copie impossible : lien sélectionné pour copie manuelle).
 
-## 6. Écarts avec `tokens.json` à traiter
+## 6. Écarts avec `tokens.json` : décisions (T-003)
 
-Ces besoins n'ont pas de token ; à ajouter avant de coder (règle « jamais de valeur en dur ») :
-- `color.focus` (ou réutiliser `color.primary`) et `border.focus-width` 2 px, pour l'état `focus`.
-- `color.success-surface` si un fond de succès est voulu (le tag `success` n'a qu'une bordure et un texte).
-- `size.avatar` (28 px dans la maquette B3) et `size.icon`.
-- `shadow.modal` : absent ; à décider (non nécessaire tant que `color.overlay` suffit).
-- Durée d'animation (`motion.fast`) : à décider, sinon aucune animation.
-- Maquette B3 : les bordures de `Card` au repos utilisent `color.border`, alors que `tokens.json` décrit `color.border-strong` « champs et cartes au repos ». À aligner (recommandé : `color.border-strong` pour les champs, `color.border` pour les cartes).
+Tous les points sont tranchés ; les tokens correspondants sont dans `tokens.json`.
+- `color.focus` ajouté, alias de `color.primary` ; `border.focus-width` ajouté (2 px) pour l'état `focus`.
+- `color.success-surface` ajouté (`#DCFCE7`) pour un fond de succès éventuel.
+- `size.avatar` (28 px, maquette B3) et `size.icon` (20 px) ajoutés.
+- `shadow.modal` : non créé, `color.overlay` suffit. Un nouveau besoin ouvrira un ticket.
+- `motion.fast` : non créé, aucune animation au MVP.
+- Bordures : `color.border-strong` pour les champs, `color.border` pour les cartes au repos. La maquette B3 est déjà conforme pour les cartes ; la description de `color.border-strong` dans `tokens.json` est corrigée en conséquence.
 
 ## 7. Correspondance écrans → composants
 

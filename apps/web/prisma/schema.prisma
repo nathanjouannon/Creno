@@ -1,0 +1,133 @@
+// Executable version of docs/domain/schema.sql (ADR-0005, ADR-0015).
+// CHECK constraints and the lower(email) unique index are not expressible here:
+// they live in the hand-written SQL migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+
+  @@map("user_role")
+}
+
+// RG-16, RG-17: a single row (id = 1, enforced by CHECK).
+model Club {
+  id        Int      @id @default(1)
+  name      String
+  timezone  String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("club")
+}
+
+// RG-03: no foreign key, identifier_hash is a digest of the normalised address.
+model LoginAttempt {
+  id             Int       @id @default(autoincrement())
+  identifierHash String    @unique @map("identifier_hash")
+  failedCount    Int       @default(0) @map("failed_count")
+  lockedUntil    DateTime? @map("locked_until") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("login_attempts")
+}
+
+// RG-01: e-mail unique ignoring case (index on lower(email) added in SQL).
+model User {
+  id           Int      @id @default(autoincrement())
+  lastName     String   @map("last_name")
+  firstName    String   @map("first_name")
+  email        String
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(USER)
+  tokenVersion Int      @default(0) @map("token_version")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  resetTokens   ResetToken[]
+  registrations Registration[]
+
+  @@map("users")
+}
+
+// RG-12
+model ResetToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  token     String    @unique
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "reset_tokens_user_id_idx")
+  @@map("reset_tokens")
+}
+
+// RG-06
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  location    String?
+  startsAt    DateTime @map("starts_at") @db.Timestamptz(6)
+  endsAt      DateTime @map("ends_at") @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  slots       Slot[]
+  invitations Invitation[]
+
+  @@index([endsAt], map: "events_ends_at_idx")
+  @@map("events")
+}
+
+// RG-07: capacity null = unlimited.
+model Slot {
+  id        Int      @id @default(autoincrement())
+  eventId   Int      @map("event_id")
+  startsAt  DateTime @map("starts_at") @db.Timestamptz(6)
+  endsAt    DateTime @map("ends_at") @db.Timestamptz(6)
+  capacity  Int?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  registrations Registration[]
+
+  @@index([eventId], map: "slots_event_id_idx")
+  @@map("slots")
+}
+
+// RG-07, RG-08, RG-11: userId null = former member.
+model Registration {
+  id        Int      @id @default(autoincrement())
+  slotId    Int      @map("slot_id")
+  userId    Int?     @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  slot Slot  @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([slotId, userId])
+  @@index([userId], map: "registrations_user_id_idx")
+  @@map("registrations")
+}
+
+// RG-02
+model Invitation {
+  id        Int      @id @default(autoincrement())
+  eventId   Int      @map("event_id")
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId], map: "invitations_event_id_idx")
+  @@map("invitations")
+}

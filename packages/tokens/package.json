@@ -1,0 +1,26 @@
+{
+  "name": "@creno/tokens",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "node src/build.mjs",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "style-dictionary": "^5.7.1",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.2.7"
+  },
+  "exports": {
+    "./tokens.css": "./generated/tokens.css",
+    "./eslint": "./src/eslint-plugin.mjs",
+    ".": "./src/index.ts"
+  }
+}
