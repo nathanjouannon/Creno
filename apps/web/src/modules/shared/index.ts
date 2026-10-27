@@ -1,1 +1,23 @@
 export { getConfig, parseConfig, ConfigError, type Config } from './config';
+export { clock, fixedClock, setClock, resetClock, systemClock, type Clock } from './clock';
+export { fromLocalDateTime, isValidTimezone, toLocalDateTime } from './timezone';
+export { createLogger, getLogger, maskEmail, redact, type Logger, type LogLevel } from './logger';
+export {
+  authenticate,
+  fakeAuthenticator,
+  resetAuthenticator,
+  setAuthenticator,
+  type Authenticator,
+  type SessionUser,
+  type UserRole,
+} from './auth';
+export {
+  route,
+  toErrorResponse,
+  newRequestId,
+  type ErrorBody,
+  type RouteAuth,
+  type RouteContext,
+  type RouteResult,
+} from './route';
+export { getHealthService } from './health';
