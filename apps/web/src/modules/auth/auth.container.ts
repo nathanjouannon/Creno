@@ -1,6 +1,9 @@
 import { clock, getConfig, getPrisma } from '@/modules/shared';
 import { createAuthRepository } from './auth.repository';
-import { createAuthService, type AuthService } from './auth.service';
+import { createLoginRepository } from './login.repository';
+import { createLoginService, type LoginService } from './login.service';
+import { hashPassword, verifyPassword } from './password';
+import { createAuthService, toUserView, type AuthService } from './auth.service';
 
 let service: AuthService | undefined;
 
@@ -15,6 +18,23 @@ export function getAuthService(): AuthService {
     });
   }
   return service;
+}
+
+let login: LoginService | undefined;
+
+export function getLoginService(): LoginService {
+  if (!login) {
+    login = createLoginService({
+      repository: createLoginRepository(getPrisma()),
+      clock,
+      secret: getConfig().AUTH_SECRET,
+      hashPassword,
+      verifyPassword,
+      openSession: (user) => getAuthService().openSession(user),
+      toUserView,
+    });
+  }
+  return login;
 }
 
 /** The authenticator the route envelope uses by default (shared/auth.ts). */

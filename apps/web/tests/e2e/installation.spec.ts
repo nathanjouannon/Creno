@@ -1,6 +1,14 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
-import { database, installInstance, installation, resetInstance } from './helpers';
+import type { Page } from '@playwright/test';
+import {
+  addressOf,
+  database,
+  expect,
+  installInstance,
+  installation,
+  resetInstance,
+  test,
+} from './helpers';
 
 test.describe.configure({ mode: 'serial' });
 test.beforeEach(resetInstance);
@@ -74,8 +82,8 @@ test('[F-19 S3] RG-17: the installation page is "not found" once the instance is
   page,
   request,
   baseURL,
-}) => {
-  await installInstance(request, baseURL!);
+}, testInfo) => {
+  await installInstance(request, baseURL!, addressOf(testInfo));
   const response = await page.goto('/installation');
   expect(response?.status()).toBe(404);
   await expect(page.getByRole('heading', { name: 'Page introuvable' })).toBeVisible();

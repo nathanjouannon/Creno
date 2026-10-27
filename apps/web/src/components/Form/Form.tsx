@@ -74,8 +74,8 @@ export function Form({
     <FormProvider {...methods}>
       {/* method=post: before the page is interactive a submission must never put the fields (a password) in the URL */}
       <form method="post" onSubmit={submit} noValidate className="flex flex-col gap-md">
-        {children}
         {globalError ? <Alert>{globalError}</Alert> : null}
+        {children}
         <Button type="submit" variant="primary" size="block" loading={formState.isSubmitting}>
           {submitLabel}
         </Button>
