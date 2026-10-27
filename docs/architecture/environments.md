@@ -37,11 +37,11 @@ Règles : `.env` est ignoré par Git ; sur le serveur il est en lecture seule po
 
 ## 3. Chaîne d'intégration continue (GitHub Actions)
 
-1. **À chaque pull request** : installation, vérification que les fichiers générés depuis `tokens.json` et le contrat d'API (`pnpm api:check`, `pnpm api:lint`) sont à jour, lint (dont l'interdiction des valeurs de style en dur, ADR-0010), contrôle des types, tests unitaires, tests d'intégration sur une base PostgreSQL jetable, test des migrations (voir section 6), tests d'accessibilité (axe), audit des dépendances, scan de secrets.
+1. **À chaque pull request** : installation, vérification que les fichiers générés depuis `tokens.json` et le contrat d'API (`pnpm api:check`, `pnpm api:lint`) sont à jour, lint (dont l'interdiction des valeurs de style en dur, ADR-0010), contrôle des types, tests unitaires, tests d'intégration sur une base PostgreSQL jetable, tests de bout en bout (Playwright, sur la version construite de l'application ; axe y vérifie l'accessibilité), test des migrations (voir section 6), audit des dépendances, scan de secrets.
 2. **Merge sur `main`** : mêmes étapes, plus la construction de l'image Docker (non publiée).
 3. **Tag `vX.Y.Z`** : mêmes étapes, puis publication de l'image sur GitHub Container Registry (`ghcr.io`, gratuit) sous le nom de version, jamais `latest`, et création des notes de version.
 
-Mise en œuvre : `.github/workflows/ci.yml`. Tâches : qualité et tests unitaires, intégration et migrations (PostgreSQL 16.4 jetable), scan de secrets (gitleaks sur tout l'historique), audit des dépendances (`pnpm audit --audit-level high`, exceptions justifiées dans `package.json`, `pnpm.auditConfig`), puis l'image. Les tests d'accessibilité (axe) s'ajoutent avec les premières pages. Deux images sont publiées pour un tag : `creno` (application) et `creno-migrate` (service de migration).
+Mise en œuvre : `.github/workflows/ci.yml`. Tâches : qualité et tests unitaires, intégration et migrations (PostgreSQL 16.4 jetable), scan de secrets (gitleaks sur tout l'historique), audit des dépendances (`pnpm audit --audit-level high`, exceptions justifiées dans `package.json`, `pnpm.auditConfig`), puis l'image. Les tests de bout en bout (`End-to-end tests`) créent leur propre base `creno_e2e`. Deux images sont publiées pour un tag : `creno` (application) et `creno-migrate` (service de migration).
 
 Une pull request ne peut être fusionnée que si toutes les étapes sont vertes. Les mises à jour de dépendances sont proposées automatiquement (Dependabot) et passent par la même chaîne.
 

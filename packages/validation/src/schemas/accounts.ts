@@ -43,6 +43,8 @@ export const setupInputSchema = z
   .strict()
   .openapi('SetupInput');
 
+export type SetupInput = z.infer<typeof setupInputSchema>;
+
 export const loginInputSchema = z
   .object({
     email: requiredString(),
