@@ -17,9 +17,13 @@
     "tokens:build": "pnpm --filter @creno/tokens build",
     "db:migrate": "pnpm --filter @creno/web db:migrate",
     "db:rollback": "pnpm --filter @creno/web db:rollback",
-    "db:seed": "pnpm --filter @creno/web db:seed"
+    "db:seed": "pnpm --filter @creno/web db:seed",
+    "api:generate": "pnpm --filter @creno/validation api:generate",
+    "api:check": "pnpm --filter @creno/validation api:check",
+    "api:lint": "redocly lint docs/api/openapi.yaml"
   },
   "devDependencies": {
+    "@redocly/cli": "^2.71.1",
     "prettier": "^3.3.0",
     "typescript": "^5.6.0"
   },

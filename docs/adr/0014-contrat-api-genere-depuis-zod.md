@@ -1,6 +1,6 @@
 # ADR-0014 : Contrat d'API écrit d'abord, puis généré depuis Zod
 
-Statut : acceptée (2026-10-26)
+Statut : acceptée (2026-10-26) ; mise en œuvre au squelette par T-005 (2026-10-27, voir « Mise en œuvre »)
 
 ## Contexte
 L'ADR-0009 (Zod) et l'ADR-0011 (OpenAPI) exigent que les schémas Zod et le contrat restent identiques, et renvoyaient la méthode à la phase 7. Le workflow est « documentation d'abord » : le contrat doit exister avant le code. Le porteur du projet préfère à terme un contrat généré depuis le code, et se demande s'il fait doublon avec Prisma.
@@ -25,3 +25,11 @@ Prisma décrit les tables (y compris `passwordHash`, `tokenVersion`, jetons hach
 - (-) Pendant la phase 7 à 8, le YAML est écrit à la main : une divergence avec les futurs schémas Zod est possible ; l'étape 4 la détecte.
 - (-) Les règles qui dépendent de la base (e-mail déjà utilisé, dernier administrateur…) ne sont pas dans Zod : elles sont décrites dans les réponses d'erreur du contrat par les déclarations de route, pas par les schémas.
 - `api/events.md` dit qu'il n'y a aucun événement asynchrone au MVP (ADR-0008) et réserve les noms futurs. `api/errors.json` n'est pas créé avant le squelette : seul `errors.md` fait foi jusque-là.
+
+## Mise en œuvre (T-005, 2026-10-27)
+- **Bibliothèque** : `@asteasolutions/zod-to-openapi` 7.x, avec OpenAPI 3.1. La conversion JSON Schema native n'existe que dans Zod 4 ; le projet est sur Zod 3, et cette bibliothèque gère aussi les chemins, les réponses et les composants, ce qu'une simple conversion de schéma ne fait pas. Les schémas se nomment sur place avec `.openapi('Nom')` (extension chargée par `packages/validation`, poids négligeable).
+- **Registre des routes** : `packages/validation/src/contract/routes.ts` (chemin, méthode, rôle requis `public`/`user`/`admin`, schémas, réponses d'erreur avec leurs codes). Il est exporté dans le contrat par les extensions `x-auth` et `x-error-codes`.
+- **Commandes** : `pnpm api:generate` écrit `docs/api/openapi.yaml`, `errors.json` et `errors.md` ; `pnpm api:check` échoue si l'un d'eux diffère ; `pnpm api:lint` passe le fichier au lint Redocly (`redocly.yaml`).
+- **Entrées strictes** : les schémas d'entrée refusent les champs inconnus (`FIELD_UNKNOWN`), ce que le contrat exprime par `additionalProperties: false`.
+- Les règles qui dépendent de la base restent décrites par les réponses d'erreur des routes, pas par les schémas.
+

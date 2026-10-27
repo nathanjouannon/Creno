@@ -1,0 +1,7 @@
+# Lint of the generated contract (`pnpm api:lint`). The recommended rules apply, except those that do not fit this API.
+extends:
+  - recommended
+rules:
+  info-license: off # private project, no public license to declare
+  tag-description: off # tags are the section names of the contract
+  operation-4xx-response: off # /auth/logout and /health cannot fail with a 4xx

@@ -21,7 +21,7 @@ Noms indicatifs, fixés par T-001 à T-006 ; mets ce fichier à jour s'ils chang
 | Base locale | `docker compose up -d db`, puis `pnpm db:migrate` et `pnpm db:seed` ; retour arrière : `pnpm db:rollback` |
 | Lancer | `pnpm dev` (http://localhost:3000) |
 | Style depuis les tokens | `pnpm tokens:build` |
-| Contrat d'API | `pnpm api:generate` (écrit `docs/api/`), `pnpm api:check` (échoue si périmé) |
+| Contrat d'API | `pnpm api:generate` (écrit `docs/api/`), `pnpm api:check` (échoue si périmé), `pnpm api:lint` (Redocly) |
 | Qualité | `pnpm lint`, `pnpm typecheck` |
 | Tests | `pnpm test` (`test:unit`, `test:integration`), `pnpm test:e2e` |
 | Production | `docker compose up -d` ; procédure complète dans `README.md` |

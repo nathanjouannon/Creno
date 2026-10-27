@@ -1,0 +1,218 @@
+{
+  "_generated": "Fichier généré par `pnpm api:generate` depuis packages/validation (ADR-0014). Ne pas modifier à la main : changer le schéma Zod ou le registre des routes, puis régénérer.",
+  "errors": {
+    "VALIDATION_ERROR": {
+      "status": 400,
+      "message": "Certains champs sont invalides.",
+      "cause": "Corps ou paramètre non conforme",
+      "details": "`fields`: liste de `{ field, code }` (section 3)",
+      "clientAction": "Afficher le message de chaque champ sous celui-ci, garder les valeurs saisies"
+    },
+    "AUTH_REQUIRED": {
+      "status": 401,
+      "message": "Connecte-toi pour continuer.",
+      "cause": "Pas de session, jeton expiré, utilisateur supprimé ou `tokenVersion` périmé",
+      "details": "",
+      "clientAction": "Rediriger vers la connexion en mémorisant la page demandée"
+    },
+    "AUTH_INVALID_CREDENTIALS": {
+      "status": 401,
+      "message": "E-mail ou mot de passe incorrect.",
+      "cause": "Échec de connexion (F-02) ; identique pour une adresse sans compte, ou d'un compte supprimé",
+      "details": "",
+      "clientAction": "Réafficher le formulaire, vider le mot de passe"
+    },
+    "AUTH_ACCOUNT_LOCKED": {
+      "status": 423,
+      "message": "Trop de tentatives. Réessaie dans 15 minutes.",
+      "cause": "RG-03 : 5 échecs consécutifs avec la même adresse ; identique pour une adresse sans compte",
+      "details": "`lockedUntil` (date-heure)",
+      "clientAction": "Afficher le message et la fin du blocage"
+    },
+    "AUTH_RESET_LINK_INVALID": {
+      "status": 410,
+      "message": "Ce lien n'est plus valide, demande un nouveau lien à un administrateur.",
+      "cause": "RG-12 : lien inconnu, expiré (plus de 3 jours), déjà utilisé ou remplacé par un plus récent",
+      "details": "",
+      "clientAction": "Afficher le message à la place du formulaire"
+    },
+    "INVITATION_INVALID": {
+      "status": 410,
+      "message": "Ce lien n'est plus valide, demande un nouveau lien à un administrateur.",
+      "cause": "RG-02 : lien inconnu, événement commencé ou supprimé",
+      "details": "",
+      "clientAction": "Afficher le message à la place du formulaire"
+    },
+    "FORBIDDEN": {
+      "status": 403,
+      "message": "Tu n'as pas le droit d'accéder à cette page.",
+      "cause": "RG-14 : action réservée aux administrateurs",
+      "details": "",
+      "clientAction": "Message générique, rien n'est modifié"
+    },
+    "FORBIDDEN_ORIGIN": {
+      "status": 403,
+      "message": "Requête refusée.",
+      "cause": "En-tête `Origin` différent de l'application (protection CSRF)",
+      "details": "",
+      "clientAction": "Message générique ; ne devrait pas arriver depuis l'interface"
+    },
+    "NOT_FOUND": {
+      "status": 404,
+      "message": "Page introuvable.",
+      "cause": "Route inconnue ; page d'installation après l'installation (RG-17)",
+      "details": "",
+      "clientAction": "Afficher la page « introuvable »"
+    },
+    "USER_NOT_FOUND": {
+      "status": 404,
+      "message": "Membre introuvable.",
+      "cause": "Identifiant inconnu",
+      "details": "",
+      "clientAction": "Retour à la liste des membres"
+    },
+    "EVENT_NOT_FOUND": {
+      "status": 404,
+      "message": "Événement introuvable.",
+      "cause": "Identifiant inconnu, ou événement passé vu par un utilisateur (RG-09)",
+      "details": "",
+      "clientAction": "Retour à la liste des événements"
+    },
+    "SLOT_NOT_FOUND": {
+      "status": 404,
+      "message": "Créneau introuvable.",
+      "cause": "Identifiant inconnu, ou créneau d'un événement passé vu par un utilisateur (RG-09)",
+      "details": "",
+      "clientAction": "Recharger l'événement"
+    },
+    "REGISTRATION_NOT_FOUND": {
+      "status": 404,
+      "message": "Inscription introuvable.",
+      "cause": "Identifiant inconnu, ou utilisateur non inscrit à ce créneau",
+      "details": "",
+      "clientAction": "Recharger l'événement"
+    },
+    "USER_EMAIL_TAKEN": {
+      "status": 409,
+      "message": "Un compte existe déjà avec cette adresse. Connecte-toi.",
+      "cause": "RG-01 : e-mail déjà utilisé, sans tenir compte de la casse (création par invitation)",
+      "details": "",
+      "clientAction": "Proposer le lien vers la connexion"
+    },
+    "USER_LAST_ADMIN": {
+      "status": 409,
+      "message": "Nomme d'abord un autre administrateur.",
+      "cause": "RG-04 : le dernier administrateur ne peut ni se retirer le droit, ni supprimer son compte",
+      "details": "",
+      "clientAction": "Afficher le message, rien ne change"
+    },
+    "USER_ROLE_CHANGE_FORBIDDEN": {
+      "status": 403,
+      "message": "Seul l'intéressé peut retirer son droit administrateur.",
+      "cause": "RG-04 : tentative de retirer le droit d'un autre",
+      "details": "",
+      "clientAction": "Message générique ; l'interface ne propose pas cette action"
+    },
+    "EVENT_PAST": {
+      "status": 409,
+      "message": "Cet événement est terminé, il n'est plus modifiable.",
+      "cause": "RG-15 : événement passé en lecture seule (vu par un administrateur)",
+      "details": "",
+      "clientAction": "Recharger la page en lecture seule"
+    },
+    "EVENT_STARTED": {
+      "status": 409,
+      "message": "Cet événement a déjà commencé : plus d'invitation possible.",
+      "cause": "RG-02 : génération d'une invitation après le début",
+      "details": "",
+      "clientAction": "Masquer « Inviter des bénévoles »"
+    },
+    "SLOT_FULL": {
+      "status": 409,
+      "message": "Ce créneau vient d'être complété.",
+      "cause": "RG-07 : limite atteinte",
+      "details": "`slotId`",
+      "clientAction": "Recharger l'événement, garder l'inscription précédente"
+    },
+    "SLOT_STARTED": {
+      "status": 409,
+      "message": "Ce créneau a commencé. Contacte un administrateur pour modifier ton inscription.",
+      "cause": "RG-08 : inscription ou désinscription après le début (heure courante supérieure ou égale au début)",
+      "details": "`slotId`",
+      "clientAction": "Recharger l'événement"
+    },
+    "SLOT_CAPACITY_BELOW_REGISTRATIONS": {
+      "status": 409,
+      "message": "{registeredCount} personnes sont déjà inscrites : retire des inscrits avant de baisser la limite.",
+      "cause": "RG-07 : limite abaissée sous le nombre d'inscrits",
+      "details": "`registeredCount`",
+      "clientAction": "Afficher le message, la limite reste inchangée"
+    },
+    "REGISTRATION_ALREADY_EXISTS": {
+      "status": 409,
+      "message": "Tu es déjà inscrit à ce créneau.",
+      "cause": "RG-08 : une seule inscription par utilisateur et créneau",
+      "details": "`slotId`",
+      "clientAction": "Recharger l'événement"
+    },
+    "RATE_LIMITED": {
+      "status": 429,
+      "message": "Trop de requêtes, réessaie plus tard.",
+      "cause": "Limites de débit (`architecture/security.md`, section 4)",
+      "details": "",
+      "clientAction": "Attendre `Retry-After`"
+    },
+    "INTERNAL_ERROR": {
+      "status": 500,
+      "message": "Une erreur est survenue.",
+      "cause": "Bug serveur",
+      "details": "",
+      "clientAction": "Afficher le `requestId`"
+    },
+    "SERVICE_UNAVAILABLE": {
+      "status": 503,
+      "message": "Le service est momentanément indisponible.",
+      "cause": "`/health` : base de données injoignable",
+      "details": "",
+      "clientAction": "Réessayer plus tard"
+    }
+  },
+  "fieldCodes": {
+    "FIELD_REQUIRED": {
+      "message": "Ce champ est obligatoire.",
+      "cause": "Champ vide ou absent. Pour `title` : « Le titre est obligatoire » ; pour `firstName`, `lastName`, `email`, le formulaire d'invitation affiche le toast « Renseigne ton nom, ton prénom et une adresse e-mail valide »"
+    },
+    "FIELD_EMAIL_INVALID": {
+      "message": "Renseigne une adresse e-mail valide.",
+      "cause": "Format d'e-mail incorrect (RG-01)"
+    },
+    "FIELD_PASSWORD_TOO_SHORT": {
+      "message": "Le mot de passe doit contenir au moins 10 caractères.",
+      "cause": "RG-01"
+    },
+    "FIELD_DATE_INVALID": {
+      "message": "Renseigne une date valide.",
+      "cause": "Date-heure mal formée"
+    },
+    "FIELD_END_NOT_AFTER_START": {
+      "message": "La fin doit être après le début.",
+      "cause": "RG-06 (événement), RG-07 (créneau) ; porté par le champ `endsAt`"
+    },
+    "FIELD_CAPACITY_TOO_LOW": {
+      "message": "La limite doit être d'au moins 1 place (ou vide pour illimité).",
+      "cause": "RG-07"
+    },
+    "FIELD_TIMEZONE_INVALID": {
+      "message": "Choisis un fuseau horaire de la liste.",
+      "cause": "RG-16 : valeur absente de la base IANA"
+    },
+    "FIELD_ROLE_INVALID": {
+      "message": "Rôle inconnu.",
+      "cause": "Valeur autre que `USER` ou `ADMIN`"
+    },
+    "FIELD_UNKNOWN": {
+      "message": "Champ non reconnu.",
+      "cause": "Champ inattendu dans le corps ; filet de sécurité, pas affiché à l'utilisateur"
+    }
+  }
+}

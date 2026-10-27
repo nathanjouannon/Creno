@@ -1,8 +1,10 @@
+<!-- Fichier généré par `pnpm api:generate` depuis packages/validation (ADR-0014). Ne pas modifier à la main : changer le schéma Zod ou le registre des routes, puis régénérer. -->
+
 # Catalogue des erreurs – Créno
 
 Statut : version 0.1 (2026-10-26). Les messages reprennent ceux des scénarios de `user-stories.md`. Les schémas Zod n'écrivent jamais de message : ils renvoient un code de champ (section 3), traduit ici (ADR-0009).
 
-À la création du squelette (phase 8, ADR-0014), ce catalogue devient un fichier TypeScript dans `packages/validation` ; `errors.json` et ce fichier en sont générés, et ne se modifient plus à la main.
+Ce fichier et `errors.json` sont générés depuis le catalogue TypeScript de `packages/validation` (ADR-0014) ; `pnpm api:check` échoue s'ils diffèrent.
 
 ## 1. Format commun
 
