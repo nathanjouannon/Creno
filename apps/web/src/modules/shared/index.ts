@@ -1,4 +1,4 @@
-export { getConfig, parseConfig, ConfigError, type Config } from './config';
+export { getConfig, parseConfig, resetConfig, ConfigError, type Config } from './config';
 export { clock, fixedClock, setClock, resetClock, systemClock, type Clock } from './clock';
 export { fromLocalDateTime, isValidTimezone, toLocalDateTime } from './timezone';
 export { createLogger, getLogger, maskEmail, redact, type Logger, type LogLevel } from './logger';
@@ -21,3 +21,6 @@ export {
   type RouteResult,
 } from './route';
 export { getHealthService } from './health';
+export { getPrisma } from './prisma';
+export { checkRateLimit, clientAddress, resetRateLimits } from './rate-limit';
+export { assertSameOrigin } from './origin';

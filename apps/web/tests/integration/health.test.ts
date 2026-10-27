@@ -94,7 +94,13 @@ describe('error responses conform to the Error schema of openapi.yaml', () => {
     const validation = await route(
       { auth: 'optional', body: z.object({ email: z.string().email() }) },
       () => ({}),
-    )(new Request('http://localhost/x', { method: 'POST', body: '{"email":"nope"}' }));
+    )(
+      new Request('http://localhost/x', {
+        method: 'POST',
+        headers: { origin: 'http://localhost:3000' },
+        body: '{"email":"nope"}',
+      }),
+    );
     const body = await validation.json();
     expect(conformsTo('Error', body)).toBe(true);
     expect(body.details.fields).toEqual([{ field: 'email', code: 'FIELD_EMAIL_INVALID' }]);

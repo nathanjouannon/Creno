@@ -101,9 +101,17 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 - Chaque pull request : audit des dépendances, scan de secrets, lint, tests (`environments.md`).
 - Tests de sécurité automatisés : accès refusé à chaque route d'administration pour un utilisateur, aucune donnée nominative après suppression de compte, concurrence sur la dernière place (RG-07) et sur le dernier administrateur (RG-04).
 
-## 5. Points à confirmer
+## 5. Décisions de mise en œuvre (T-007)
+
+- **Mots de passe** : argon2id (`@node-rs/argon2`), minimum OWASP : mémoire 19 456 Kio (19 Mio), 2 itérations, parallélisme 1, sel aléatoire par mot de passe. Les paramètres sont stockés dans chaque empreinte : les relever plus tard n'invalide pas les anciennes. La comparaison est faite par argon2 (temps constant).
+- **Jeton** : JWT HS256 signé avec `AUTH_SECRET` (bibliothèque `jose`), contenant l'identifiant (`sub`), `tv` (`tokenVersion`), `iat` et `exp` (30 jours). Tout autre algorithme est refusé.
+- **Exception de développement du cookie** : le préfixe `__Host-` exige `Secure`, que Safari refuse sur `http://localhost`. Hors production (`NODE_ENV` différent de `production`), le cookie s'appelle `session` et n'a pas l'attribut `Secure` ; en production il s'appelle `__Host-session` avec `Secure`.
+- **Adresse IP** : lue dans `X-Forwarded-For` seulement si `TRUST_PROXY` vaut `true`, en prenant la dernière valeur (celle ajoutée par Caddy, qui écrase ce que le client envoie). Sinon aucun en-tête n'est cru et tous les appels partagent le même compteur (usage local).
+- **Limites de débit** : fenêtre fixe d'une minute, compteurs en mémoire (une seule instance, `architecture.md`) ; `/setup`, `/auth/login`, `/password-resets/*` et `/invitations/*` partagent le budget de 10, le reste de l'API 100 ; `/health` n'est pas limité. Les compteurs sont perdus au redémarrage.
+- **`Origin`** : toute requête `POST`, `PUT`, `PATCH` ou `DELETE` dont l'en-tête `Origin` est absent ou différent de `APP_URL` est refusée (`FORBIDDEN_ORIGIN`). Les clients qui ne sont pas des navigateurs doivent donc envoyer cet en-tête.
+
+## 6. Points à confirmer
 
 - Durée de conservation des journaux (90 jours proposés).
 - Droits d'accès, de rectification et d'export des données : le MVP ne couvre que l'effacement (RG-11) ; aucune page ne permet de corriger son nom ou son e-mail. À traiter avant la mise en service pour un club réel, ou à assumer explicitement.
-- Paramètres exacts d'argon2id à fixer au squelette (phase 8).
 - Copie des sauvegardes hors serveur : décision à revoir si le club accumule des données importantes.

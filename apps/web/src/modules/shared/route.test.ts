@@ -2,10 +2,15 @@ import { AppError } from '@creno/validation';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { fakeAuthenticator, resetAuthenticator, setAuthenticator } from './auth';
+import { resetRateLimits } from './rate-limit';
 import { route } from './route';
 
 const post = (body?: unknown, url = 'http://localhost/api/things') =>
-  new Request(url, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) });
+  new Request(url, {
+    method: 'POST',
+    headers: { origin: 'http://localhost:3000' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
 
 const bodySchema = z
   .object({
@@ -127,7 +132,11 @@ describe('route envelope: error translation', () => {
     const handler = route({ auth: 'optional', body: bodySchema }, () => ({}));
     for (const request of [
       post(),
-      new Request('http://localhost/x', { method: 'POST', body: '{oops' }),
+      new Request('http://localhost/x', {
+        method: 'POST',
+        headers: { origin: 'http://localhost:3000' },
+        body: '{oops',
+      }),
     ]) {
       const response = await handler(request);
       expect(response.status).toBe(400);
@@ -236,5 +245,35 @@ describe('route envelope: logs', () => {
     expect(lines[0].requestId).toMatch(/^req_/);
     expect(stdout.join('')).not.toContain('alice@club.fr');
     expect(stdout.join('')).not.toContain('0123456789');
+  });
+});
+
+describe('route envelope: protections that come before the handler', () => {
+  afterEach(resetRateLimits);
+
+  it('[F-02] the 11th login request in a minute from one address gets 429 RATE_LIMITED with Retry-After', async () => {
+    const login = route({ auth: 'optional' }, () => ({ body: {} }));
+    const request = () => post(undefined, 'http://localhost/api/auth/login');
+    for (let i = 0; i < 10; i++) expect((await login(request())).status).toBe(200);
+    const refused = await login(request());
+    expect(refused.status).toBe(429);
+    expect(Number(refused.headers.get('Retry-After'))).toBeGreaterThan(0);
+    const body = await refused.json();
+    expect(body.code).toBe('RATE_LIMITED');
+    expect(body.details).toBeUndefined();
+  });
+
+  it('refuses a request that changes data from a foreign origin with 403 FORBIDDEN_ORIGIN before running the handler', async () => {
+    let called = false;
+    const handler = route({ auth: 'optional' }, () => ((called = true), {}));
+    const response = await handler(
+      new Request('http://localhost/api/things', {
+        method: 'POST',
+        headers: { origin: 'https://evil.example' },
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect((await response.json()).code).toBe('FORBIDDEN_ORIGIN');
+    expect(called).toBe(false);
   });
 });

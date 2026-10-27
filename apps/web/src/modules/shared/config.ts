@@ -4,7 +4,10 @@ import { z } from 'zod';
 const booleanString = z.enum(['true', 'false']).transform((v) => v === 'true');
 
 export const configSchema = z.object({
-  DATABASE_URL: z.string().min(1).regex(/^postgres(ql)?:\/\//),
+  DATABASE_URL: z
+    .string()
+    .min(1)
+    .regex(/^postgres(ql)?:\/\//),
   POSTGRES_USER: z.string().min(1),
   POSTGRES_PASSWORD: z.string().min(1),
   POSTGRES_DB: z.string().min(1),
@@ -48,4 +51,9 @@ let cached: Config | undefined;
 export function getConfig(): Config {
   cached ??= parseConfig(process.env);
   return cached;
+}
+
+/** Forgets the parsed configuration; tests call it after changing `process.env`. */
+export function resetConfig(): void {
+  cached = undefined;
 }

@@ -139,7 +139,7 @@ export function buildOpenApiDocument(): object {
     in: 'cookie',
     name: '__Host-session',
     description:
-      'JWT dans un cookie `HttpOnly`, `Secure`, `SameSite=Lax`, chemin `/`, valable 30 jours (ADR-0006).\nVérifié en base à chaque requête (utilisateur existant, `tokenVersion` identique). Absent ou refusé : `401 AUTH_REQUIRED`.\n',
+      "JWT dans un cookie `HttpOnly`, `Secure`, `SameSite=Lax`, chemin `/`, valable 30 jours (ADR-0006).\nVérifié en base à chaque requête (utilisateur existant, `tokenVersion` identique). Absent ou refusé : `401 AUTH_REQUIRED`.\nEn développement (hors production) le cookie s'appelle `session` et n'est pas `Secure`, pour fonctionner sur http://localhost (`security.md`, section 5).\n",
   });
   registry.registerComponent('headers', 'SessionCookie', {
     description: 'Pose (ou efface) le cookie de session `__Host-session`',

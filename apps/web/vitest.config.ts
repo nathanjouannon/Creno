@@ -8,11 +8,15 @@ export default defineConfig({
     projects: [
       {
         resolve: { alias },
-        test: { name: 'unit', include: ['src/**/*.test.ts'] },
+        test: { name: 'unit', include: ['src/**/*.test.ts'], setupFiles: ['./tests/setup-env.ts'] },
       },
       {
         resolve: { alias },
-        test: { name: 'integration', include: ['tests/integration/**/*.test.ts'] },
+        test: {
+          name: 'integration',
+          include: ['tests/integration/**/*.test.ts'],
+          setupFiles: ['./tests/setup-env.ts'],
+        },
       },
     ],
   },

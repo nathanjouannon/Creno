@@ -10,6 +10,8 @@ import { ZodError, type ZodTypeAny, type z } from 'zod';
 import { authenticate, type SessionUser } from './auth';
 import { clock } from './clock';
 import { toFieldErrors } from './field-errors';
+import { assertSameOrigin } from './origin';
+import { checkRateLimit } from './rate-limit';
 import { getLogger, type Logger } from './logger';
 
 /** `optional`: user if signed in, otherwise null. `user`: signed in. `admin`: signed in with the ADMIN role (RG-14). */
@@ -68,9 +70,11 @@ export function toErrorResponse(error: unknown, requestId: string, log: Logger):
   if (error instanceof AppError) {
     code = error.code;
     details = error.details;
-    const retryAfter = error.details?.retryAfter;
-    if (code === 'RATE_LIMITED' && typeof retryAfter === 'number')
+    const { retryAfter, ...rest } = error.details ?? {};
+    if (code === 'RATE_LIMITED' && typeof retryAfter === 'number') {
       headers['Retry-After'] = String(retryAfter);
+      details = Object.keys(rest).length > 0 ? rest : undefined; // errors.md: RATE_LIMITED has no details
+    }
   } else if (error instanceof ZodError) {
     code = 'VALIDATION_ERROR';
     details = { fields: toFieldErrors(error) };
@@ -127,6 +131,9 @@ export function route<
     let code: ErrorCode | undefined;
 
     try {
+      // Cheapest refusals first: request budget, then origin, then who is calling
+      checkRateLimit(request);
+      assertSameOrigin(request);
       const user = await authenticate(request);
       if (config.auth !== 'optional' && !user) throw new AppError('AUTH_REQUIRED');
       // RG-14: the role comes from the authenticator (database), never from the client
