@@ -1,4 +1,11 @@
-# Development database only. The application and proxy services are added by the deployment ticket.
+# `docker compose up -d db` starts the development database only; `docker compose up -d` starts the whole production stack
+# (docs/architecture/environments.md, sections 4 and 5). Image versions are fixed, never `latest`.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: 10m
+    max-file: '5'
+
 services:
   db:
     image: postgres:16.4-alpine
@@ -16,6 +23,63 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    logging: *logging
+
+  # Runs once per update, before the application starts (environments.md, section 4, step 3).
+  migrate:
+    image: ghcr.io/nathanjouannon/creno-migrate:${CRENO_VERSION:-dev}
+    build:
+      context: .
+      target: migrate
+    restart: 'no'
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    depends_on:
+      db:
+        condition: service_healthy
+    logging: *logging
+
+  app:
+    image: ghcr.io/nathanjouannon/creno:${CRENO_VERSION:-dev}
+    build:
+      context: .
+      target: app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env}
+      APP_URL: ${APP_URL:?set APP_URL in .env}
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+      TRUST_PROXY: ${TRUST_PROXY:-true}
+      BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY:?set BACKUP_ENCRYPTION_KEY in .env}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    logging: *logging
+
+  caddy:
+    image: caddy:2.8.4-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    logging: *logging
 
 volumes:
   db-data:
+  caddy-data:
+  caddy-config:

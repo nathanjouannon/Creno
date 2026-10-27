@@ -33,6 +33,15 @@
       "@prisma/engines",
       "prisma",
       "esbuild"
-    ]
+    ],
+    "overrides": {
+      "next>postcss": "^8.5.23",
+      "deepmerge-ts": "^8.0.0"
+    },
+    "auditConfig": {
+      "ignoreGhsas": [
+        "GHSA-mrhx-c7xc-m3w5"
+      ]
+    }
   }
 }
