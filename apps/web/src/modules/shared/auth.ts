@@ -1,5 +1,5 @@
-// The route envelope only needs "who is calling"; the real session (JWT cookie, role read from the
-// database, tokenVersion check) is provided by the auth module in T-007 through `setAuthenticator`.
+// The route envelope only needs "who is calling". By default the auth module answers (JWT cookie, user and role read
+// from the database, tokenVersion check); tests replace it with `setAuthenticator`.
 export type UserRole = 'USER' | 'ADMIN';
 
 export interface SessionUser {
@@ -10,9 +10,13 @@ export interface SessionUser {
 /** Resolves the caller of a request, or null when there is no valid session. */
 export type Authenticator = (request: Request) => Promise<SessionUser | null>;
 
-const anonymous: Authenticator = async () => null;
+// Loaded on first use: the auth module itself depends on `shared`.
+const sessionAuthenticator: Authenticator = async (request) => {
+  const { authenticateRequest } = await import('@/modules/auth');
+  return authenticateRequest(request);
+};
 
-let current: Authenticator = anonymous;
+let current: Authenticator = sessionAuthenticator;
 
 export const authenticate: Authenticator = (request) => current(request);
 
@@ -21,7 +25,7 @@ export function setAuthenticator(next: Authenticator): void {
 }
 
 export function resetAuthenticator(): void {
-  current = anonymous;
+  current = sessionAuthenticator;
 }
 
 /** Test double: always returns the given user (or nobody). */
