@@ -20,7 +20,8 @@
     "db:seed": "pnpm --filter @creno/web db:seed",
     "api:generate": "pnpm --filter @creno/validation api:generate",
     "api:check": "pnpm --filter @creno/validation api:check",
-    "api:lint": "redocly lint docs/api/openapi.yaml"
+    "api:lint": "redocly lint docs/api/openapi.yaml",
+    "test:e2e": "pnpm --filter @creno/web test:e2e"
   },
   "devDependencies": {
     "@redocly/cli": "^2.71.1",

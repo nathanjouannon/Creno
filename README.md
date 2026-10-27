@@ -53,7 +53,7 @@ La chaîne `.github/workflows/ci.yml` s'exécute sur chaque pull request et chaq
 **Protéger `main`** (réglage GitHub, à faire une fois par le propriétaire du dépôt) : Settings → Branches → Add branch ruleset (ou règle de protection) sur `main`, avec :
 
 - _Require a pull request before merging_ (une approbation) ;
-- _Require status checks to pass_ : `Quality and unit tests`, `Integration tests and migrations`, `Secret scan`, `Dependency audit` ;
+- _Require status checks to pass_ : `Quality and unit tests`, `Integration tests and migrations`, `End-to-end tests`, `Secret scan`, `Dependency audit` ;
 - _Require branches to be up to date before merging_ ;
 - _Block force pushes_ et _Restrict deletions_.
 

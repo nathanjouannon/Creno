@@ -74,6 +74,42 @@ jobs:
       # The integration suite also applies, undoes and replays every migration on its own database (environments.md, section 6)
       - run: pnpm test:integration
 
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16.4-alpine
+        env:
+          POSTGRES_USER: creno
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: creno
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U creno -d creno"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      # The suite creates its own database (creno_e2e) next to this one
+      DATABASE_URL: postgresql://creno:ci-only-password@localhost:5432/creno
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.19
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @creno/web exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - name: Keep the traces of a failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: apps/web/test-results
+          retention-days: 7
+
   secrets:
     name: Secret scan
     runs-on: ubuntu-24.04
@@ -105,7 +141,7 @@ jobs:
   image:
     name: Docker image
     if: github.event_name == 'push'
-    needs: [quality, integration, secrets, audit]
+    needs: [quality, integration, e2e, secrets, audit]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:

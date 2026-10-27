@@ -15,22 +15,27 @@
     "postinstall": "prisma generate --schema prisma/schema.prisma",
     "db:migrate": "tsx --env-file-if-exists=../../.env prisma/tools.ts migrate",
     "db:rollback": "tsx --env-file-if-exists=../../.env prisma/tools.ts rollback",
-    "db:seed": "tsx --env-file-if-exists=../../.env prisma/seed.ts"
+    "db:seed": "tsx --env-file-if-exists=../../.env prisma/seed.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@creno/validation": "workspace:*",
+    "@hookform/resolvers": "^3.10.0",
     "@node-rs/argon2": "^2.2.2",
     "@prisma/client": "^6.19.3",
     "jose": "^5.10.0",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-hook-form": "^7.91.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@creno/tokens": "workspace:*",
     "@eslint/js": "^9.0.0",
     "@next/eslint-plugin-next": "^15.5.28",
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
