@@ -238,6 +238,7 @@ Tous les points sont tranchés ; les tokens correspondants sont dans `tokens.jso
 - `size.avatar` (28 px, maquette B3) et `size.icon` (20 px) ajoutés.
 - `shadow.modal` : non créé, `color.overlay` suffit. Un nouveau besoin ouvrira un ticket.
 - `motion.fast` : non créé, aucune animation au MVP.
+- `space.none` ajouté (0 px, T-010) : les échelles numériques de Tailwind sont supprimées, `right-0` ou `inset-0` ne produisent donc rien ; `right-none`, `inset-none` collent un élément à un bord (fenêtre modale, menu, toasts).
 - Bordures : `color.border-strong` pour les champs, `color.border` pour les cartes au repos. La maquette B3 est déjà conforme pour les cartes ; la description de `color.border-strong` dans `tokens.json` est corrigée en conséquence.
 
 ## 7. Correspondance écrans → composants

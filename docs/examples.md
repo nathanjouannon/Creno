@@ -1,6 +1,6 @@
 # Exemples de code de référence – Créno
 
-Statut : version 1.0 (2026-10-26). Extraits courts du style attendu, tous sur le même cas : **s'inscrire à un créneau** (F-07, RG-07, RG-08, RG-09, RG-15, `POST /slots/{slotId}/registrations`). Ils appliquent `conventions.md`. Aucun code n'existe encore : les signatures des outils partagés (`route`, `AppError`, `clock`, composant `Button`) sont celles visées par T-004, T-007 et T-010. Quand le vrai code existe, la tâche qui l'écrit (T-010, T-014) remplace l'extrait correspondant par un renvoi vers le fichier réel, qui devient la référence.
+Statut : version 1.0 (2026-10-26). Extraits courts du style attendu, tous sur le même cas : **s'inscrire à un créneau** (F-07, RG-07, RG-08, RG-09, RG-15, `POST /slots/{slotId}/registrations`). Ils appliquent `conventions.md`. Les sections 1 à 5 sont encore des extraits visés par T-004, T-007 et T-014 ; les sections 6 et 7 renvoient vers le code réel de T-010. Quand le vrai code existe, la tâche qui l'écrit remplace l'extrait correspondant par un renvoi vers le fichier réel, qui devient la référence.
 
 ## 1. Schéma de validation (`packages/validation`)
 
@@ -152,53 +152,19 @@ it('[F-07 S3] RG-07: the last seat goes to exactly one of 50 simultaneous reques
 });
 ```
 
-## 6. Composant : classes issues des tokens, texte toujours présent (`components/SlotStatusTag.tsx`)
+## 6. Composant : classes issues des tokens, texte toujours présent
 
-```tsx
-type Props = { tone: 'neutral' | 'success' | 'danger'; children: string };
+Référence réelle (T-010) : `apps/web/src/components/Alert/Alert.tsx` et `apps/web/src/components/Card/Card.tsx`. Une table `variante → classes de tokens`, aucun style en dur, et le sens porté par le texte, jamais par la seule couleur (`design/components.md`, section 1). `SlotStatusTag`, composant métier, suivra le même modèle avec le ticket d'écran qui le crée.
 
-const toneClasses = {
-  neutral: 'border-border text-text-muted',
-  success: 'border-success text-success',
-  danger: 'border-danger bg-danger-surface text-danger',
-} as const;
+## 7. Composant avec action : chargement, erreur du catalogue, nom accessible
 
-// design/components.md, SlotStatusTag: the meaning never relies on color alone, so the text is always shown
-export function SlotStatusTag({ tone, children }: Props) {
-  return (
-    <span className={`rounded-tag border px-sm text-small font-medium ${toneClasses[tone]}`}>{children}</span>
-  );
-}
-```
+Références réelles (T-010) :
+- `apps/web/src/components/Button/Button.tsx` : état `loading` (libellé conservé, action bloquée, jamais de double envoi).
+- `apps/web/src/components/ConfirmDialog/ConfirmDialog.tsx` : une action asynchrone dont l'erreur d'API s'affiche avec le message du catalogue ; on décide sur le `code`, jamais sur le `message`.
+- `apps/web/src/components/Form/Form.tsx` et `FormField/FormField.tsx` : erreurs de champ reliées par `aria-describedby`, `aria-invalid`.
+- `apps/web/src/components/Toast/Toast.tsx` : retour d'une action (`useToast`).
 
-## 7. Composant avec action : état de chargement, erreur du catalogue, nom accessible (`components/RegisterButton.tsx`)
-
-```tsx
-'use client';
-
-type Props = { slotId: number; slotLabel: string; onChanged: () => void };
-
-export function RegisterButton({ slotId, slotLabel, onChanged }: Props) {
-  const [loading, setLoading] = useState(false);
-  const { showToast } = useToast();
-
-  async function handleClick() {
-    setLoading(true);
-    const result = await apiClient.registerToSlot(slotId);
-    setLoading(false);
-
-    // Show the catalog message, but decide on the code, never on the message
-    if (!result.ok) showToast({ tone: 'danger', message: result.error.message });
-    onChanged(); // always reload: the true state of the slot may have changed (ADR-0008, no real time)
-  }
-
-  return (
-    <Button variant="primary" size="block" loading={loading} aria-label={`Je m'inscris au créneau ${slotLabel}`} onClick={handleClick}>
-      Je m'inscris
-    </Button>
-  );
-}
-```
+Le bouton d'inscription (`RegisterButton`) reste à écrire avec T-014 ; il assemblera ces composants et rechargera l'état du créneau après chaque réponse (ADR-0008).
 
 ## Ce que ces extraits montrent
 

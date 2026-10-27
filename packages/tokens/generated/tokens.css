@@ -39,6 +39,7 @@
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-bold: 700;
+  --spacing-none: 0px;
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
@@ -63,6 +64,7 @@
   --font-size-large: var(--text-large);
   --font-size-title: var(--text-title);
   --font-line-height: 1.5;
+  --space-none: var(--spacing-none);
   --space-xs: var(--spacing-xs);
   --space-sm: var(--spacing-sm);
   --space-md: var(--spacing-md);

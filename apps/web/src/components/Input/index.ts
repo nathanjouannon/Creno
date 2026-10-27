@@ -1,1 +1,10 @@
-export { EmailInput, PasswordInput, SelectInput, TextInput } from './Input';
+export {
+  DateInput,
+  EmailInput,
+  NumberInput,
+  PasswordInput,
+  SelectInput,
+  Textarea,
+  TextInput,
+  TimeInput,
+} from './Input';
