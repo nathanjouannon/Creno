@@ -1,11 +1,12 @@
 import { AppError } from '@creno/validation';
-import type { SessionUser } from '@/modules/shared';
+import type { Clock, SessionUser } from '@/modules/shared';
 import type { MemberRecord, MembersRepository } from './members.repository';
 
 type Role = 'USER' | 'ADMIN';
 
 interface Dependencies {
   repository: MembersRepository;
+  clock: Clock;
   toUserView: (user: MemberRecord) => unknown;
 }
 
@@ -27,7 +28,12 @@ export function decideRoleChange(input: {
   return 'USER';
 }
 
-export function createMembersService({ repository, toUserView }: Dependencies) {
+/** RG-04: the last administrator cannot delete their account. */
+export function assertAccountDeletable(user: { role: Role }, adminCount: number): void {
+  if (user.role === 'ADMIN' && adminCount <= 1) throw new AppError('USER_LAST_ADMIN');
+}
+
+export function createMembersService({ repository, clock, toUserView }: Dependencies) {
   return {
     /** F-10, RG-14: the route envelope has checked the administrator. */
     async list() {
@@ -54,6 +60,31 @@ export function createMembersService({ repository, toUserView }: Dependencies) {
         return decided === null ? target : tx.setRole(userId, decided);
       });
       return toUserView(member);
+    },
+
+    /** F-11 scenario 3: lets the interface refuse the last administrator at the click, before any confirmation. */
+    async checkAccountDeletion(actor: SessionUser) {
+      await repository.inDeletionTransaction(async (tx) => {
+        const self = await tx.find(actor.id);
+        if (!self) throw new AppError('AUTH_REQUIRED');
+        assertAccountDeletable(self, await tx.countAdmins());
+      });
+    },
+
+    /**
+     * F-11, RG-11: unstarted registrations are freed, the others lose their owner ("ancien membre"), then the whole
+     * `User` row goes, so no personal data survives. Serializable, so two administrators cannot both leave (RG-04).
+     */
+    async deleteAccount(actor: SessionUser) {
+      await repository.inDeletionTransaction(async (tx) => {
+        const self = await tx.find(actor.id);
+        if (!self) throw new AppError('AUTH_REQUIRED');
+        assertAccountDeletable(self, await tx.countAdmins());
+        await tx.deleteRegistrationsOfUnstartedSlots(actor.id, clock.now());
+        await tx.anonymizeRegistrations(actor.id);
+        await tx.deleteResetTokens(actor.id);
+        await tx.deleteUser(actor.id);
+      });
     },
   };
 }

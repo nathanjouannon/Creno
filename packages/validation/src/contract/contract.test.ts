@@ -12,9 +12,9 @@ type Doc = {
 const doc = buildOpenApiDocument() as Doc;
 
 describe('route registry', () => {
-  it('declares the 27 operations of the contract with unique operation ids', () => {
-    expect(routes).toHaveLength(27);
-    expect(new Set(routes.map((r) => r.operationId)).size).toBe(27);
+  it('declares the 28 operations of the contract with unique operation ids', () => {
+    expect(routes).toHaveLength(28);
+    expect(new Set(routes.map((r) => r.operationId)).size).toBe(28);
   });
 
   it('RG-14: every route that is not public declares its required role, and admin routes can answer 403 or 401', () => {
@@ -47,11 +47,11 @@ describe('route registry', () => {
 });
 
 describe('generated OpenAPI document', () => {
-  it('has the 27 operations, each with its role and error codes', () => {
+  it('has the 28 operations, each with its role and error codes', () => {
     const operations = Object.values(doc.paths).flatMap((item) =>
       Object.values(item).filter((op) => op.operationId),
     );
-    expect(operations).toHaveLength(27);
+    expect(operations).toHaveLength(28);
     for (const op of operations) expect(['public', 'user', 'admin']).toContain(op['x-auth']);
     expect(doc.paths['/setup']!.post!['x-auth']).toBe('public');
     expect(doc.paths['/users']!.get!['x-auth']).toBe('admin');

@@ -16,6 +16,15 @@ export interface RoleTransaction {
   setRole(userId: number, role: UserRole): Promise<MemberRecord>;
 }
 
+export interface DeletionTransaction {
+  find(userId: number): Promise<MemberRecord | null>;
+  countAdmins(): Promise<number>;
+  deleteRegistrationsOfUnstartedSlots(userId: number, now: Date): Promise<void>;
+  anonymizeRegistrations(userId: number): Promise<void>;
+  deleteResetTokens(userId: number): Promise<void>;
+  deleteUser(userId: number): Promise<void>;
+}
+
 const select = {
   id: true,
   firstName: true,
@@ -26,6 +35,22 @@ const select = {
 } as const;
 
 const RETRIES = 6;
+
+async function serializable<T>(
+  prisma: PrismaClient,
+  work: (client: Prisma.TransactionClient) => Promise<T>,
+): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await prisma.$transaction(work, {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      });
+    } catch (error) {
+      // Two changes at the same moment: the refused one is replayed
+      if (!isSerializationFailure(error) || attempt >= RETRIES) throw error;
+    }
+  }
+}
 
 export function createMembersRepository(prisma: PrismaClient) {
   return {
@@ -43,25 +68,38 @@ export function createMembersRepository(prisma: PrismaClient) {
      * their right at the same time both read two administrators; the database refuses the second write, which is
      * replayed and now reads one. The decision itself stays in the service.
      */
-    async inRoleTransaction<T>(work: (tx: RoleTransaction) => Promise<T>): Promise<T> {
-      for (let attempt = 1; ; attempt++) {
-        try {
-          return await prisma.$transaction(
-            (client) =>
-              work({
-                find: (userId) => client.user.findUnique({ where: { id: userId }, select }),
-                countAdmins: () => client.user.count({ where: { role: 'ADMIN' } }),
-                setRole: (userId, role) =>
-                  client.user.update({ where: { id: userId }, data: { role }, select }),
-              }),
-            { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-          );
-        } catch (error) {
-          // Two role changes at the same moment: the refused one is replayed
-          if (!isSerializationFailure(error) || attempt >= RETRIES) throw error;
-        }
-      }
-    },
+    inRoleTransaction: <T>(work: (tx: RoleTransaction) => Promise<T>): Promise<T> =>
+      serializable(prisma, (client) =>
+        work({
+          find: (userId) => client.user.findUnique({ where: { id: userId }, select }),
+          countAdmins: () => client.user.count({ where: { role: 'ADMIN' } }),
+          setRole: (userId, role) =>
+            client.user.update({ where: { id: userId }, data: { role }, select }),
+        }),
+      ),
+
+    /** RG-04, RG-11: same guarantee for the last administrator who deletes their account. */
+    inDeletionTransaction: <T>(work: (tx: DeletionTransaction) => Promise<T>): Promise<T> =>
+      serializable(prisma, (client) =>
+        work({
+          find: (userId) => client.user.findUnique({ where: { id: userId }, select }),
+          countAdmins: () => client.user.count({ where: { role: 'ADMIN' } }),
+          deleteRegistrationsOfUnstartedSlots: async (userId, now) => {
+            await client.registration.deleteMany({
+              where: { userId, slot: { startsAt: { gt: now } } },
+            });
+          },
+          anonymizeRegistrations: async (userId) => {
+            await client.registration.updateMany({ where: { userId }, data: { userId: null } });
+          },
+          deleteResetTokens: async (userId) => {
+            await client.resetToken.deleteMany({ where: { userId } });
+          },
+          deleteUser: async (userId) => {
+            await client.user.delete({ where: { id: userId } });
+          },
+        }),
+      ),
   };
 }
 

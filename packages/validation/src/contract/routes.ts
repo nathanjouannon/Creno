@@ -236,6 +236,21 @@ export const routes: RouteDefinition[] = [
     ],
   },
   {
+    operationId: 'checkAccountDeletion',
+    method: 'get',
+    path: '/me/deletion-check',
+    tag: 'Authentification',
+    summary: 'Vérifier que son compte peut être supprimé (F-11, RG-04)',
+    description:
+      "Ne supprime rien. Permet à l'interface de refuser dès le clic, sans écran de confirmation, le dernier administrateur ; `DELETE /me` refait le contrôle dans sa transaction.",
+    auth: 'user',
+    success: { status: 204, description: 'Le compte peut être supprimé' },
+    errors: [
+      'Unauthenticated',
+      error(409, ['USER_LAST_ADMIN'], 'Dernier administrateur (`USER_LAST_ADMIN`, RG-04)'),
+    ],
+  },
+  {
     operationId: 'checkPasswordReset',
     method: 'get',
     path: '/password-resets/{token}',
