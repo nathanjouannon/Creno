@@ -4,9 +4,10 @@ import { test as base, type APIRequestContext, type TestInfo } from '@playwright
 
 export const database = new PrismaClient({ datasourceUrl: process.env.E2E_DATABASE_URL });
 
-/** Back to a new instance: no club, no user, no failed login. */
+/** Back to a new instance: no event, no club, no user, no failed login. */
 export async function resetInstance() {
   await database.$transaction([
+    database.event.deleteMany(),
     database.user.deleteMany(),
     database.club.deleteMany(),
     database.loginAttempt.deleteMany(),

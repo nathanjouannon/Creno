@@ -68,8 +68,9 @@ export function Form({
       return;
     }
     const target = errorMap?.[error.code];
+    // Under the field, the catalog message of the API, with its figures (« 5 personnes sont déjà inscrites… »)
     if (target && 'field' in target)
-      setError(target.field, { type: 'server', message: error.code }, { shouldFocus: true });
+      setError(target.field, { type: 'server', message: error.message }, { shouldFocus: true });
     else setGlobalError(target?.message ?? error.message);
   }
 
@@ -94,7 +95,16 @@ export function Form({
     <FormProvider {...methods}>
       <SendingContext.Provider value={sending}>
         {/* method=post: before the page is interactive a submission must never put the fields (a password) in the URL */}
-        <form method="post" onSubmit={submit} noValidate className="flex flex-col gap-md">
+        <form
+          method="post"
+          onSubmit={(event) => {
+            // A form opened in a dialog over another form: React events cross the portal, the one below stays put
+            event.stopPropagation();
+            return submit(event);
+          }}
+          noValidate
+          className="flex flex-col gap-md"
+        >
           {globalError ? <Alert>{globalError}</Alert> : null}
           {children}
           <Button type="submit" variant="primary" size="block" loading={sending}>

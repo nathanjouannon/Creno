@@ -14,6 +14,8 @@ interface Props {
   required?: boolean;
   /** Error look without a message here (the message is shown by another field of the same group). */
   invalid?: boolean;
+  /** Wording of a code for this field only, as the catalog asks (`FIELD_REQUIRED` of `title`: « Le titre est obligatoire. »). */
+  messages?: Partial<Record<string, string>>;
   /** An `Input` of components/Input; it receives its wiring from here. */
   children: ReactElement<Record<string, unknown>>;
 }
@@ -24,7 +26,7 @@ export function fieldMessage(code: string): string {
 }
 
 /** Label, control, help and error of one field, linked for assistive technology. */
-export function FormField({ name, label, help, required, invalid, children }: Props) {
+export function FormField({ name, label, help, required, invalid, messages, children }: Props) {
   const { register, formState } = useFormContext();
   const sending = useFormSending();
   const id = useId();
@@ -53,7 +55,7 @@ export function FormField({ name, label, help, required, invalid, children }: Pr
           {help}
         </p>
       ) : null}
-      {code ? <FieldError id={errorId}>{fieldMessage(code)}</FieldError> : null}
+      {code ? <FieldError id={errorId}>{messages?.[code] ?? fieldMessage(code)}</FieldError> : null}
     </div>
   );
 }

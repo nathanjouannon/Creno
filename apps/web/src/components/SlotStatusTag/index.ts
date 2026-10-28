@@ -1,0 +1,1 @@
+export { SlotStatusTag } from './SlotStatusTag';

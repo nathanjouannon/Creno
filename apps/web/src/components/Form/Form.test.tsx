@@ -93,6 +93,7 @@ describe('Form', () => {
     await waitFor(() =>
       expect(screen.getByLabelText('Titre')).toHaveAttribute('aria-invalid', 'true'),
     );
+    expect(screen.getByText('unused')).toBeInTheDocument();
   });
 
   it('resetOnError empties the listed fields after a failure', async () => {
