@@ -93,6 +93,7 @@ CREATE TABLE registrations (
 CREATE INDEX registrations_user_id_idx ON registrations (user_id);
 
 -- Invitation (RG-02). Lien réutilisable ; la validité est calculée : valide tant que now() < events.starts_at.
+-- `token` contient l'empreinte SHA-256 du jeton (hexadécimal), jamais le jeton lui-même (security.md).
 CREATE TABLE invitations (
     id          INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     event_id    INTEGER     NOT NULL REFERENCES events (id) ON DELETE CASCADE,

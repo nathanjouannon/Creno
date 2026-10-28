@@ -29,6 +29,8 @@ interface Props {
   onSubmit: (values: FieldValues) => Promise<ApiResult>;
   submitLabel: string;
   errorMap?: Record<string, ErrorTarget>;
+  /** Called with the names of the fields the schema refused, before anything is sent. */
+  onInvalid?: (fields: string[]) => void;
   /** Fields to empty after a failure (the password of a login). */
   resetOnError?: string[];
   children: ReactNode;
@@ -44,6 +46,7 @@ export function Form({
   onSubmit,
   submitLabel,
   errorMap,
+  onInvalid,
   resetOnError = [],
   children,
 }: Props) {
@@ -74,7 +77,9 @@ export function Form({
     else setGlobalError(target?.message ?? error.message);
   }
 
-  const submit = handleSubmit(async (values) => {
+  const submit = handleSubmit(onSubmitValid, (errors) => onInvalid?.(Object.keys(errors)));
+
+  async function onSubmitValid(values: FieldValues) {
     if (sendingNow.current) return; // never a double submission
     sendingNow.current = true;
     setSending(true);
@@ -89,7 +94,7 @@ export function Form({
       sendingNow.current = false;
       setSending(false);
     }
-  });
+  }
 
   return (
     <FormProvider {...methods}>

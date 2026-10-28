@@ -13,6 +13,9 @@ export const config = {
 // Pages a visitor may open (flow 00). Every other page, even one that does not exist, needs a session: a new
 // public page (invitation, password reset) is added here by the ticket that creates it.
 const PUBLIC_PAGES = ['/connexion', '/installation'];
+// F-01: the invitation link, opened by someone without an account
+const isPublicPage = (pathname: string) =>
+  PUBLIC_PAGES.includes(pathname) || pathname.startsWith('/invitation/');
 
 /**
  * Flow 00. Before the installation, every page leads to the installation page (flow 09). Afterwards, a visitor is
@@ -27,7 +30,7 @@ export async function middleware(request: NextRequest) {
       ? NextResponse.next()
       : redirectTo(request, '/installation');
   }
-  if (PUBLIC_PAGES.includes(pathname)) return NextResponse.next();
+  if (isPublicPage(pathname)) return NextResponse.next();
   if (await getAuthService().resolveSession(request)) return NextResponse.next();
 
   const destination = safeDestination(`${pathname}${search}`);

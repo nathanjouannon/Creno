@@ -8,10 +8,11 @@ import { EmptyState } from '@/components/EmptyState';
 import { EventHeader } from '@/components/EventHeader';
 import { SlotCard } from '@/components/SlotCard';
 import { SlotForm, emptySlotForm, type SlotFormValues } from '@/components/SlotForm';
+import { LinkDialog } from '@/components/LinkDialog';
 import { useToast } from '@/components/Toast';
 import { deleteJson, patchJson, postJson, type ApiResult } from '@/lib/api-client';
 import type { Club, EventDetail, Slot } from '@/lib/api-types';
-import { formatTime, toLocalParts } from '@/lib/dates';
+import { formatDayTime, formatTime, toLocalParts } from '@/lib/dates';
 import { useApi } from '@/lib/use-api';
 import { both, ScreenState } from './ScreenState';
 
@@ -42,6 +43,7 @@ type Pending =
   | { kind: 'edit-slot'; slot: Slot }
   | { kind: 'unregister'; slot: Slot }
   | { kind: 'remove-registration'; slot: Slot; attendee: Slot['attendees'][number] }
+  | { kind: 'invitation'; url: string; expiresAt: string }
   | null;
 
 interface Props {
@@ -56,6 +58,7 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
   const { showToast } = useToast();
   const [pending, setPending] = useState<Pending>(null);
   const [busy, setBusy] = useState(false);
+  const [inviting, setInviting] = useState(false);
   // The slot whose registration is under way: only its button is blocked
   const [registeringSlot, setRegisteringSlot] = useState<number | null>(null);
 
@@ -111,6 +114,18 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
     return result;
   }
 
+  // F-01, RG-02: a new link each time; the API refuses once the event has started
+  async function invite() {
+    setInviting(true);
+    const result = await postJson<{ url: string; expiresAt: string }>(
+      `/api/events/${event.id}/invitations`,
+      undefined,
+    );
+    setInviting(false);
+    if (result.ok) setPending({ kind: 'invitation', ...result.data });
+    else await settle(result);
+  }
+
   // F-09, RG-08: the administrator removes anyone, even from a started slot
   async function removeRegistration(registrationId: number): Promise<ApiResult> {
     const result = await deleteJson(`/api/registrations/${registrationId}`);
@@ -129,6 +144,17 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
         timeZone={timeZone}
         actions={
           <>
+            {/* RG-02: no invitation once the event has started */}
+            {event.status === 'upcoming' ? (
+              <Button
+                variant="secondary"
+                loading={inviting}
+                onClick={invite}
+                className="basis-full"
+              >
+                Inviter des bénévoles
+              </Button>
+            ) : null}
             <Button
               variant="secondary"
               onClick={() => router.push(`/events/${event.id}/edit`)}
@@ -192,6 +218,15 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
         >
           {`Tu ne seras plus inscrit(e) au créneau ${slotHours(pending.slot, timeZone)}. Ta place sera libérée.`}
         </ConfirmDialog>
+      ) : null}
+
+      {pending?.kind === 'invitation' ? (
+        <LinkDialog
+          variant="invitation"
+          link={pending.url}
+          validUntil={formatDayTime(pending.expiresAt, timeZone)}
+          onClose={close}
+        />
       ) : null}
 
       {pending?.kind === 'remove-registration' ? (
