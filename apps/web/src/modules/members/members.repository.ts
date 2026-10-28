@@ -46,8 +46,10 @@ async function serializable<T>(
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       });
     } catch (error) {
-      // Two changes at the same moment: the refused one is replayed
+      // Two changes at the same moment: the refused one is replayed. A random, growing pause keeps the two from
+      // replaying in lockstep and conflicting again until the attempts run out (seen on slow CI runners).
       if (!isSerializationFailure(error) || attempt >= RETRIES) throw error;
+      await new Promise((resolve) => setTimeout(resolve, Math.random() * 10 * attempt));
     }
   }
 }
