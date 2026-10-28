@@ -59,7 +59,7 @@ Ils découlent de `architecture.md`, section 5, et de `security.md`, section 4 ;
 
 ## 5. Des stories aux tests
 
-Convention : un scénario de `user-stories.md` (par exemple « F-07, scénario 3 ») est couvert par un test nommé `[F-07 S3] …`. La matrice ci-dessous dit à quel niveau et dans quelle tâche ; elle est complétée en T-023.
+Convention : un scénario de `user-stories.md` (par exemple « F-07, scénario 3 ») est couvert par un test nommé `[F-07 S3] …`. La matrice ci-dessous dit à quel niveau et dans quelle tâche ; elle a été relue en T-023 (`recette-mvp.md`, section 2) : chaque scénario MVP porte son identifiant dans au moins un test.
 
 | Story | Scénarios | Intégration (tâche) | E2E (tâche) | Remarques |
 | --- | --- | --- | --- | --- |
@@ -69,6 +69,7 @@ Convention : un scénario de `user-stories.md` (par exemple « F-07, scénario 3
 | F-01 Invitation | 1 à 7 | 1 à 6 (T-017) | 1 à 7 (T-017) | |
 | F-04 Événement | 1 à 8 | 1 à 8 (T-011) | 1 à 7 (T-013) | Scénario 8 (fuseau) : unitaire |
 | F-05 Créneaux | 1 à 8 | 1 à 8 (T-012) | 1, 3 ter, 4, 6 (T-013) | |
+| F-20 Mon profil | 1 à 6 | 2 à 6 (T-025) | 1 à 5 (T-025) | Scénario 6 : intégration et unitaire seulement |
 | F-21 Description de créneau | 1 à 6 | 1 à 3, 5 (T-024) | 1 à 6 (T-024) | Scénario 3 : unitaire (limite) et intégration ; scénario 4 : composant et E2E |
 | F-06 Consulter | 1 à 5 | 1 à 4 bis (T-014) | 1 à 5 (T-015) | |
 | F-07 S'inscrire | 1 à 5 | 1 à 5 (T-014) | 1 à 4 ter (T-015) | Scénario 3 : concurrence en intégration, deux navigateurs en E2E |

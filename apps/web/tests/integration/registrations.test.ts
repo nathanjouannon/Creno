@@ -141,7 +141,7 @@ describe('POST /slots/{slotId}/registrations (F-07)', () => {
     expect(await countRegistrations(slot.id)).toBe(3);
   });
 
-  it('[F-07 S2] RG-07: refuses a full slot with SLOT_FULL', async () => {
+  it('[F-07 S2] [F-05 S2] RG-07: refuses a full slot with SLOT_FULL', async () => {
     const slot = await insertSlot((await insertEvent()).id, 2, 2);
     const response = await register(slot.id);
     expect(response.status).toBe(409);
