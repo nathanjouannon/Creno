@@ -37,6 +37,17 @@ Les états communs à tous les composants interactifs (`default`, `hover`, `focu
 - Variantes : une seule.
 - États : `closed` · `open` (E1) · `focus`.
 
+### AppFooter
+- Rôle : pied de page de **toutes** les pages (publiques, connectées, administrateur), avec le lien « Mentions d'information » vers la page publique `/mentions` (RGPD, T-021). `font.size-small`, `color.text-muted`, bordure haute `color.border`, `space.md` de marge ; repère `contentinfo`.
+- Variantes : une seule. États : `default` · `focus` (le lien est un `Link`).
+
+### PrivacyNotice
+- Rôle : rappel court sous les champs d'un formulaire de création de compte (A1 invitation, A10 installation) : ce que le club garde (nom, prénom, e-mail) et pourquoi, avec le lien vers les mentions d'information, ouvert dans un nouvel onglet pour ne pas perdre la saisie. `font.size-small`, `color.text-muted`.
+- Variantes : une seule.
+
+### LegalNotice (page `/mentions`)
+- Rôle : page publique de mentions d'information : responsable, finalité, données, durée, droits. Titre `PageTitle`, sections en `h2`, `PageContainer` `narrow`. Texte seulement, aucun composant interactif.
+
 ### PageContainer
 - Rôle : zone de contenu : `size.content-max` centrée, `space.md` de marge sur mobile. Variante `narrow` en `size.form-max` pour les écrans A1 à A9.
 
@@ -170,8 +181,8 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 
 ### SlotStatusTag
 - Rôle : pastille d'état en haut à droite d'un créneau ; `radius.tag`, `font.size-small`, `font.weight-medium`.
-- Variantes : `neutral` (bordure `color.border`, texte `color.text-muted` : places restantes, Sans limite, Commencé) · `success` (bordure `color.success`, texte `color.text` : Inscrit) · `danger` (bordure `color.danger`, fond `color.danger-surface`, texte `color.text` : Complet) · `counter` (« 3 / 4 », version admin).
-- Contraste (T-015) : `color.success` sur blanc (3,29:1) et `color.danger` sur `color.danger-surface` (3,94:1) sont sous les 4,5:1 exigés pour un texte de `font.size-small` (WCAG 2.2 AA). La couleur reste sur la bordure ; le texte est en `color.text`.
+- Variantes : `neutral` (bordure `color.border`, texte `color.text-muted` : places restantes, Sans limite, Commencé) · `success` (bordure et texte `color.success` : Inscrit) · `danger` (bordure et texte `color.danger`, fond `color.danger-surface` : Complet) · `counter` (« 3 / 4 », version admin).
+- Contraste (T-021) : les tokens `color.success`, `color.danger` et `color.text-muted` ont été assombris pour atteindre 4,5:1 (WCAG 2.2 AA) sur leurs fonds ; un test de `packages/tokens` garde les ratios.
 - Règle : le sens ne repose pas sur la seule couleur, le texte est toujours présent.
 
 ### AttendeeList / AttendeeChip
@@ -240,7 +251,7 @@ Tous les points sont tranchés ; les tokens correspondants sont dans `tokens.jso
 - `shadow.modal` : non créé, `color.overlay` suffit. Un nouveau besoin ouvrira un ticket.
 - `motion.fast` : non créé, aucune animation au MVP.
 - `space.none` ajouté (0 px, T-010) : les échelles numériques de Tailwind sont supprimées, `right-0` ou `inset-0` ne produisent donc rien ; `right-none`, `inset-none` collent un élément à un bord (fenêtre modale, menu, toasts).
-- Contraste (T-015) : voir `SlotStatusTag`, section 4. `color.text-muted` sur `color.surface` fait 4,39:1 (survol d'un `EventListItem`) : à corriger dans les tokens, hors périmètre de T-015.
+- Contraste (T-021) : `color.text-muted` (`#5B6472`), `color.success` (`#15803D`) et `color.danger` (`#B91C1C`) corrigés pour atteindre 4,5:1 sur blanc, `color.surface` et leurs fonds ; le contournement de `SlotStatusTag` (texte en `color.text`) est retiré. Garde : `packages/tokens/tests/contrast.test.ts`.
 - Bordures : `color.border-strong` pour les champs, `color.border` pour les cartes au repos. La maquette B3 est déjà conforme pour les cartes ; la description de `color.border-strong` dans `tokens.json` est corrigée en conséquence.
 
 ## 7. Correspondance écrans → composants

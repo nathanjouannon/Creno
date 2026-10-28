@@ -95,7 +95,7 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 - Données personnelles limitées au nom, prénom et e-mail (RG-01) ; hébergement dans l'Union européenne ; aucun cookie tiers, le cookie de session est strictement nécessaire.
 - Effacement à la demande de l'utilisateur par la suppression du compte (RG-11).
 - Purge régulière : lignes de `login_attempts` sans blocage depuis plus de 24 heures, jetons de réinitialisation expirés ou utilisés depuis plus de 30 jours.
-- Mentions d'information (identité du responsable, finalité, durée, droits) à afficher à l'inscription et dans une page dédiée.
+- Mentions d'information (identité du responsable, finalité, durée, droits) à afficher à l'inscription et dans une page dédiée : page publique `/mentions`, lien dans le pied de page de chaque page (T-021). Le responsable est le club (`Club.name`), joignable par un administrateur.
 
 **Dépendances et intégration continue**
 - Chaque pull request : audit des dépendances, scan de secrets, lint, tests (`environments.md`).
@@ -115,5 +115,5 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 ## 6. Points à confirmer
 
 - Durée de conservation des journaux (90 jours proposés).
-- Droits d'accès, de rectification et d'export des données : le MVP ne couvre que l'effacement (RG-11) ; aucune page ne permet de corriger son nom ou son e-mail. À traiter avant la mise en service pour un club réel, ou à assumer explicitement.
+- ~~Droits d'accès, de rectification et d'export des données~~ **Tranché le 2026-10-28 (T-021)** : le MVP couvre l'effacement (RG-11) ; l'accès, la rectification et l'export se demandent à un administrateur du club, ce que la page de mentions d'information écrit noir sur blanc. Une page « Mon profil » (consulter et modifier, F-20) est planifiée en version 1.1 : ticket T-025 (#57). L'export automatique reste hors périmètre.
 - Copie des sauvegardes hors serveur : décision à revoir si le club accumule des données importantes.

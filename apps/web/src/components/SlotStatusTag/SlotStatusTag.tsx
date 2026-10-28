@@ -6,12 +6,12 @@ type Props =
 
 const plural = (count: number, word: string) => `${count} ${word}${count > 1 ? 's' : ''}`;
 
-// design/components.md, "SlotStatusTag": the border and the text colour carry the variant, the text always says it too
+// design/components.md, "SlotStatusTag": the border and the text colour carry the variant (contrast checked by packages/tokens), the text always says it too
 const toneClasses = {
   counter: 'border-border text-text-muted',
   neutral: 'border-border text-text-muted',
-  success: 'border-success text-text',
-  danger: 'border-danger bg-danger-surface text-text',
+  success: 'border-success text-success',
+  danger: 'border-danger bg-danger-surface text-danger',
 };
 
 /**

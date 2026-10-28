@@ -86,6 +86,7 @@ Un scénario qui ne peut pas être automatisé (par exemple « en moins de 3 min
   - lecteur d'écran (VoiceOver et un second) : titres, noms des champs, annonce des erreurs et des toasts, nom des boutons « Je m'inscris » par créneau ;
   - zoom à 200 % et texte agrandi : rien ne se chevauche ;
   - contraste : valeurs des tokens vérifiées une fois à la création de `tokens.json`, puis contrôlées par axe.
+- Automatisé dans `apps/web/tests/e2e/` : `accessibility.spec.ts` (axe sur tous les écrans et états, 360 et 1000 px, lien vers les mentions sur chaque page) et `keyboard.spec.ts` (connexion, inscription, création d'événement au clavier seul). Les contrastes des tokens sont gardés par `packages/tokens/tests/contrast.test.ts`.
 - Le rapport est noté dans la pull request de T-021.
 
 ## 7. Jeux de données
