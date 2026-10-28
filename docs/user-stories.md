@@ -392,7 +392,7 @@ Scénario 4 : accès refusé à un utilisateur (F-03)
 
 Scénario 5 : retrait d'un inscrit par l'administrateur (RG-08)
 - Given : un administrateur sur la vue de remplissage d'un créneau limité à 4 avec 4 inscrits, dont Marie D.
-- When : il clique sur « Retirer » à côté de Marie D. et confirme « Marie D. ne sera plus inscrite à ce créneau »
+- When : il clique sur « Retirer » à côté de Marie D. et confirme « Marie D. ne sera plus inscrit(e) à ce créneau »
 - Then : Marie D. disparaît de la liste, le compteur passe à « 3 / 4 » et la place est de nouveau disponible ; sans confirmation, rien n'est retiré
 
 Scénario 6 : retrait sur un créneau commencé (RG-08)

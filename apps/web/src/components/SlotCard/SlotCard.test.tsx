@@ -138,3 +138,50 @@ describe('SlotCard admin', () => {
     expect(screen.queryByRole('button', { name: /inscris/ })).toBeNull();
   });
 });
+
+describe('SlotCard admin: filling (F-09)', () => {
+  const admin = (overrides: Partial<Slot> = {}, props = {}) =>
+    render(<SlotCard variant="admin" slot={slot(overrides)} timeZone="Europe/Paris" {...props} />);
+
+  it('[F-09 S1] RG-07: « 3 / 4 » for a limited slot, « 2 inscrits » for an unlimited one', () => {
+    admin({ registeredCount: 3 });
+    expect(screen.getByText('3 / 4')).toBeInTheDocument();
+  });
+
+  it('[F-09 S1] RG-07: an unlimited slot reads « 2 inscrits », never an alert', () => {
+    admin({ capacity: null, remainingPlaces: null });
+    expect(screen.getByText('2 inscrits')).toBeInTheDocument();
+    expect(screen.queryByText(/Aucun inscrit/)).toBeNull();
+  });
+
+  it('[F-09 S2] a limited slot without attendee shows « Aucun inscrit »', () => {
+    admin({ registeredCount: 0, attendees: [], capacity: 6 });
+    expect(screen.getByText('0 / 6')).toBeInTheDocument();
+    expect(screen.getByText('(!) Aucun inscrit')).toBeInTheDocument();
+  });
+
+  it('[F-09 S2] an unlimited slot without attendee is not an alert', () => {
+    admin({ registeredCount: 0, attendees: [], capacity: null });
+    expect(screen.queryByText(/Aucun inscrit/)).toBeNull();
+  });
+
+  it('[F-09 S5] RG-08: « × » next to each attendee, named after the person and the slot', async () => {
+    const onRemoveAttendee = vi.fn();
+    admin({}, { onRemoveAttendee });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Retirer Marie D. du créneau 08:00 – 10:00' }),
+    );
+    expect(onRemoveAttendee).toHaveBeenCalledWith(expect.objectContaining({ registrationId: 1 }));
+  });
+
+  it('[F-09 S6] RG-08: a started slot still has its « × »', () => {
+    admin({ started: true }, { onRemoveAttendee: () => {} });
+    expect(screen.getAllByRole('button', { name: /^Retirer / })).toHaveLength(2);
+  });
+
+  it('[F-09 S3] [F-09 S7] RG-15: a past event lists the attendees without « Retirer »', () => {
+    render(<SlotCard variant="readonly" slot={slot()} timeZone="Europe/Paris" />);
+    expect(screen.getByText('Marie D.')).toBeInTheDocument();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+});
