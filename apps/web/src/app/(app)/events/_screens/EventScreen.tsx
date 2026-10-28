@@ -11,7 +11,7 @@ import { SlotForm, emptySlotForm, type SlotFormValues } from '@/components/SlotF
 import { useToast } from '@/components/Toast';
 import { deleteJson, patchJson, postJson, type ApiResult } from '@/lib/api-client';
 import type { Club, EventDetail, Slot } from '@/lib/api-types';
-import { toLocalParts } from '@/lib/dates';
+import { formatTime, toLocalParts } from '@/lib/dates';
 import { useApi } from '@/lib/use-api';
 import { both, ScreenState } from './ScreenState';
 
@@ -32,11 +32,15 @@ function slotFormValues(slot: Slot, timeZone: string): SlotFormValues {
   };
 }
 
+const slotHours = (slot: Slot, timeZone: string) =>
+  `${formatTime(slot.startsAt, timeZone)} – ${formatTime(slot.endsAt, timeZone)}`;
+
 type Pending =
   | { kind: 'delete-event'; count: number }
   | { kind: 'delete-slot'; slot: Slot }
   | { kind: 'add-slot' }
   | { kind: 'edit-slot'; slot: Slot }
+  | { kind: 'unregister'; slot: Slot }
   | null;
 
 interface Props {
@@ -51,6 +55,8 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
   const { showToast } = useToast();
   const [pending, setPending] = useState<Pending>(null);
   const [busy, setBusy] = useState(false);
+  // The slot whose registration is under way: only its button is blocked
+  const [registeringSlot, setRegisteringSlot] = useState<number | null>(null);
 
   const close = () => setPending(null);
 
@@ -90,7 +96,22 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
     await settle(await deleteSlot(slot));
   }
 
+  // F-07: after any answer the slot is read again, so a refusal (last seat taken, slot started) shows its real state
+  async function register(slot: Slot) {
+    setRegisteringSlot(slot.id);
+    const result = await postJson(`/api/slots/${slot.id}/registrations`, undefined);
+    setRegisteringSlot(null);
+    await settle(result);
+  }
+
+  async function unregister(slot: Slot): Promise<ApiResult> {
+    const result = await deleteJson(`/api/slots/${slot.id}/registrations/me`);
+    await reload();
+    return result;
+  }
+
   const variant = event.status === 'past' ? 'past' : editable ? 'admin' : 'volunteer';
+  const slotVariant = variant === 'past' ? 'readonly' : variant;
 
   return (
     <div className="flex flex-col gap-md">
@@ -132,8 +153,11 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
           event.slots.map((slot) => (
             <SlotCard
               key={slot.id}
-              variant={editable ? 'admin' : 'readonly'}
+              variant={slotVariant}
               slot={slot}
+              loading={registeringSlot === slot.id}
+              onRegister={() => register(slot)}
+              onUnregister={() => setPending({ kind: 'unregister', slot })}
               timeZone={timeZone}
               showDay={
                 toLocalParts(slot.startsAt, timeZone).date !==
@@ -145,6 +169,17 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
           ))
         )}
       </section>
+
+      {pending?.kind === 'unregister' ? (
+        <ConfirmDialog
+          variant="unregister"
+          title="Te désinscrire ?"
+          onConfirm={() => unregister(pending.slot)}
+          onClose={close}
+        >
+          {`Tu ne seras plus inscrit(e) au créneau ${slotHours(pending.slot, timeZone)}. Ta place sera libérée.`}
+        </ConfirmDialog>
+      ) : null}
 
       {pending?.kind === 'delete-event' ? (
         <ConfirmDialog
@@ -194,7 +229,8 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
 }
 
 /**
- * The page of an event. Administrator: Modifier, Supprimer, Ajouter un créneau and the actions of each slot (C2,
+ * The page of an event. Volunteer (B3, B4, B6, B7): the slots with their attendees and the registration actions;
+ * the administrator has them too (RG-08). Administrator: Modifier, Supprimer, Ajouter un créneau and the actions of each slot (C2,
  * F-04, F-05). A past event shows none of them (RG-15). An unknown event, or a past one for a user, is « introuvable »
  * (RG-09): the API answers 404 and its message is shown.
  */

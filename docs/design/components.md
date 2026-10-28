@@ -170,7 +170,8 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 
 ### SlotStatusTag
 - Rôle : pastille d'état en haut à droite d'un créneau ; `radius.tag`, `font.size-small`, `font.weight-medium`.
-- Variantes : `neutral` (bordure `color.border`, texte `color.text-muted` : places restantes, Sans limite, Commencé) · `success` (`color.success` : Inscrit) · `danger` (`color.danger` sur `color.danger-surface` : Complet) · `counter` (« 3 / 4 », version admin).
+- Variantes : `neutral` (bordure `color.border`, texte `color.text-muted` : places restantes, Sans limite, Commencé) · `success` (bordure `color.success`, texte `color.text` : Inscrit) · `danger` (bordure `color.danger`, fond `color.danger-surface`, texte `color.text` : Complet) · `counter` (« 3 / 4 », version admin).
+- Contraste (T-015) : `color.success` sur blanc (3,29:1) et `color.danger` sur `color.danger-surface` (3,94:1) sont sous les 4,5:1 exigés pour un texte de `font.size-small` (WCAG 2.2 AA). La couleur reste sur la bordure ; le texte est en `color.text`.
 - Règle : le sens ne repose pas sur la seule couleur, le texte est toujours présent.
 
 ### AttendeeList / AttendeeChip
@@ -239,6 +240,7 @@ Tous les points sont tranchés ; les tokens correspondants sont dans `tokens.jso
 - `shadow.modal` : non créé, `color.overlay` suffit. Un nouveau besoin ouvrira un ticket.
 - `motion.fast` : non créé, aucune animation au MVP.
 - `space.none` ajouté (0 px, T-010) : les échelles numériques de Tailwind sont supprimées, `right-0` ou `inset-0` ne produisent donc rien ; `right-none`, `inset-none` collent un élément à un bord (fenêtre modale, menu, toasts).
+- Contraste (T-015) : voir `SlotStatusTag`, section 4. `color.text-muted` sur `color.surface` fait 4,39:1 (survol d'un `EventListItem`) : à corriger dans les tokens, hors périmètre de T-015.
 - Bordures : `color.border-strong` pour les champs, `color.border` pour les cartes au repos. La maquette B3 est déjà conforme pour les cartes ; la description de `color.border-strong` dans `tokens.json` est corrigée en conséquence.
 
 ## 7. Correspondance écrans → composants

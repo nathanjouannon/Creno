@@ -75,3 +75,16 @@ export async function createMember() {
     },
   });
 }
+
+/** Another user without the administrator right, to be two people on the same slot. */
+export async function createOtherMember(firstName: string, lastName: string, email: string) {
+  return database.user.create({
+    data: {
+      firstName,
+      lastName,
+      email,
+      passwordHash: await hash(member.password),
+      role: 'USER',
+    },
+  });
+}

@@ -38,7 +38,7 @@ Références réelles (T-010) :
 - `apps/web/src/components/Form/Form.tsx` et `FormField/FormField.tsx` : erreurs de champ reliées par `aria-describedby`, `aria-invalid`.
 - `apps/web/src/components/Toast/Toast.tsx` : retour d'une action (`useToast`).
 
-Le bouton d'inscription (`RegisterButton`) reste à écrire avec T-015 ; il assemblera ces composants et rechargera l'état du créneau après chaque réponse (ADR-0008).
+Référence réelle (T-015) : `apps/web/src/components/SlotCard/SlotCard.tsx` (variante `volunteer`, bouton « Je m'inscris » nommé par créneau) et `apps/web/src/app/(app)/events/_screens/EventScreen.tsx`, qui assemble ces composants et relit l'événement après chaque réponse (ADR-0008).
 
 ## Ce que ces extraits montrent
 
