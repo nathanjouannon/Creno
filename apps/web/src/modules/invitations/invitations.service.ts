@@ -1,7 +1,6 @@
 import { AppError, type acceptInvitationInputSchema } from '@creno/validation';
 import type { z } from 'zod';
-import type { Clock } from '@/modules/shared';
-import { generateInvitationToken, hashInvitationToken } from './invitation-token';
+import { generateLinkToken, hashLinkToken, type Clock } from '@/modules/shared';
 import type { CreatedUser, InvitationsRepository } from './invitations.repository';
 
 type AcceptInput = z.output<typeof acceptInvitationInputSchema>;
@@ -30,7 +29,7 @@ export function createInvitationsService({
 }: Dependencies) {
   /** Unknown link, started event and deleted event (cascade) are the same answer (RG-02). */
   async function findValid(token: string) {
-    const invitation = await repository.findByTokenHash(hashInvitationToken(token));
+    const invitation = await repository.findByTokenHash(hashLinkToken(token));
     if (!invitation || !isStillValid(invitation.event.startsAt, clock.now()))
       throw new AppError('INVITATION_INVALID');
     return invitation.event;
@@ -46,8 +45,8 @@ export function createInvitationsService({
       if (!startsAt) throw new AppError('EVENT_NOT_FOUND');
       if (!isStillValid(startsAt, clock.now())) throw new AppError('EVENT_STARTED');
 
-      const token = generateInvitationToken();
-      await repository.create(eventId, hashInvitationToken(token));
+      const token = generateLinkToken();
+      await repository.create(eventId, hashLinkToken(token));
       return {
         url: new URL(`/invitation/${token}`, appUrl).toString(),
         expiresAt: startsAt.toISOString(),

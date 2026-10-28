@@ -1,7 +1,6 @@
 import { AppError } from '@creno/validation';
 import { describe, expect, it, vi } from 'vitest';
-import { fixedClock } from '@/modules/shared';
-import { hashInvitationToken } from './invitation-token';
+import { fixedClock, hashLinkToken } from '@/modules/shared';
 import type { InvitationsRepository } from './invitations.repository';
 import { createInvitationsService, isStillValid } from './invitations.service';
 
@@ -69,7 +68,7 @@ describe('create', () => {
     expect(link.expiresAt).toBe(later.toISOString());
     const token = link.url.replace('https://creno.example.org/invitation/', '');
     expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    expect(repository.create).toHaveBeenCalledWith(9, hashInvitationToken(token));
+    expect(repository.create).toHaveBeenCalledWith(9, hashLinkToken(token));
   });
 
   it('[F-01 S7] RG-02: refuses once the event has started', async () => {
@@ -92,7 +91,7 @@ describe('check', () => {
       eventTitle: 'Course',
       clubName: 'Ski Club',
     });
-    expect(repository.findByTokenHash).toHaveBeenCalledWith(hashInvitationToken('abc'));
+    expect(repository.findByTokenHash).toHaveBeenCalledWith(hashLinkToken('abc'));
   });
 
   it('[F-01 S1 bis] RG-02: follows the current start of the event', async () => {

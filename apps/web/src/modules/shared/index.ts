@@ -20,6 +20,7 @@ export {
   type RouteContext,
   type RouteResult,
 } from './route';
+export { generateLinkToken, hashLinkToken } from './link-token';
 export { getHealthService } from './health';
 export { getPrisma } from './prisma';
 export { checkRateLimit, clientAddress, resetRateLimits } from './rate-limit';
