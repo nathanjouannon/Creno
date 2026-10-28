@@ -5,6 +5,7 @@ import { SlotStatusTag } from '@/components/SlotStatusTag';
 import type { Slot } from '@/lib/api-types';
 import { formatDay, formatTime } from '@/lib/dates';
 
+type Attendee = Slot['attendees'][number];
 type Variant = 'volunteer' | 'admin' | 'readonly';
 
 type SlotSource = Pick<Slot, 'startsAt' | 'endsAt' | 'capacity' | 'registeredCount'> &
@@ -23,6 +24,8 @@ interface Props {
   /** `volunteer`, and `admin` with the same rules (RG-08): the registration of the signed-in user. */
   onRegister?: () => void;
   onUnregister?: () => void;
+  /** `admin`: the « × » of an attendee (RG-08). Absent on a past event (RG-15). */
+  onRemoveAttendee?: (attendee: Attendee) => void;
   /** A registration or a cancellation is under way: the button keeps its label and is blocked. */
   loading?: boolean;
 }
@@ -64,6 +67,7 @@ export function SlotCard({
   deleteLabel = 'Supprimer',
   onRegister,
   onUnregister,
+  onRemoveAttendee,
   loading = false,
 }: Props) {
   const hours = `${formatTime(slot.startsAt, timeZone)} – ${formatTime(slot.endsAt, timeZone)}`;
@@ -72,7 +76,7 @@ export function SlotCard({
   const attendees = slot.attendees ?? [];
   const mine = attendees.some((attendee) => attendee.isMe);
   const volunteerZone = variant === 'volunteer' || (variant === 'admin' && Boolean(slot.attendees));
-  // RG-08: a started slot takes no registration and no cancellation; an administrator removes through C2 (T-016)
+  // RG-08: a started slot takes no registration and no cancellation; an administrator removes through C2
   const startedMessage =
     volunteerZone && slot.started
       ? !mine
@@ -82,8 +86,10 @@ export function SlotCard({
           : null
       : null;
 
+  // C2: a limited slot without attendee stands out; the text says it too
+  const empty = variant === 'admin' && slot.capacity !== null && slot.registeredCount === 0;
   return (
-    <Card variant={volunteerZone && mine ? 'selected' : 'default'}>
+    <Card variant={empty ? 'alert' : volunteerZone && mine ? 'selected' : 'default'}>
       <div className="flex flex-col gap-sm">
         <div className="flex items-start justify-between gap-sm">
           <h3 className="font-bold text-text">{heading}</h3>
@@ -97,7 +103,14 @@ export function SlotCard({
             />
           )}
         </div>
-        {volunteerZone ? <AttendeeList attendees={attendees} /> : null}
+        {volunteerZone || variant === 'readonly' ? (
+          <AttendeeList
+            attendees={attendees}
+            onRemove={variant === 'admin' ? onRemoveAttendee : undefined}
+            slotLabel={heading}
+          />
+        ) : null}
+        {empty ? <p className="text-small text-danger">(!) Aucun inscrit</p> : null}
         {startedMessage ? <p className="text-small text-danger">{startedMessage}</p> : null}
         {volunteerZone && !slot.started ? (
           mine ? (

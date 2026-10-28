@@ -41,6 +41,7 @@ type Pending =
   | { kind: 'add-slot' }
   | { kind: 'edit-slot'; slot: Slot }
   | { kind: 'unregister'; slot: Slot }
+  | { kind: 'remove-registration'; slot: Slot; attendee: Slot['attendees'][number] }
   | null;
 
 interface Props {
@@ -110,6 +111,13 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
     return result;
   }
 
+  // F-09, RG-08: the administrator removes anyone, even from a started slot
+  async function removeRegistration(registrationId: number): Promise<ApiResult> {
+    const result = await deleteJson(`/api/registrations/${registrationId}`);
+    await reload();
+    return result;
+  }
+
   const variant = event.status === 'past' ? 'past' : editable ? 'admin' : 'volunteer';
   const slotVariant = variant === 'past' ? 'readonly' : variant;
 
@@ -163,6 +171,11 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
                 toLocalParts(slot.startsAt, timeZone).date !==
                 toLocalParts(event.startsAt, timeZone).date
               }
+              onRemoveAttendee={
+                variant === 'admin'
+                  ? (attendee) => setPending({ kind: 'remove-registration', slot, attendee })
+                  : undefined
+              }
               onEdit={() => setPending({ kind: 'edit-slot', slot })}
               onDelete={() => askDeleteSlot(slot)}
             />
@@ -178,6 +191,17 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
           onClose={close}
         >
           {`Tu ne seras plus inscrit(e) au créneau ${slotHours(pending.slot, timeZone)}. Ta place sera libérée.`}
+        </ConfirmDialog>
+      ) : null}
+
+      {pending?.kind === 'remove-registration' ? (
+        <ConfirmDialog
+          variant="remove-registration"
+          title="Retirer cet inscrit ?"
+          onConfirm={() => removeRegistration(pending.attendee.registrationId)}
+          onClose={close}
+        >
+          {`${pending.attendee.displayName ?? 'Cet ancien membre'} ne sera plus inscrit(e) au créneau ${slotHours(pending.slot, timeZone)}. La place sera libérée.`}
         </ConfirmDialog>
       ) : null}
 
