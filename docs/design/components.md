@@ -85,7 +85,7 @@ Bibliothèque : **react-hook-form** si la stack retenue en phase 6 est React ou 
 | `onSubmit(values)` | Envoi ; renvoie un succès ou une erreur d'API (`code`, `details.fields`) |
 | `submitLabel` | Libellé du `Button primary` de validation, rendu en bas du formulaire |
 | `children` | Les `FormField` |
-| `errorMap` | Correspondance code d'erreur → champ ou message global (ex. `AUTH_INVALID_CREDENTIALS` → `Alert`) |
+| `errorMap` | Correspondance code d'erreur → champ ou message global (ex. `AUTH_INVALID_CREDENTIALS` → `Alert`). Sous un champ, c'est le message du catalogue renvoyé par l'API qui s'affiche, avec ses nombres (`SLOT_CAPACITY_BELOW_REGISTRATIONS` → « 5 personnes sont déjà inscrites… », C7) |
 | `resetOnError` | Champs à vider après un échec (ex. `password` à la connexion) |
 
 - Mise en page : champs empilés, espacement `space.md`, bouton de validation `block` en dernier, largeur `size.form-max` pour les écrans publics.
@@ -104,7 +104,7 @@ Bibliothèque : **react-hook-form** si la stack retenue en phase 6 est React ou 
 
 ### FormField
 - Rôle : lie un `Input` à un champ du formulaire par son `name`, et affiche autour de lui le libellé (`font.size-small`, `color.text-muted`), l'aide (`color.text-muted`) et le `FieldError`.
-- Props : `name`, `label`, `help?`, `required?`, et un enfant `Input` (ou un composant de groupe comme `DateTimeRange`).
+- Props : `name`, `label`, `help?`, `required?`, `messages?` (libellé propre à ce champ pour un code, quand le catalogue le prévoit : `FIELD_REQUIRED` du titre → « Le titre est obligatoire. »), et un enfant `Input` (ou un composant de groupe comme `DateTimeRange`).
 - États (hérités de l'`Input`) : `default` · `focus` · `filled` · `error` · `disabled`.
 - Accessibilité : libellé relié au contrôle, erreur reliée par `aria-describedby`, `aria-invalid` en état `error`.
 
@@ -129,7 +129,7 @@ Bibliothèque : **react-hook-form** si la stack retenue en phase 6 est React ou 
 | `LoginForm` | e-mail, mot de passe | A5 à A7 | Erreur unique non détaillée, mot de passe vidé, blocage 15 min (RG-03) |
 | `ResetPasswordForm` | nouveau mot de passe | A8 | Lien invalide : l'écran remplace le formulaire (A9) |
 | `EventForm` | titre, description, lieu, `DateTimeRange` début / fin, liste de créneaux | C4, C5 | Création et modification (`defaultValues`) ; les créneaux sont une liste de valeurs du formulaire (tableau de champs) |
-| `SlotForm` | date, `DateTimeRange` heures, limite | C6, C7 | Formulaire distinct ouvert depuis `EventForm` (jamais imbriqué dans le HTML) ; son résultat est ajouté à la liste de créneaux de `EventForm` ; limite sous le nombre d'inscrits refusée (RG-07) |
+| `SlotForm` | date, heure de début, heure de fin, limite | C6, C7 | Formulaire distinct, dans une fenêtre (`Modal`, titre « Ajouter un créneau » ou « Modifier le créneau », bouton « Annuler ») ouverte depuis `EventForm` ou la page de l'événement : jamais imbriqué dans le HTML ; depuis `EventForm`, son résultat est ajouté à la liste de créneaux ; fin après début le même jour ; avertissement hors des dates de l'événement calculé à la saisie (RG-07) ; limite sous le nombre d'inscrits refusée sous le champ (RG-07) |
 
 Les actions sans champ (se désinscrire, générer un lien, retirer son droit administrateur) ne sont pas des formulaires : ce sont de simples `Button` avec `ConfirmDialog` ou `Toast`.
 
@@ -198,7 +198,7 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 - États : `default` · `loading` · `error` (refus RG-04 : `Toast` danger « Nomme d'abord un autre administrateur. »).
 
 ### EmptyState
-- Rôle : texte `color.text-muted` sous le titre quand une liste est vide. Message de la liste d'événements : « Aucun événement à venir pour le moment. » (B2).
+- Rôle : texte `color.text-muted` sous le titre quand une liste est vide. Messages : « Aucun événement à venir pour le moment. » (B2, C1), « Aucun événement passé. » (C9), « Aucun créneau pour le moment. » (page d'un événement sans créneau).
 
 ## 5. Retours et fenêtres
 

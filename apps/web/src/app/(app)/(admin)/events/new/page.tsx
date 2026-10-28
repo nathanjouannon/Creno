@@ -1,13 +1,13 @@
 import { PageContainer } from '@/components/PageContainer';
-import { PageTitle } from '@/components/PageTitle';
+import { EventFormScreen } from '../../../events/_screens/EventFormScreen';
 
 export const metadata = { title: 'Créer un événement' };
 
-// Provisional (C4): the form comes with T-015. It exists now so that the administrator guard has a real page.
+// C4, C5 (F-04): the administrator guard is in the (admin) layout; the API checks the role again.
 export default function NewEventPage() {
   return (
     <PageContainer>
-      <PageTitle>Créer un événement</PageTitle>
+      <EventFormScreen />
     </PageContainer>
   );
 }

@@ -1,15 +1,15 @@
-import { EmptyState } from '@/components/EmptyState';
 import { PageContainer } from '@/components/PageContainer';
-import { PageTitle } from '@/components/PageTitle';
+import { requirePageUser } from '@/modules/auth';
+import { EventListScreen } from './_screens/EventListScreen';
 
 export const metadata = { title: 'Événements' };
 
-// Provisional list (B2): the real one comes with T-013 and T-015. The header and the guard are in the (app) layout.
-export default function EventsPage() {
+// B1, C1 (F-04, F-06): upcoming and ongoing events. The administrator also gets « Créer un événement ».
+export default async function EventsPage() {
+  const user = await requirePageUser();
   return (
     <PageContainer>
-      <PageTitle>Événements</PageTitle>
-      <EmptyState>Aucun événement à venir pour le moment.</EmptyState>
+      <EventListScreen scope="upcoming" isAdmin={user.role === 'ADMIN'} />
     </PageContainer>
   );
 }
