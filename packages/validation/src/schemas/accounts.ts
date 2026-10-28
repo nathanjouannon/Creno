@@ -65,6 +65,21 @@ export const acceptInvitationInputSchema = z
   .strict()
   .openapi('AcceptInvitationInput');
 
+export const updateProfileInputSchema = z
+  .object({
+    firstName: requiredString(),
+    lastName: requiredString(),
+    email: emailSchema,
+    currentPassword: z
+      .string({ invalid_type_error: 'FIELD_REQUIRED' })
+      .optional()
+      .describe("Exigé seulement quand l'e-mail change (RG-18) ; jamais renvoyé"),
+  })
+  .strict()
+  .openapi('UpdateProfileInput');
+
+export type UpdateProfileInput = z.infer<typeof updateProfileInputSchema>;
+
 export const resetPasswordInputSchema = z.object({ password: passwordSchema }).strict();
 
 export const setUserRoleInputSchema = z.object({ role: roleSchema }).strict();

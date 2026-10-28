@@ -30,6 +30,12 @@ describe('UserMenu', () => {
     expect(screen.getByRole('button', { name: 'Se déconnecter' })).toBeInTheDocument();
   });
 
+  it('[F-20 S1] offers « Mon profil », a link to /profil', async () => {
+    renderMenu();
+    await userEvent.click(screen.getByRole('button', { name: 'Alex' }));
+    expect(screen.getByRole('link', { name: 'Mon profil' })).toHaveAttribute('href', '/profil');
+  });
+
   it('closes with Escape and gives the focus back to the trigger (keyboard only)', async () => {
     renderMenu();
     await userEvent.tab();

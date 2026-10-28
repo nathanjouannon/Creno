@@ -24,9 +24,10 @@ flowchart TD
         direction TB
         H1["Navigation : Événements"]
         H2["Navigation, administrateur<br/>uniquement : Événements passés,<br/>Membres"]
-        H3["Menu du prénom, en haut à droite :<br/>Se déconnecter, Supprimer mon<br/>compte"]
+        H3["Menu du prénom, en haut à droite :<br/>Mon profil, Se déconnecter,<br/>Supprimer mon compte"]
     end
 
+    H3 -->|"Mon profil"| PROF["Mon profil : nom, prénom, e-mail (F-20, RG-18).<br/>Nouvel e-mail : mot de passe actuel requis"]
     H3 -->|"Se déconnecter"| LOGIN
     H3 -->|"Supprimer mon compte"| DEL["Suppression du compte (flux 08)"]
     H1 --> LIST["Liste des événements (flux 04)"]

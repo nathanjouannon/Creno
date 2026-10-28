@@ -115,5 +115,5 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 ## 6. Points à confirmer
 
 - Durée de conservation des journaux (90 jours proposés).
-- ~~Droits d'accès, de rectification et d'export des données~~ **Tranché le 2026-10-28 (T-021)** : le MVP couvre l'effacement (RG-11) ; l'accès, la rectification et l'export se demandent à un administrateur du club, ce que la page de mentions d'information écrit noir sur blanc. Une page « Mon profil » (consulter et modifier, F-20) est planifiée en version 1.1 : ticket T-025 (#57). L'export automatique reste hors périmètre.
+- ~~Droits d'accès, de rectification et d'export des données~~ **Tranché le 2026-10-28 (T-021)** : le MVP couvre l'effacement (RG-11) ; l'accès, la rectification et l'export se demandent à un administrateur du club, ce que la page de mentions d'information écrit noir sur blanc. La page « Mon profil » (consulter et modifier, F-20, RG-18) est livrée par T-025 (#57) : l'accès et la rectification se font désormais seul ; seuls la réinitialisation du mot de passe par un administrateur et l'export restent hors page. L'export automatique reste hors périmètre.
 - Copie des sauvegardes hors serveur : décision à revoir si le club accumule des données importantes.

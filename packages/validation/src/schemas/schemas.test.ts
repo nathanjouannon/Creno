@@ -9,6 +9,7 @@ import {
   setupInputSchema,
   slotInputSchema,
   slotUpdateSchema,
+  updateProfileInputSchema,
 } from './index';
 
 /** The field codes a schema returns for an input, by field name. */
@@ -121,5 +122,33 @@ describe('input schemas return field codes, never messages (ADR-0009)', () => {
     expect(fieldCodes(loginInputSchema, { email: 'lea@club.fr' })).toEqual({
       password: 'FIELD_REQUIRED',
     });
+  });
+});
+
+describe('updateProfileInputSchema (F-20, RG-01, RG-18)', () => {
+  const profile = { firstName: 'Léa', lastName: 'Bernard', email: 'lea@club.fr' };
+
+  it('[F-20 S6] refuses an empty name or first name and a malformed address', () => {
+    expect(
+      fieldCodes(updateProfileInputSchema, { firstName: ' ', lastName: '', email: 'lea.club.fr' }),
+    ).toEqual({
+      firstName: 'FIELD_REQUIRED',
+      lastName: 'FIELD_REQUIRED',
+      email: 'FIELD_EMAIL_INVALID',
+    });
+  });
+
+  it('RG-01: trims the address; the current password is optional here (the service decides)', () => {
+    expect(updateProfileInputSchema.parse({ ...profile, email: '  lea@club.fr ' })).toEqual(
+      profile,
+    );
+    expect(updateProfileInputSchema.parse({ ...profile, currentPassword: 'secret' })).toEqual({
+      ...profile,
+      currentPassword: 'secret',
+    });
+  });
+
+  it('refuses a field it does not know, such as a role (RG-14)', () => {
+    expect(updateProfileInputSchema.safeParse({ ...profile, role: 'ADMIN' }).success).toBe(false);
   });
 });

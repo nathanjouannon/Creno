@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/components/Button';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
@@ -85,6 +86,13 @@ export function UserMenu({ firstName }: Props) {
           id={panelId}
           className="absolute right-none z-10 mt-xs flex w-max flex-col gap-xs rounded-card border border-border bg-background p-sm"
         >
+          <Link
+            href="/profil"
+            onClick={() => setOpen(false)}
+            className="flex h-control items-center rounded-button px-sm text-text hover:bg-surface"
+          >
+            Mon profil
+          </Link>
           <LogoutButton />
           <Button variant="secondary" size="inline" loading={checking} onClick={startDeletion}>
             <span className="text-danger">Supprimer mon compte</span>
@@ -98,7 +106,8 @@ export function UserMenu({ firstName }: Props) {
           onConfirm={deleteAccount}
           onClose={() => setConfirming(false)}
         >
-          Ton nom, ton prénom et ton e-mail seront effacés. Tes inscriptions futures seront libérées.
+          Ton nom, ton prénom et ton e-mail seront effacés. Tes inscriptions futures seront
+          libérées.
         </ConfirmDialog>
       ) : null}
     </div>

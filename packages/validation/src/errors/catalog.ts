@@ -115,6 +115,14 @@ export const errorCatalog = {
     details: '',
     clientAction: 'Proposer le lien vers la connexion',
   },
+  USER_EMAIL_IN_USE: {
+    status: 409,
+    message: 'Cette adresse est déjà utilisée par un autre compte.',
+    cause:
+      'RG-01, RG-18 : e-mail déjà pris, sans tenir compte de la casse (modification du profil)',
+    details: '',
+    clientAction: 'Afficher le message sous le champ e-mail, garder la saisie',
+  },
   USER_LAST_ADMIN: {
     status: 409,
     message: "Nomme d'abord un autre administrateur.",
@@ -217,6 +225,10 @@ export const fieldErrorCatalog = {
   FIELD_PASSWORD_TOO_SHORT: {
     message: 'Le mot de passe doit contenir au moins 10 caractères.',
     cause: 'RG-01',
+  },
+  FIELD_PASSWORD_INCORRECT: {
+    message: 'Le mot de passe actuel est incorrect.',
+    cause: 'RG-18 : mot de passe actuel faux, porté par le champ `currentPassword`',
   },
   FIELD_DATE_INVALID: { message: 'Renseigne une date valide.', cause: 'Date-heure mal formée' },
   FIELD_END_NOT_AFTER_START: {

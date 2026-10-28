@@ -22,6 +22,7 @@ Règles d'usage :
 | Échec de connexion | `LoginAttempt.failedCount` | Compteur d'échecs consécutifs pour une adresse saisie, qu'elle ait un compte ou non ; remis à zéro après une connexion réussie. | RG-03 | `failedLoginCount` sur `User` (abandonné) |
 | Blocage de connexion | `LoginAttempt.lockedUntil` | Date jusqu'à laquelle la connexion avec cette adresse est refusée (15 minutes après le 5e échec). Vide si l'adresse n'est pas bloquée. La réponse est la même pour une adresse sans compte. | RG-03 | « verrouillage », « désactivation » (concept abandonné), `lockedUntil` sur `User` |
 | Version de jeton | `User.tokenVersion` | Nombre incrémenté à la réinitialisation du mot de passe ; un jeton de connexion émis avec une autre version est refusé. | RG-12 | « numéro de session » |
+| Mon profil | `me` (module, route `/me`) | Page où l'utilisateur consulte et modifie son nom, son prénom et son e-mail. Le mot « profil » ne désigne que cette page, jamais un rôle ; le code dit `me`, pas `Profile`. | RG-18 | `Profile`, `Account` |
 | Suppression de compte | `deleteUser` | Effacement du nom, du prénom et de l'e-mail d'un utilisateur, libération de ses inscriptions futures, anonymisation des passées. Seul le titulaire la déclenche. | RG-11, RG-04 | « désactivation », « archivage » |
 
 ### Invitations et réinitialisation

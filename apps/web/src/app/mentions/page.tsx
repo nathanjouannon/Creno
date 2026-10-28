@@ -53,9 +53,9 @@ export default async function LegalNoticePage() {
         <section className={SECTION}>
           <h2 className={HEADING}>Cookies et hébergement</h2>
           <p>
-            Créno n&apos;utilise qu&apos;un cookie de session, nécessaire à la connexion (30
-            jours), et aucun cookie de suivi ni de tiers. Les données sont hébergées dans
-            l&apos;Union européenne.
+            Créno n&apos;utilise qu&apos;un cookie de session, nécessaire à la connexion (30 jours),
+            et aucun cookie de suivi ni de tiers. Les données sont hébergées dans l&apos;Union
+            européenne.
           </p>
         </section>
         <section className={SECTION}>
@@ -66,9 +66,12 @@ export default async function LegalNoticePage() {
               le menu de ton prénom, « Supprimer mon compte ».
             </li>
             <li>
-              <strong>Accès, rectification et export</strong> : pour l&apos;instant, demande-les à
-              un administrateur du club, qui corrige ton nom, ton prénom ou ton e-mail, ou te remet
-              tes données. Une page « Mon profil » est prévue pour le faire toi-même.
+              <strong>Accès et rectification</strong> : tu consultes et tu corriges toi-même ton
+              nom, ton prénom et ton e-mail depuis le menu de ton prénom, « Mon profil ».
+            </li>
+            <li>
+              <strong>Export</strong> : pour l&apos;instant, demande-le à un administrateur du club,
+              qui te remet tes données.
             </li>
             <li>
               Si tu penses que tes droits ne sont pas respectés, tu peux saisir la CNIL (cnil.fr).

@@ -33,9 +33,13 @@ Les états communs à tous les composants interactifs (`default`, `hover`, `focu
 - Règle : les onglets admin ne sont jamais rendus pour un utilisateur, la protection réelle reste côté serveur (F-03).
 
 ### UserMenu
-- Rôle : menu du prénom (avatar à initiale + prénom + flèche), en haut à droite ; contient « Se déconnecter » et « Supprimer mon compte » (en `color.danger`).
+- Rôle : menu du prénom (avatar à initiale + prénom + flèche), en haut à droite ; contient « Mon profil » (lien vers `/profil`), « Se déconnecter » et « Supprimer mon compte » (en `color.danger`).
 - Variantes : une seule.
 - États : `closed` · `open` (E1) · `focus`.
+
+### ProfileForm (page `/profil`, F-20)
+- Rôle : formulaire « Mon profil » (`PageContainer` `narrow`, `PageTitle`, `BackLink`) avec `Form`, trois `FormField` pré-remplis (Nom, Prénom, E-mail) et, **seulement quand l'e-mail saisi diffère de l'e-mail enregistré**, un champ « Mot de passe actuel » (`PasswordInput`, aide « Nécessaire pour changer d'e-mail »). Bouton « Enregistrer » ; succès : `Toast` `success` « Profil enregistré » et valeurs conservées.
+- Variantes : une seule. États : `default` · `chargement` · `erreur` (champ sous chaque `FormField`, adresse prise et mot de passe faux sous leur champ) · `succès`.
 
 ### AppFooter
 - Rôle : pied de page de **toutes** les pages (publiques, connectées, administrateur), avec le lien « Mentions d'information » vers la page publique `/mentions` (RGPD, T-021). `font.size-small`, `color.text-muted`, bordure haute `color.border`, `space.md` de marge ; repère `contentinfo`.

@@ -42,6 +42,7 @@ Toute erreur de l'API renvoie ce JSON (schéma `Error` de `openapi.yaml`) :
 | `SLOT_NOT_FOUND` | 404 | Créneau introuvable. | Identifiant inconnu, ou créneau d'un événement passé vu par un utilisateur (RG-09) | | Recharger l'événement |
 | `REGISTRATION_NOT_FOUND` | 404 | Inscription introuvable. | Identifiant inconnu, ou utilisateur non inscrit à ce créneau | | Recharger l'événement |
 | `USER_EMAIL_TAKEN` | 409 | Un compte existe déjà avec cette adresse. Connecte-toi. | RG-01 : e-mail déjà utilisé, sans tenir compte de la casse (création par invitation) | | Proposer le lien vers la connexion |
+| `USER_EMAIL_IN_USE` | 409 | Cette adresse est déjà utilisée par un autre compte. | RG-01, RG-18 : e-mail déjà pris, sans tenir compte de la casse (modification du profil) | | Afficher le message sous le champ e-mail, garder la saisie |
 | `USER_LAST_ADMIN` | 409 | Nomme d'abord un autre administrateur. | RG-04 : le dernier administrateur ne peut ni se retirer le droit, ni supprimer son compte | | Afficher le message, rien ne change |
 | `USER_ROLE_CHANGE_FORBIDDEN` | 403 | Seul l'intéressé peut retirer son droit administrateur. | RG-04 : tentative de retirer le droit d'un autre | | Message générique ; l'interface ne propose pas cette action |
 | `EVENT_PAST` | 409 | Cet événement est terminé, il n'est plus modifiable. | RG-15 : événement passé en lecture seule (vu par un administrateur) | | Recharger la page en lecture seule |
@@ -63,6 +64,7 @@ Un code de champ ne se rattache pas à un statut HTTP : il explique pourquoi un 
 | `FIELD_REQUIRED` | Ce champ est obligatoire. | Champ vide ou absent. Pour `title` : « Le titre est obligatoire » ; pour `firstName`, `lastName`, `email`, le formulaire d'invitation affiche le toast « Renseigne ton nom, ton prénom et une adresse e-mail valide » |
 | `FIELD_EMAIL_INVALID` | Renseigne une adresse e-mail valide. | Format d'e-mail incorrect (RG-01) |
 | `FIELD_PASSWORD_TOO_SHORT` | Le mot de passe doit contenir au moins 10 caractères. | RG-01 |
+| `FIELD_PASSWORD_INCORRECT` | Le mot de passe actuel est incorrect. | RG-18 : mot de passe actuel faux, porté par le champ `currentPassword` |
 | `FIELD_DATE_INVALID` | Renseigne une date valide. | Date-heure mal formée |
 | `FIELD_END_NOT_AFTER_START` | La fin doit être après le début. | RG-06 (événement), RG-07 (créneau) ; porté par le champ `endsAt` |
 | `FIELD_CAPACITY_TOO_LOW` | La limite doit être d'au moins 1 place (ou vide pour illimité). | RG-07 |
