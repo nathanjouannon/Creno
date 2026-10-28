@@ -1,4 +1,5 @@
 import { Prisma, type PrismaClient, type UserRole } from '@prisma/client';
+import { isSerializationFailure } from '@/modules/shared';
 
 export interface MemberRecord {
   id: number;
@@ -25,10 +26,6 @@ const select = {
 } as const;
 
 const RETRIES = 6;
-
-// A serialization failure (two role changes at the same moment) is replayed
-const isConflict = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034';
 
 export function createMembersRepository(prisma: PrismaClient) {
   return {
@@ -60,7 +57,8 @@ export function createMembersRepository(prisma: PrismaClient) {
             { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
           );
         } catch (error) {
-          if (!isConflict(error) || attempt >= RETRIES) throw error;
+          // Two role changes at the same moment: the refused one is replayed
+          if (!isSerializationFailure(error) || attempt >= RETRIES) throw error;
         }
       }
     },

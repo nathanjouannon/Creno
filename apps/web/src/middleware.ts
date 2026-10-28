@@ -13,9 +13,10 @@ export const config = {
 // Pages a visitor may open (flow 00). Every other page, even one that does not exist, needs a session: a new
 // public page (invitation, password reset) is added here by the ticket that creates it.
 const PUBLIC_PAGES = ['/connexion', '/installation'];
-// F-01: the invitation link, opened by someone without an account
+// F-01, F-02: the invitation and password reset links, opened by someone who is not signed in
+const PUBLIC_PREFIXES = ['/invitation/', '/reinitialisation/'];
 const isPublicPage = (pathname: string) =>
-  PUBLIC_PAGES.includes(pathname) || pathname.startsWith('/invitation/');
+  PUBLIC_PAGES.includes(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
 /**
  * Flow 00. Before the installation, every page leads to the installation page (flow 09). Afterwards, a visitor is

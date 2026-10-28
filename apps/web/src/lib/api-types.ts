@@ -3,6 +3,7 @@ import type {
   eventDetailSchema,
   eventSummarySchema,
   slotSchema,
+  userSchema,
 } from '@creno/validation';
 import type { z } from 'zod';
 
@@ -11,3 +12,4 @@ export type Club = z.output<typeof clubSchema>;
 export type EventSummary = z.output<typeof eventSummarySchema>;
 export type EventDetail = z.output<typeof eventDetailSchema>;
 export type Slot = z.output<typeof slotSchema>;
+export type User = z.output<typeof userSchema>;
