@@ -40,6 +40,21 @@ services:
         condition: service_healthy
     logging: *logging
 
+  # Daily purge of expired login attempts and reset tokens (security.md, section 4). Not started by `up`; the host's
+  # cron runs it (README.md). Reuses the migrate image, which has the tooling, so no third image is published.
+  purge:
+    image: ghcr.io/nathanjouannon/creno-migrate:${CRENO_VERSION:-dev}
+    profiles: ['tools']
+    restart: 'no'
+    command: ['pnpm', 'db:purge']
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      db:
+        condition: service_healthy
+    logging: *logging
+
   app:
     image: ghcr.io/nathanjouannon/creno:${CRENO_VERSION:-dev}
     build:

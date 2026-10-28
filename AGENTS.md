@@ -18,7 +18,7 @@ Noms indicatifs, fixés par T-001 à T-006 ; mets ce fichier à jour s'ils chang
 | But | Commande |
 | --- | --- |
 | Installer | `pnpm install` |
-| Base locale | `docker compose up -d db`, puis `pnpm db:migrate` et `pnpm db:seed` ; retour arrière : `pnpm db:rollback` |
+| Base locale | `docker compose up -d db`, puis `pnpm db:migrate` et `pnpm db:seed` ; retour arrière : `pnpm db:rollback` ; purge : `pnpm db:purge` |
 | Lancer | `pnpm dev` (http://localhost:3000) |
 | Style depuis les tokens | `pnpm tokens:build` |
 | Contrat d'API | `pnpm api:generate` (écrit `docs/api/`), `pnpm api:check` (échoue si périmé), `pnpm api:lint` (Redocly) |

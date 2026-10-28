@@ -28,7 +28,7 @@ Les valeurs ne sont jamais dans le dépôt. Modèle : `.env.example`. Aucune var
 | `APP_URL` | Adresse publique de l'application ; sert aux liens d'invitation et de réinitialisation et au contrôle de l'en-tête `Origin` | oui | `.env` |
 | `DOMAIN` | Nom de domaine servi par Caddy | oui en production | `.env` du serveur |
 | `TRUST_PROXY` | L'application lit l'adresse IP dans l'en-tête posé par Caddy (limites de débit) | oui en production (`true`), non en local | `.env` du serveur |
-| `BACKUP_ENCRYPTION_KEY` | Chiffrement des sauvegardes | oui en production | `.env` du serveur, copie conservée hors du serveur |
+| `BACKUP_ENCRYPTION_KEY` | Clé **publique** `age` (`age1…`) pour laquelle les sauvegardes sont chiffrées ; la clé privée correspondante n'est jamais sur le serveur | oui en production | `.env` du serveur |
 | `LOG_LEVEL` | `debug` en local, `info` en production | non | `.env` |
 | `NODE_ENV` | `development` ou `production` | oui | défini par la commande de lancement et l'image |
 | `CRENO_VERSION` | Numéro de version des images à lancer (`0.1.0` pour le tag `v0.1.0`) ; jamais `latest` ; `dev` par défaut pour une construction locale | oui en production | `.env` du serveur ; lue par `docker compose`, pas par l'application |
@@ -55,7 +55,7 @@ Mise à jour manuelle, après validation humaine d'une version publiée (décisi
 4. Redémarrer l'application (`docker compose up -d`).
 5. Vérifier `/health` et ouvrir une page de l'application.
 
-La procédure complète, avec les commandes exactes, est écrite dans `README.md` à la création du squelette.
+La procédure complète, avec les commandes exactes, est écrite dans `README.md` (« Mettre à jour », « Revenir en arrière »). Le script `deploy/update.sh <version>` enchaîne les étapes 1 à 5.
 
 **Première mise en service d'une instance** : `docker compose up -d`, puis ouvrir l'adresse du club et remplir la page d'installation (club et premier administrateur) tout de suite après le déploiement (RG-17, ADR-0012).
 
@@ -70,16 +70,18 @@ La procédure complète, avec les commandes exactes, est écrite dans `README.md
 **Reverse proxy : Caddy.** Il termine le HTTPS (certificats Let's Encrypt automatiques), redirige le HTTP vers le HTTPS et pose les en-têtes de `security.md` (HSTS, CSP, `nosniff`, `Referrer-Policy`, `frame-ancestors`). Les limites de débit par adresse IP sont appliquées par l'application, ce qui évite un module Caddy supplémentaire et suffit pour une seule instance. Caddy transmet l'adresse IP du client dans un en-tête lu quand `TRUST_PROXY` vaut `true`.
 
 **Sauvegardes**
-- Une sauvegarde par jour par `pg_dump`, chiffrée, conservée sur le serveur (décision du 2026-10-26) : 7 jours glissants, plus une par mois.
-- Une sauvegarde supplémentaire est faite automatiquement avant chaque migration de production.
-- Perte de données maximale 24 h, restauration en moins de 4 h (`architecture.md`).
-- Restauration : arrêter l'application, déchiffrer la sauvegarde choisie, la recharger dans PostgreSQL, redémarrer, vérifier `/health`. Procédure à tester une fois avant la première mise en service, puis régulièrement.
-- La clé de chiffrement est aussi gardée hors du serveur (`security.md`, section 2).
+- Une sauvegarde par jour par `pg_dump` (format `custom`), chiffrée avec **`age`** pour la clé publique `BACKUP_ENCRYPTION_KEY`, conservée sur le serveur dans `backups/` (décision du 2026-10-26) : 7 jours glissants, plus la première de chaque mois gardée 12 mois (`backups/monthly/`). Script : `deploy/backup.sh`, lancé chaque nuit par `cron` (commande dans `README.md`).
+- Une sauvegarde supplémentaire (`pre-update`) est faite automatiquement par `deploy/update.sh` avant chaque mise à jour, donc avant chaque migration de production.
+- Choix de la clé publique : le serveur peut chiffrer mais pas déchiffrer. Une personne qui vole le serveur ou ses sauvegardes n'obtient pas les données. La clé privée (fichier produit par `age-keygen`) est gardée par le porteur du projet, dans son gestionnaire de mots de passe, et n'est fournie qu'au moment d'une restauration.
+- Perte de données maximale 24 h, restauration en moins de 4 h (`architecture.md`). Mesure du 2026-10-28 sur une base d'essai (migrations + jeu de données `seed`) : 5 s, déchiffrement compris. Le temps réel est dominé par l'accès au serveur et la récupération de la clé privée.
+- Restauration (`deploy/restore.sh <sauvegarde> <clé-privée>`) : arrête l'application, déchiffre, recharge dans PostgreSQL (`pg_restore --clean`), redémarre ; puis vérifier `/health`. Avec `RESTORE_DB=<nom>`, la sauvegarde est rechargée dans une autre base jetable sans toucher à la production : c'est le test à faire avant la première mise en service, puis tous les 6 mois.
+
+**Purge planifiée** : `login_attempts` sans blocage depuis plus de 24 h et `reset_tokens` expirés ou utilisés depuis plus de 30 jours (`security.md`, section 4). Le service `purge` de `docker-compose.yml` (profil `tools`, image `creno-migrate`, commande `pnpm db:purge`) est lancé chaque nuit par `cron` ; il écrit une ligne de journal avec le nombre de lignes supprimées. Aucune file ni tâche de fond dans l'application.
 
 **Supervision**
 - `/health` répond 200 si l'application et la base répondent. Un service externe gratuit l'interroge toutes les 5 minutes et envoie une alerte en cas d'arrêt.
-- Journaux JSON sur la sortie standard, rotation Docker (par exemple 10 Mo sur 5 fichiers) ; format et contenu dans `security.md`.
-- Espace disque surveillé (la base et les sauvegardes sont sur le même serveur).
+- Journaux JSON sur la sortie standard, rotation Docker (10 Mo sur 5 fichiers par conteneur, réglée dans `docker-compose.yml`) ; format et contenu dans `security.md`.
+- Espace disque : `deploy/backup.sh` affiche le remplissage du disque à chaque sauvegarde (visible dans le journal de `cron`) ; la base et les sauvegardes sont sur le même serveur.
 
 **Maintenance** : versions d'images fixées (jamais `latest`, version majeure de PostgreSQL fixée), mises à jour du système du serveur chaque mois, correctifs de sécurité des dépendances par Dependabot.
 
@@ -96,6 +98,5 @@ Décision du 2026-10-26 : les migrations de base sont des scripts SQL versionné
 ## 7. Points à confirmer
 
 - Domaine du club et hébergeur du serveur (VPS ou Raspberry).
-- Outil de chiffrement des sauvegardes (`age` proposé) et durée de conservation des sauvegardes mensuelles (12 mois proposés).
-- Fréquence des tests de restauration (tous les 6 mois proposés).
+- Service d'alerte de disponibilité gratuit retenu par le club (voir `README.md`) ; copie des sauvegardes hors serveur (`security.md`).
 - Gestionnaire de paquets : pnpm (proposé dans `architecture.md`).

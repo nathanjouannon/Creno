@@ -30,10 +30,10 @@ Données à protéger : nom, prénom et adresse e-mail des utilisateurs, mots de
 ## 2. Secrets
 
 - Aucun secret dans le code ni dans Git ; seul `.env.example` (noms des variables, sans valeurs) est versionné.
-- Secrets de l'application : `AUTH_SECRET` (signature des JWT, 32 octets aléatoires au minimum), `DATABASE_URL` (identifiants de la base), `BACKUP_ENCRYPTION_KEY` (chiffrement des sauvegardes). La liste complète et le rôle de chaque variable sont dans `environments.md`.
+- Secrets de l'application : `AUTH_SECRET` (signature des JWT, 32 octets aléatoires au minimum), `DATABASE_URL` (identifiants de la base), `BACKUP_ENCRYPTION_KEY` (clé publique `age` des sauvegardes, pas un secret). La liste complète et le rôle de chaque variable sont dans `environments.md`.
 - Local : fichier `.env` ignoré par Git. Serveur : fichier `.env` en lecture seule pour son propriétaire (droits 600), hors du dépôt.
-- Rotation : `AUTH_SECRET` en cas de fuite ou une fois par an (tous les utilisateurs doivent alors se reconnecter) ; mot de passe de la base idem ; clé des sauvegardes en cas de fuite, avec nouveau chiffrement des sauvegardes à venir.
-- Les sauvegardes sont chiffrées et conservées sur le serveur (décision du 2026-10-26). La clé de chiffrement doit être gardée aussi ailleurs que sur le serveur (gestionnaire de mots de passe du porteur du projet) : chiffrer avec une clé stockée à côté de la sauvegarde ne protège presque pas.
+- Rotation : `AUTH_SECRET` en cas de fuite ou une fois par an (tous les utilisateurs doivent alors se reconnecter) ; mot de passe de la base idem ; clé des sauvegardes : en cas de fuite de la clé privée, générer une nouvelle paire, remplacer `BACKUP_ENCRYPTION_KEY` ; les anciennes sauvegardes restent lisibles avec l'ancienne clé privée tant qu'on les garde.
+- Les sauvegardes sont chiffrées et conservées sur le serveur (décision du 2026-10-26). Le chiffrement est asymétrique (`age`) : le serveur ne détient que la clé publique, la clé privée est gardée uniquement hors du serveur (gestionnaire de mots de passe du porteur du projet). Une clé de déchiffrement stockée à côté de la sauvegarde ne protégerait presque pas ; sans la clé privée, les sauvegardes sont inutilisables, donc elle doit exister en au moins deux endroits sûrs.
 - Les jetons d'invitation et de réinitialisation sont stockés hachés ; les journaux ne les contiennent jamais.
 
 ## 3. Rôles et permissions
