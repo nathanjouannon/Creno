@@ -69,7 +69,12 @@ describe('EventForm (C4, C5)', () => {
       startsAt: '2027-03-14T07:00:00.000Z',
       endsAt: '2027-03-14T17:00:00.000Z',
       slots: [
-        { startsAt: '2027-03-14T07:00:00.000Z', endsAt: '2027-03-14T09:00:00.000Z', capacity: 4 },
+        {
+          startsAt: '2027-03-14T07:00:00.000Z',
+          endsAt: '2027-03-14T09:00:00.000Z',
+          capacity: 4,
+          description: null,
+        },
       ],
     });
   });

@@ -14,6 +14,8 @@ export const slotFormSchema = z
       .refine((value) => value === '' || (/^\d+$/.test(value) && Number(value) >= 1), {
         message: 'FIELD_CAPACITY_TOO_LOW',
       }),
+    // RG-07, F-21: optional plain text, 500 characters at most (blank = none)
+    description: z.string().trim().max(500, 'FIELD_DESCRIPTION_TOO_LONG'),
   })
   .refine((slot) => !slot.startTime || !slot.endTime || slot.endTime > slot.startTime, {
     // RG-07: the end comes after the start, on the same day
@@ -28,4 +30,5 @@ export const emptySlotForm = (date = ''): SlotFormValues => ({
   startTime: '',
   endTime: '',
   capacity: '',
+  description: '',
 });

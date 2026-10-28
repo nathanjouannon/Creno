@@ -34,6 +34,13 @@ async function tables(): Promise<string[]> {
   return rows.map((r) => r.tablename);
 }
 
+async function slotColumns(): Promise<string[]> {
+  const rows = await db.$queryRawUnsafe<{ column_name: string }[]>(
+    `SELECT column_name FROM information_schema.columns WHERE table_name = 'slots'`,
+  );
+  return rows.map((r) => r.column_name);
+}
+
 const EXPECTED_TABLES = [
   'club',
   'events',
@@ -60,7 +67,10 @@ describe('migrations (ADR-0015)', () => {
   it('apply, undo, replay', async () => {
     tool('migrate');
     expect(await tables()).toEqual(EXPECTED_TABLES);
-    tool('rollback');
+    tool('rollback'); // undoes the last migration only: the slot description
+    expect(await tables()).toEqual(EXPECTED_TABLES);
+    expect(await slotColumns()).not.toContain('description');
+    tool('rollback'); // then the initial one
     expect(await tables()).toEqual([]);
     const enums = await db.$queryRawUnsafe<unknown[]>(
       `SELECT 1 FROM pg_type WHERE typname = 'user_role'`,
@@ -68,6 +78,7 @@ describe('migrations (ADR-0015)', () => {
     expect(enums).toHaveLength(0);
     tool('migrate');
     expect(await tables()).toEqual(EXPECTED_TABLES);
+    expect(await slotColumns()).toContain('description');
   }, 120_000);
 });
 
@@ -90,6 +101,15 @@ describe('database constraints', () => {
     await db.$executeRawUnsafe(
       `INSERT INTO slots (event_id, starts_at, ends_at, capacity) VALUES (${eventId}, ${ts(9)}, ${ts(10)}, NULL), (${eventId}, ${ts(9)}, ${ts(10)}, 1)`,
     );
+  });
+
+  it('F-21, RG-07: a slot description is NULL or 1 to 500 characters, never blank', async () => {
+    const slot = (description: string) =>
+      `INSERT INTO slots (event_id, starts_at, ends_at, description) VALUES (${eventId}, ${ts(9)}, ${ts(10)}, '${description}')`;
+    await db.$executeRawUnsafe(slot('a'.repeat(500)));
+    await rejects(slot('a'.repeat(501)));
+    await rejects(slot('   '));
+    await rejects(slot(''));
   });
 
   it('RG-06/RG-07: end not after start is refused (event and slot)', async () => {

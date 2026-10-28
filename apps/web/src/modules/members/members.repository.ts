@@ -34,7 +34,10 @@ const select = {
   createdAt: true,
 } as const;
 
-const RETRIES = 6;
+// Enough attempts, and a pause that grows, to outlast a competing transaction that is slow to commit (a loaded CI runner
+// took longer than six short pauses, and the refusal reached the caller as a 500).
+const RETRIES = 10;
+const MAX_PAUSE_MS = 250;
 
 async function serializable<T>(
   prisma: PrismaClient,
@@ -46,10 +49,12 @@ async function serializable<T>(
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       });
     } catch (error) {
-      // Two changes at the same moment: the refused one is replayed. A random, growing pause keeps the two from
-      // replaying in lockstep and conflicting again until the attempts run out (seen on slow CI runners).
+      // Two changes at the same moment: the refused one is replayed. While the other has not committed, the replay
+      // is refused again, so it waits for a random time (full jitter) that doubles up to MAX_PAUSE_MS; the jitter also
+      // keeps the two from replaying in lockstep.
       if (!isSerializationFailure(error) || attempt >= RETRIES) throw error;
-      await new Promise((resolve) => setTimeout(resolve, Math.random() * 10 * attempt));
+      const ceiling = Math.min(5 * 2 ** attempt, MAX_PAUSE_MS);
+      await new Promise((resolve) => setTimeout(resolve, Math.random() * ceiling));
     }
   }
 }

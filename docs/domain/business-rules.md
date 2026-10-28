@@ -1,8 +1,9 @@
 # Règles de gestion – Créno
 
-Statut : brouillon v0.3 (2026-10-26). Les règles sont numérotées (RG-01, RG-02…) afin d'être citées dans le code, les user stories, les tickets et les tests. Un numéro n'est jamais réutilisé : une règle abandonnée est barrée, pas renumérotée. Les termes suivent `glossary.md` (utilisateur, créneau, inscription…).
+Statut : brouillon v0.4 (2026-10-26). Les règles sont numérotées (RG-01, RG-02…) afin d'être citées dans le code, les user stories, les tickets et les tests. Un numéro n'est jamais réutilisé : une règle abandonnée est barrée, pas renumérotée. Les termes suivent `glossary.md` (utilisateur, créneau, inscription…).
 
 Révision v0.2 : vocabulaire aligné sur le glossaire, précisions sur RG-01, RG-03, RG-06 à RG-09, RG-11 et RG-12 ; ajout de RG-14 à RG-16.
+Révision v0.4 : description facultative d'un créneau (RG-07, F-21).
 Révision v0.3 : blocage de connexion par adresse saisie (RG-03), premier administrateur créé par la page d'installation (RG-04), fuseau du club (RG-16) ; ajout de RG-17.
 
 ## Comptes
@@ -28,7 +29,7 @@ Révision v0.3 : blocage de connexion par adresse saisie (RG-03), premier admini
 - **RG-15** : Un événement passé est en lecture seule : ni lui ni ses créneaux ne peuvent être modifiés ou supprimés, et les inscriptions ne changent plus.
 
 ## Créneaux et inscriptions
-- **RG-07** : Un créneau comporte une date, une heure de début, une heure de fin (après le début) et une limite de places facultative, d'au moins 1. Sans limite, le nombre de places est illimité. La limite n'est jamais dépassée par une inscription d'utilisateur et ne peut pas être abaissée sous le nombre d'inscrits. Un créneau peut sortir des dates de l'événement (par exemple un montage avant le début) : l'administrateur en est averti mais peut valider. L'inscription est atomique : la dernière place ne peut pas être attribuée à deux personnes.
+- **RG-07** : Un créneau comporte une date, une heure de début, une heure de fin (après le début) et une limite de places facultative, d'au moins 1, et une description facultative (F-21) : texte brut de 500 caractères au plus, sans mise en forme ni lien cliquable, vide équivalent à absente, modifiable tant que l'événement n'est pas passé (RG-15), sans effet sur les inscriptions. Sans limite, le nombre de places est illimité. La limite n'est jamais dépassée par une inscription d'utilisateur et ne peut pas être abaissée sous le nombre d'inscrits. Un créneau peut sortir des dates de l'événement (par exemple un montage avant le début) : l'administrateur en est averti mais peut valider. L'inscription est atomique : la dernière place ne peut pas être attribuée à deux personnes.
 - **RG-08** : Un utilisateur, administrateur compris, peut s'inscrire et se désinscrire d'un créneau tant que celui-ci n'a pas commencé (heure courante strictement avant son heure de début). Il ne peut être inscrit qu'une fois au même créneau. Le chevauchement de deux créneaux n'est pas contrôlé. Un administrateur peut retirer l'inscription d'un utilisateur, avec confirmation, même sur un créneau commencé, tant que l'événement n'est pas passé (RG-15) ; l'ajout d'un inscrit par un administrateur est prévu en v1.1 (F-12).
 - **RG-16** : Une instance a un seul fuseau horaire, celui du club, choisi à l'installation (`Club.timezone`). Toutes les dates et heures saisies et affichées sont dans ce fuseau ; elles sont stockées avec leur fuseau (UTC).
 

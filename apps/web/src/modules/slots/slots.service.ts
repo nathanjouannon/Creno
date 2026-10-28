@@ -31,6 +31,7 @@ export function createSlotsService({ repository, clock }: Dependencies) {
         startsAt: new Date(input.startsAt),
         endsAt: new Date(input.endsAt),
         capacity: input.capacity,
+        description: input.description || null, // RG-07: blank = none
       });
       if (!slot) throw new AppError('EVENT_NOT_FOUND');
       return toSlotView(slot, clock.now(), user.id);
@@ -64,6 +65,8 @@ export function createSlotsService({ repository, clock }: Dependencies) {
         if (input.startsAt) changes.startsAt = startsAt;
         if (input.endsAt) changes.endsAt = endsAt;
         if (capacity !== undefined) changes.capacity = capacity;
+        // F-21, RG-07: allowed on a started slot (only a past event is read only, RG-15); registrations are untouched
+        if (input.description !== undefined) changes.description = input.description || null;
         return tx.update(slotId, changes);
       });
       return toSlotView(slot, clock.now(), user.id);

@@ -16,5 +16,7 @@ Chaque écran porte le même code dans les deux versions (A1, B3…) avec ses r�
 - `.excalidraw` : source éditable (à ouvrir sur excalidraw.com ou dans l'extension VS Code).
 - `.png` : export pour la relecture.
 
+Description de créneau (F-21, T-024) : le champ « Description » de C6 et C7 et son affichage dans C2, B3 et B4 sont décrits dans `components.md` (SlotForm, SlotCard) ; les maquettes dessinées ne sont pas redessinées.
+
 Points marqués « à CONFIRMER » en orange : ils reprennent les questions encore ouvertes dans les flows (B5). Le texte orange de C6 est un avertissement, pas une question ouverte.
 Les wireframes sont volontairement sans couleur de marque : les couleurs et tailles viendront de `design/tokens.json`.

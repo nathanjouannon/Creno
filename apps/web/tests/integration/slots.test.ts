@@ -79,10 +79,16 @@ async function insertEvent(times: { startsAt: string; endsAt: string } = upcomin
   });
 }
 
-async function insertSlot(eventId: number, capacity: number | null, registeredCount = 0) {
+async function insertSlot(
+  eventId: number,
+  capacity: number | null,
+  registeredCount = 0,
+  description: string | null = null,
+) {
   return database.prisma.slot.create({
     data: {
       eventId,
+      description,
       startsAt: new Date(morning.startsAt),
       endsAt: new Date(morning.endsAt),
       capacity,
@@ -197,6 +203,94 @@ describe('POST /events/{eventId}/slots (F-05)', () => {
     const response = await create(999_999, morning);
     expect(response.status).toBe(404);
     expect(response.body.code).toBe('EVENT_NOT_FOUND');
+  });
+});
+
+describe('slot description (F-21, RG-07)', () => {
+  const storedDescription = async (slotId: number) =>
+    (await database.prisma.slot.findUniqueOrThrow({ where: { id: slotId } })).description;
+
+  it('[F-21 S1] RG-07: without a description the slot is created with none (null)', async () => {
+    const event = await insertEvent();
+    const response = await create(event.id, morning);
+    expect(response.status).toBe(201);
+    expect(response.body.description).toBeNull();
+    const blank = await create(event.id, { ...morning, description: '   ' });
+    expect(blank.body.description).toBeNull();
+  });
+
+  it('[F-21 S2] RG-07: the description is stored trimmed and returned', async () => {
+    const event = await insertEvent();
+    const response = await create(event.id, {
+      ...morning,
+      description: ' Prévoir de quoi se changer ',
+    });
+    expect(response.status).toBe(201);
+    expect(response.body.description).toBe('Prévoir de quoi se changer');
+    expect(await storedDescription(response.body.id)).toBe('Prévoir de quoi se changer');
+  });
+
+  it('[F-21 S3] RG-07: 500 characters are accepted, 501 are refused with FIELD_DESCRIPTION_TOO_LONG and nothing is created', async () => {
+    const event = await insertEvent();
+    expect((await create(event.id, { ...morning, description: 'é'.repeat(500) })).status).toBe(201);
+    const response = await create(event.id, { ...morning, description: 'é'.repeat(501) });
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({
+      code: 'VALIDATION_ERROR',
+      details: { fields: [{ field: 'description', code: 'FIELD_DESCRIPTION_TOO_LONG' }] },
+    });
+    expect(await database.prisma.slot.count({ where: { eventId: event.id } })).toBe(1);
+  });
+
+  it('[F-21 S4] RG-07: markup is stored as typed, never interpreted', async () => {
+    const event = await insertEvent();
+    const response = await create(event.id, { ...morning, description: '<b>Gants</b> fournis' });
+    expect(response.body.description).toBe('<b>Gants</b> fournis');
+  });
+
+  it('[F-21 S5] RG-07, RG-15: a started slot keeps its registrations when only its description changes', async () => {
+    const event = await insertEvent({
+      startsAt: '2027-03-14T07:00:00Z',
+      endsAt: '2027-03-14T17:00:00Z',
+    });
+    const slot = await insertSlot(event.id, 8, 3);
+    shared.setClock(shared.fixedClock('2027-03-14T09:00:00Z')); // the slot began at 08:00
+    const response = await patch(slot.id, { description: 'Gants fournis' });
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      description: 'Gants fournis',
+      started: true,
+      registeredCount: 3,
+      capacity: 8,
+    });
+  });
+
+  it('RG-07: null or blank clears the description; leaving it out keeps it', async () => {
+    const slot = await insertSlot((await insertEvent()).id, null, 0, 'À garder');
+    expect((await patch(slot.id, { capacity: 4 })).body.description).toBe('À garder');
+    expect((await patch(slot.id, { description: '  ' })).body.description).toBeNull();
+    expect(await storedDescription(slot.id)).toBeNull();
+    await patch(slot.id, { description: 'Encore' });
+    expect((await patch(slot.id, { description: null })).body.description).toBeNull();
+  });
+
+  it('[F-21 S3] RG-07: a too long description on update is refused and the stored one is kept', async () => {
+    const slot = await insertSlot((await insertEvent()).id, null, 0, 'Avant');
+    const response = await patch(slot.id, { description: 'a'.repeat(501) });
+    expect(response.status).toBe(400);
+    expect(response.body.details.fields).toEqual([
+      { field: 'description', code: 'FIELD_DESCRIPTION_TOO_LONG' },
+    ]);
+    expect(await storedDescription(slot.id)).toBe('Avant');
+  });
+
+  it('[F-21 S6] RG-15: the description of a slot of a past event cannot be changed', async () => {
+    const event = await insertEvent({ startsAt: '2027-03-09T07:00:00Z', endsAt: NOW });
+    const slot = await insertSlot(event.id, null, 0, 'Avant');
+    const response = await patch(slot.id, { description: 'Après' });
+    expect(response.status).toBe(409);
+    expect(response.body.code).toBe('EVENT_PAST');
+    expect(await storedDescription(slot.id)).toBe('Avant');
   });
 });
 

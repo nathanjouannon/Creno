@@ -36,6 +36,10 @@ export const slotSchema = z
     startsAt: outDateTime(),
     endsAt: outDateTime(),
     capacity: z.number().int().nullable().describe('`null` = places illimitées'),
+    description: z
+      .string()
+      .nullable()
+      .describe('Texte brut (jamais interprété), `null` = sans description (RG-07, F-21)'),
     registeredCount: z.number().int().min(0),
     remainingPlaces: z
       .number()
@@ -59,6 +63,15 @@ const capacity = () =>
     .min(1, 'FIELD_CAPACITY_TOO_LOW')
     .nullable();
 
+// RG-07, F-21: optional plain text of 500 characters at most; blank or `null` means none (the service stores `null`).
+const slotDescription = () =>
+  z
+    .string()
+    .trim()
+    .max(500, 'FIELD_DESCRIPTION_TOO_LONG')
+    .nullable()
+    .describe('Texte brut de 500 caractères au plus ; vide ou `null` = sans description (RG-07)');
+
 // RG-07: `null` or absent = unlimited places, otherwise at least 1; a slot may exceed the event dates.
 export const slotInputSchema = z
   .object({
@@ -67,13 +80,19 @@ export const slotInputSchema = z
     capacity: capacity()
       .default(null)
       .describe('Nombre de places ; `null` ou absent = illimité (RG-07)'),
+    description: slotDescription().optional(),
   })
   .strict()
   .refine(endsAfterStarts, endsAfterStartsIssue)
   .openapi('SlotInput');
 
 export const slotUpdateSchema = z
-  .object({ startsAt: dateTime(), endsAt: dateTime(), capacity: capacity() })
+  .object({
+    startsAt: dateTime(),
+    endsAt: dateTime(),
+    capacity: capacity(),
+    description: slotDescription(),
+  })
   .partial()
   .strict()
   .refine((slot) => Object.keys(slot).length > 0, { message: 'FIELD_REQUIRED' })

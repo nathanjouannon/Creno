@@ -169,6 +169,36 @@ describe('POST /events (F-04)', () => {
     },
   );
 
+  it('[F-21 S2] RG-07: a slot created with the event keeps its description, a blank one is none', async () => {
+    const response = await create({
+      ...input,
+      slots: [
+        { ...slot, description: ' Montage des barrières, gants fournis ' },
+        { ...slot, description: '  ' },
+      ],
+    });
+    expect(response.status).toBe(201);
+    expect(conforms('EventDetail', response.body)).toBe(true);
+    expect(response.body.slots.map((s: { description: string | null }) => s.description)).toEqual([
+      'Montage des barrières, gants fournis',
+      null,
+    ]);
+    const stored = await database.prisma.slot.findMany({ orderBy: { id: 'asc' } });
+    expect(stored.map((s) => s.description)).toEqual([
+      'Montage des barrières, gants fournis',
+      null,
+    ]);
+  });
+
+  it('[F-21 S3] RG-07: a too long description on a slot of the event refuses the whole creation', async () => {
+    const response = await create({ ...input, slots: [{ ...slot, description: 'a'.repeat(501) }] });
+    expect(response.status).toBe(400);
+    expect(response.body.details.fields).toEqual([
+      { field: 'slots.0.description', code: 'FIELD_DESCRIPTION_TOO_LONG' },
+    ]);
+    expect(await database.prisma.event.count()).toBe(0);
+  });
+
   it('F-04: one invalid slot refuses the whole creation (atomic): no event, no slot', async () => {
     const response = await create({ ...input, slots: [slot, { ...slot, capacity: 0 }] });
     expect(response.status).toBe(400);

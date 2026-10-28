@@ -351,6 +351,11 @@ components:
             - integer
             - "null"
           description: "`null` = places illimitées"
+        description:
+          type:
+            - string
+            - "null"
+          description: Texte brut (jamais interprété), `null` = sans description (RG-07, F-21)
         registeredCount:
           type: integer
           minimum: 0
@@ -375,6 +380,7 @@ components:
         - startsAt
         - endsAt
         - capacity
+        - description
         - registeredCount
         - remainingPlaces
         - full
@@ -414,6 +420,12 @@ components:
           minimum: 1
           default: null
           description: Nombre de places ; `null` ou absent = illimité (RG-07)
+        description:
+          type:
+            - string
+            - "null"
+          maxLength: 500
+          description: Texte brut de 500 caractères au plus ; vide ou `null` = sans description (RG-07)
       required:
         - startsAt
         - endsAt
@@ -485,6 +497,12 @@ components:
             - integer
             - "null"
           minimum: 1
+        description:
+          type:
+            - string
+            - "null"
+          maxLength: 500
+          description: Texte brut de 500 caractères au plus ; vide ou `null` = sans description (RG-07)
       additionalProperties: false
       minProperties: 1
     UpdateProfileInput:

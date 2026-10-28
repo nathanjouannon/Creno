@@ -68,6 +68,7 @@ Un code de champ ne se rattache pas à un statut HTTP : il explique pourquoi un 
 | `FIELD_DATE_INVALID` | Renseigne une date valide. | Date-heure mal formée |
 | `FIELD_END_NOT_AFTER_START` | La fin doit être après le début. | RG-06 (événement), RG-07 (créneau) ; porté par le champ `endsAt` |
 | `FIELD_CAPACITY_TOO_LOW` | La limite doit être d'au moins 1 place (ou vide pour illimité). | RG-07 |
+| `FIELD_DESCRIPTION_TOO_LONG` | La description ne peut pas dépasser 500 caractères. | RG-07 (F-21) : description d'un créneau de plus de 500 caractères ; portée par le champ `description` |
 | `FIELD_TIMEZONE_INVALID` | Choisis un fuseau horaire de la liste. | RG-16 : valeur absente de la base IANA |
 | `FIELD_ROLE_INVALID` | Rôle inconnu. | Valeur autre que `USER` ou `ADMIN` |
 | `FIELD_UNKNOWN` | Champ non reconnu. | Champ inattendu dans le corps ; filet de sécurité, pas affiché à l'utilisateur |

@@ -74,8 +74,11 @@ CREATE TABLE slots (
     starts_at   TIMESTAMPTZ NOT NULL,
     ends_at     TIMESTAMPTZ NOT NULL,
     capacity    INTEGER     CHECK (capacity >= 1),
+    description TEXT,  -- F-21, RG-07 : texte brut facultatif, 500 caractères au plus ; vide = NULL
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CHECK (ends_at > starts_at)
+    CHECK (ends_at > starts_at),
+    CONSTRAINT slots_description_check
+        CHECK (description IS NULL OR (length(btrim(description)) > 0 AND char_length(description) <= 500))
 );
 
 CREATE INDEX slots_event_id_idx ON slots (event_id);

@@ -46,6 +46,7 @@ describe('SlotForm (C6, C7)', () => {
         startsAt: '2027-03-14T08:00:00.000Z',
         endsAt: '2027-03-14T11:00:00.000Z',
         capacity: null,
+        description: null,
       }),
     );
     expect(onClose).toHaveBeenCalled();
@@ -93,7 +94,7 @@ describe('SlotForm (C6, C7)', () => {
         ok: false,
         error: { code: 'SLOT_CAPACITY_BELOW_REGISTRATIONS', message },
       }),
-      { date: '2027-03-14', startTime: '08:00', endTime: '10:00', capacity: '8' },
+      { date: '2027-03-14', startTime: '08:00', endTime: '10:00', capacity: '8', description: '' },
     );
     const limit = screen.getByLabelText(/Limite de places/);
     await userEvent.clear(limit);
@@ -103,5 +104,54 @@ describe('SlotForm (C6, C7)', () => {
     expect(limit).toHaveAttribute('aria-invalid', 'true');
     expect(limit).toHaveValue(3);
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('[F-21 S2] RG-07: the description typed is sent trimmed with the slot', async () => {
+    const { onSubmit } = open();
+    await fill('09:00', '12:00');
+    await userEvent.type(screen.getByLabelText(/Description/), '  Prévoir de quoi se changer ');
+    await validate();
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ description: 'Prévoir de quoi se changer' }),
+      ),
+    );
+  });
+
+  it('[F-21 S3] RG-07: over 500 characters is refused under the field, the text is kept, nothing is sent', async () => {
+    const { onSubmit, onClose } = open();
+    await fill('09:00', '12:00');
+    const field = screen.getByLabelText(/Description/);
+    await userEvent.click(field);
+    await userEvent.paste('a'.repeat(501));
+    await validate();
+    expect(
+      await screen.findByText('La description ne peut pas dépasser 500 caractères.'),
+    ).toBeInTheDocument();
+    expect(field).toHaveAttribute('aria-invalid', 'true');
+    expect(field).toHaveValue('a'.repeat(501));
+    expect(screen.getByLabelText('Début')).toHaveValue('09:00');
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('[F-21 S3] RG-07: exactly 500 characters pass', async () => {
+    const { onSubmit } = open();
+    await fill('09:00', '12:00');
+    await userEvent.click(screen.getByLabelText(/Description/));
+    await userEvent.paste('a'.repeat(500));
+    await validate();
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+  });
+
+  it('[F-21 S5] the description of an existing slot is prefilled for editing', () => {
+    open(vi.fn(), {
+      date: '2027-03-14',
+      startTime: '08:00',
+      endTime: '10:00',
+      capacity: '',
+      description: 'Gants fournis',
+    });
+    expect(screen.getByLabelText(/Description/)).toHaveValue('Gants fournis');
   });
 });

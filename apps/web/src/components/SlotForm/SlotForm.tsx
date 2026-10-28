@@ -6,7 +6,7 @@ import { Button } from '@/components/Button';
 import { Modal } from '@/components/ConfirmDialog';
 import { Form } from '@/components/Form';
 import { FormField } from '@/components/FormField';
-import { DateInput, NumberInput, TimeInput } from '@/components/Input';
+import { DateInput, NumberInput, Textarea, TimeInput } from '@/components/Input';
 import type { ApiResult } from '@/lib/api-client';
 import { toInstant } from '@/lib/dates';
 import { slotFormSchema, type SlotFormValues } from './slot-form-schema';
@@ -16,6 +16,8 @@ export interface SlotValues {
   startsAt: string;
   endsAt: string;
   capacity: number | null;
+  /** Plain text, `null` for none (F-21). */
+  description: string | null;
 }
 
 interface Props {
@@ -35,6 +37,7 @@ const fieldNames: Record<string, string> = {
   startsAt: 'startTime',
   endsAt: 'endTime',
   capacity: 'capacity',
+  description: 'description',
 };
 
 function toSlotValues(values: SlotFormValues, timeZone: string): SlotValues | null {
@@ -42,7 +45,12 @@ function toSlotValues(values: SlotFormValues, timeZone: string): SlotValues | nu
   const endsAt = toInstant(values.date, values.endTime, timeZone);
   if (!startsAt || !endsAt) return null;
   const capacity = values.capacity.trim();
-  return { startsAt, endsAt, capacity: capacity === '' ? null : Number(capacity) };
+  return {
+    startsAt,
+    endsAt,
+    capacity: capacity === '' ? null : Number(capacity),
+    description: values.description.trim() || null,
+  };
 }
 
 /** RG-07: a slot may be outside the dates of its event; the administrator is warned but can validate. */
@@ -59,7 +67,7 @@ function OutOfEventWarning({ timeZone, event }: Pick<Props, 'timeZone' | 'event'
 }
 
 /**
- * C6, C7 (F-05, RG-07): day, start, end, optional limit, in a window opened from the event form or the event page,
+ * C6, C7 (F-05, F-21, RG-07): day, start, end, optional limit and description, in a window opened from the event form or the event page,
  * so never inside another form in the HTML. A limit under the registrations is refused by the server, under the
  * limit field.
  */
@@ -105,6 +113,13 @@ export function SlotForm({ title, onClose, timeZone, event, defaultValues, onSub
         </FormField>
         <FormField name="capacity" label="Limite de places (vide = illimité)">
           <NumberInput />
+        </FormField>
+        <FormField
+          name="description"
+          label="Description (facultatif)"
+          help="Texte simple, 500 caractères au plus."
+        >
+          <Textarea />
         </FormField>
         <OutOfEventWarning timeZone={timeZone} event={event} />
       </Form>

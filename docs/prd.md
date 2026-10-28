@@ -42,6 +42,7 @@ Note : les personas viennent de l'expérience de l'auteur, aucun entretien n'a e
 | F-03 | Rôles et permissions (administrateur, utilisateur) | Must | v1 (MVP) | Un bénévole ne peut accéder à aucune action d'administration, y compris par URL directe |
 | F-04 | Créer, modifier, supprimer un événement | Must | v1 (MVP) | L'administrateur publie un événement avec titre, description, lieu et dates de début et de fin en moins de 3 minutes ; un événement peut être enregistré sans créneau |
 | F-05 | Définir des créneaux (shifts) par événement avec horaires et nombre de places. Par défaut, le nombre de places est illimité ; l'administrateur peut le limiter à la création du créneau | Must | v1 (MVP) | Un créneau sans limite accepte toute inscription ; un créneau limité complet n'accepte plus d'inscription et sa limite n'est jamais dépassée |
+| F-21 | Décrire un créneau : texte libre facultatif (500 caractères au plus, texte brut) saisi par l'administrateur, lu par les bénévoles et les administrateurs sur le créneau (extension de F-05) | Must | v1 (MVP) | Un créneau sans description s'affiche comme avant ; la description saisie est visible sur le créneau, y compris dans un événement passé |
 | F-06 | Consulter la liste des événements et leurs créneaux | Must | v1 (MVP) | Un bénévole voit, pour chaque créneau, les noms des inscrits et, si le créneau est limité, les places restantes |
 | F-07 | S'inscrire à un créneau | Must | v1 (MVP) | L'inscription est enregistrée immédiatement et visible sans recharger manuellement l'écran de confirmation |
 | F-08 | Se désinscrire ou changer de créneau | Must | v1 (MVP) | Le bénévole modifie sa réponse seul ; la place libérée est aussitôt disponible |
@@ -62,7 +63,7 @@ Principe directeur (retour du test d'ephios) : réduire les options au strict mi
 
 ## 5. MVP
 
-Le MVP regroupe F-01 à F-11 et F-19.
+Le MVP regroupe F-01 à F-11, F-19 et F-21.
 
 **Définition de « fini » d'une fonctionnalité** : ses user stories (`user-stories.md`) ont toutes leurs scénarios Given/When/Then passants, testés automatiquement ou manuellement, l'interface est utilisable sur mobile, le texte est en français, et la documentation utilisateur concernée est à jour.
 

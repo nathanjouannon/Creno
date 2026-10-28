@@ -90,12 +90,14 @@ model Event {
 
 // RG-07: capacity null = unlimited.
 model Slot {
-  id        Int      @id @default(autoincrement())
-  eventId   Int      @map("event_id")
-  startsAt  DateTime @map("starts_at") @db.Timestamptz(6)
-  endsAt    DateTime @map("ends_at") @db.Timestamptz(6)
-  capacity  Int?
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id          Int      @id @default(autoincrement())
+  eventId     Int      @map("event_id")
+  startsAt    DateTime @map("starts_at") @db.Timestamptz(6)
+  endsAt      DateTime @map("ends_at") @db.Timestamptz(6)
+  capacity    Int?
+  // F-21, RG-07: plain text, 500 characters at most (CHECK slots_description_check added in SQL)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
   registrations Registration[]
