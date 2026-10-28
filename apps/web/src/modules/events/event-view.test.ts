@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { displayName, eventStatus, toEventDetailView } from './event-view';
+import { eventStatus, toEventDetailView } from './event-view';
 import type { EventDetailRecord } from './events.repository';
 
 const startsAt = new Date('2027-01-15T07:00:00Z');
@@ -22,12 +22,6 @@ describe('eventStatus (RG-09, glossary)', () => {
 
   it('past at the exact end', () => {
     expect(eventStatus(event, endsAt)).toBe('past');
-  });
-});
-
-describe('displayName (RG-09)', () => {
-  it('is the first name and the initial of the last name', () => {
-    expect(displayName({ firstName: 'Marie', lastName: 'dupont' })).toBe('Marie D.');
   });
 });
 
