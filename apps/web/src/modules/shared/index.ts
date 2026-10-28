@@ -25,3 +25,4 @@ export { getHealthService } from './health';
 export { getPrisma } from './prisma';
 export { checkRateLimit, clientAddress, resetRateLimits } from './rate-limit';
 export { assertSameOrigin } from './origin';
+export { isSerializationFailure } from './serialization';
