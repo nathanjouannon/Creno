@@ -1,5 +1,7 @@
 import { clock, getConfig, getPrisma } from '@/modules/shared';
 import { createAuthRepository } from './auth.repository';
+import { createPasswordResetRepository } from './password-reset.repository';
+import { createPasswordResetService, type PasswordResetService } from './password-reset.service';
 import { createLoginRepository } from './login.repository';
 import { createLoginService, type LoginService } from './login.service';
 import { hashPassword, verifyPassword } from './password';
@@ -35,6 +37,22 @@ export function getLoginService(): LoginService {
     });
   }
   return login;
+}
+
+let passwordReset: PasswordResetService | undefined;
+
+export function getPasswordResetService(): PasswordResetService {
+  if (!passwordReset) {
+    const config = getConfig();
+    passwordReset = createPasswordResetService({
+      repository: createPasswordResetRepository(getPrisma()),
+      clock,
+      appUrl: config.APP_URL,
+      secret: config.AUTH_SECRET,
+      hashPassword,
+    });
+  }
+  return passwordReset;
 }
 
 /** The authenticator the route envelope uses by default (shared/auth.ts). */

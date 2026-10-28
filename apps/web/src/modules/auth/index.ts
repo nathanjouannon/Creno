@@ -1,4 +1,9 @@
-export { getAuthService, getLoginService, authenticateRequest } from './auth.container';
+export {
+  getAuthService,
+  getLoginService,
+  getPasswordResetService,
+  authenticateRequest,
+} from './auth.container';
 export { getPageUser, requirePageUser } from './page-session';
 export { hashPassword, verifyPassword } from './password';
 export { toUserView } from './auth.service';
