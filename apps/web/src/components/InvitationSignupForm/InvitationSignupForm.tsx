@@ -7,6 +7,7 @@ import { Button } from '@/components/Button';
 import { Form } from '@/components/Form';
 import { FormField } from '@/components/FormField';
 import { EmailInput, PasswordInput, TextInput } from '@/components/Input';
+import { PrivacyNotice } from '@/components/PrivacyNotice';
 import { useToast } from '@/components/Toast';
 import { postJson } from '@/lib/api-client';
 
@@ -69,6 +70,7 @@ export function InvitationSignupForm({ token, eventId }: Props) {
       <FormField name="password" label="Mot de passe" help="10 caractères au minimum." required>
         <PasswordInput autoComplete="new-password" />
       </FormField>
+      <PrivacyNotice />
       {emailTaken ? (
         <Button
           variant="secondary"

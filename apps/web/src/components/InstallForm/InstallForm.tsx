@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Form } from '@/components/Form';
 import { FormField } from '@/components/FormField';
 import { EmailInput, PasswordInput, SelectInput, TextInput } from '@/components/Input';
+import { PrivacyNotice } from '@/components/PrivacyNotice';
 import { postJson } from '@/lib/api-client';
 
 interface Props {
@@ -65,6 +66,7 @@ export function InstallForm({ timezones }: Props) {
           <PasswordInput autoComplete="new-password" />
         </FormField>
       </fieldset>
+      <PrivacyNotice />
     </Form>
   );
 }

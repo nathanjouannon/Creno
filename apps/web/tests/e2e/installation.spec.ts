@@ -141,6 +141,7 @@ test('keyboard: the form is usable with the keyboard alone', async ({ page }) =>
   await page.keyboard.press('Tab');
   await page.keyboard.type(installation.admin.password);
   await page.keyboard.press('Tab'); // "Afficher"
+  await page.keyboard.press('Tab'); // "Mentions d'information" (T-021)
   await page.keyboard.press('Tab'); // "Installer"
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/events$/);

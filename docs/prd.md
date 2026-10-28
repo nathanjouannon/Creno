@@ -56,6 +56,7 @@ Note : les personas viennent de l'expérience de l'auteur, aucun entretien n'a e
 | F-16 | Suivi des heures et classement des contributeurs | Could | v2 | Le total d'heures d'un bénévole correspond à la somme de ses créneaux validés |
 | F-17 | Export des inscriptions (CSV / impression) | Could | v2 | Le fichier exporté reflète exactement l'écran de l'événement |
 | F-18 | Vue calendrier d'un événement côté administrateur (qui est sur quel créneau, d'un coup d'œil), en plus de la liste de F-09 | Could | Versions futures | L'administrateur voit sur un calendrier les inscrits de chaque créneau, identiques à la liste de F-09 |
+| F-20 | Mon profil : consulter et modifier son nom, son prénom et son e-mail (droits d'accès et de rectification, RGPD) | Should | v1.1 | Après modification, l'ancien e-mail ne permet plus de se connecter et le nouveau est unique sans tenir compte de la casse |
 
 Principe directeur (retour du test d'ephios) : réduire les options au strict minimum pour ne pas perdre l'utilisateur.
 

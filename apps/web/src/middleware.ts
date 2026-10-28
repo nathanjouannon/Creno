@@ -12,7 +12,7 @@ export const config = {
 
 // Pages a visitor may open (flow 00). Every other page, even one that does not exist, needs a session: a new
 // public page (invitation, password reset) is added here by the ticket that creates it.
-const PUBLIC_PAGES = ['/connexion', '/installation'];
+const PUBLIC_PAGES = ['/connexion', '/installation', '/mentions'];
 // F-01, F-02: the invitation and password reset links, opened by someone who is not signed in
 const PUBLIC_PREFIXES = ['/invitation/', '/reinitialisation/'];
 const isPublicPage = (pathname: string) =>
@@ -25,6 +25,9 @@ const isPublicPage = (pathname: string) =>
  */
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+
+  // T-021: the information notice is readable by anyone, installed or not
+  if (pathname === '/mentions') return NextResponse.next();
 
   if (!(await getClubService().isInstalled())) {
     return pathname === '/installation'

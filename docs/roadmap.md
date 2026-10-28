@@ -84,6 +84,6 @@ Ordre conseillé (les dépendances exactes sont dans le tableau) :
 
 | Version | Fonctionnalités | Remarque |
 | --- | --- | --- |
-| v1.1 | F-12 inscription par un administrateur, F-13 historique, F-14 mon planning | Écrire les tickets après la première utilisation réelle (`prd.md`, section 7) |
+| v1.1 | F-12 inscription par un administrateur, F-13 historique, F-14 mon planning, F-20 mon profil ([T-025](https://github.com/nathanjouannon/Creno/issues/57)) | F-20 : ticket déjà écrit, il donne les droits d'accès et de rectification (`security.md`, section 6) ; les autres : écrire les tickets après la première utilisation réelle (`prd.md`, section 7) |
 | v2 | F-15 notifications par e-mail, F-16 suivi des heures, F-17 export | F-15 exige un ADR et complète `api/events.md` |
 | Plus tard | F-18 vue calendrier ; connexion Google, Facebook, Apple | ADR dédié pour l'authentification externe (ADR-0006) |
