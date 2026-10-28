@@ -27,7 +27,9 @@ export function EventHeader({ variant, event, timeZone, actions }: Props) {
         <p className="text-small text-text-muted">{errorCatalog.EVENT_PAST.message}</p>
       ) : null}
       {event.description ? <p className="text-text">{event.description}</p> : null}
-      {variant === 'admin' && actions ? <div className="flex gap-sm">{actions}</div> : null}
+      {variant === 'admin' && actions ? (
+        <div className="flex flex-wrap gap-sm">{actions}</div>
+      ) : null}
     </header>
   );
 }

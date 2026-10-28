@@ -31,7 +31,7 @@ flowchart TD
         B9 --> B10["Redirection vers la page de<br/>l'événement mémorisé, prénom en<br/>haut à droite, puis état<br/>temporaire effacé"]
     end
 
-    %% État temporaire : simple mémoire du navigateur (par exemple un store de type Zustand), choix technique laissé à la phase architecture.
+    %% État temporaire (T-017) : pas de store, l'événement du lien est porté par l'adresse de la page de connexion (`/connexion?suite=/events/{id}`), déjà validée par `safeDestination`.
     %% Une instance = une association (PRD section 6) : seul l'événement est mémorisé, le club est implicite.
     NOTE["État temporaire : identifiant de<br/>l'événement de l'invitation, perdu<br/>à la fermeture de l'onglet<br/>(comportement à valider en phase<br/>architecture)"]
     BM -.- NOTE
