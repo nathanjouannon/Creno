@@ -38,7 +38,10 @@ export function checkRateLimit(request: Request): void {
   const { pathname } = new URL(request.url);
   if (pathname === '/health') return; // public and unlimited (openapi.yaml)
 
-  const strict = STRICT_PATHS.some((pattern) => pattern.test(pathname));
+  // PATCH /me checks a password (RG-18): it shares the small budget so a stolen session cannot guess it
+  const strict =
+    STRICT_PATHS.some((pattern) => pattern.test(pathname)) ||
+    (request.method === 'PATCH' && pathname === '/api/me');
   const key = `${strict ? 'strict' : 'default'}:${clientAddress(request)}`;
   const now = clock.now().getTime();
   const all = counters();

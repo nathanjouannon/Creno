@@ -102,7 +102,7 @@ test('the demonstration page does not exist in production', async ({ page }) => 
   expect(response?.status()).toBe(404);
 });
 
-test('keyboard only: the user menu opens, reaches "Se déconnecter" and closes with Escape', async ({
+test('keyboard only: the user menu opens, reaches "Mon profil" and "Se déconnecter" and closes with Escape', async ({
   page,
 }) => {
   await page.goto('/connexion');
@@ -114,6 +114,8 @@ test('keyboard only: the user menu opens, reaches "Se déconnecter" and closes w
   await page.keyboard.press('Tab'); // user menu
   await expect(menu).toBeFocused();
   await page.keyboard.press('Enter');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'Mon profil' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeFocused();
   await page.keyboard.press('Escape');

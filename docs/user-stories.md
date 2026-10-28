@@ -515,6 +515,40 @@ Scénario 3 : accès réservé (F-03)
 - When : il ouvre l'URL du journal
 - Then : l'accès est refusé
 
+### « Mon profil » (F-20)
+
+En tant qu'**utilisateur**, je veux consulter et corriger mon nom, mon prénom et mon e-mail afin d'exercer mes droits d'accès et de rectification sans passer par un administrateur.
+
+Scénario 1 : consulter (RG-18)
+- Given : un utilisateur connecté
+- When : il choisit « Mon profil » dans le menu de son prénom
+- Then : son nom, son prénom et son e-mail s'affichent dans un formulaire modifiable
+
+Scénario 2 : modifier son nom ou son prénom (RG-09, RG-18)
+- Given : un utilisateur inscrit à un créneau
+- When : il change son prénom et enregistre, sans changer d'e-mail
+- Then : le changement est enregistré sans demander de mot de passe, et le créneau affiche aussitôt le nouveau « Prénom N. »
+
+Scénario 3 : changer d'e-mail (RG-01, RG-18)
+- Given : un utilisateur qui saisit une nouvelle adresse et son mot de passe actuel
+- When : il enregistre
+- Then : le nouvel e-mail est enregistré, il reste connecté et l'ancienne adresse ne permet plus de se connecter
+
+Scénario 4 : mot de passe actuel absent ou faux (RG-18)
+- Given : un utilisateur qui saisit une nouvelle adresse
+- When : il enregistre sans mot de passe, ou avec un mot de passe faux
+- Then : rien n'est modifié et le message « Ce champ est obligatoire. » ou « Le mot de passe actuel est incorrect. » s'affiche sous le champ du mot de passe
+
+Scénario 5 : adresse déjà utilisée (RG-01)
+- Given : un autre utilisateur dont l'adresse est `Marie@Club.fr`
+- When : l'utilisateur saisit `marie@club.fr` avec son mot de passe actuel et enregistre
+- Then : rien n'est modifié et le message « Cette adresse est déjà utilisée par un autre compte. » s'affiche
+
+Scénario 6 : champ vide ou e-mail mal formé (RG-01)
+- Given : un utilisateur qui vide son nom, ou saisit une adresse sans « @ »
+- When : il enregistre
+- Then : rien n'est envoyé et le message du champ s'affiche
+
 ### « Mon planning » (F-14)
 
 En tant qu'**utilisateur**, je veux voir la liste de mes prochaines inscriptions afin de ne rien oublier.

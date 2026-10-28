@@ -24,6 +24,7 @@ import {
   slotSchema,
   slotUpdateSchema,
   tokenParamsSchema,
+  updateProfileInputSchema,
   userIdParamsSchema,
   userSchema,
 } from '../schemas';
@@ -217,6 +218,26 @@ export const routes: RouteDefinition[] = [
     auth: 'user',
     success: { status: 200, description: "L'utilisateur connecté", schema: userSchema },
     errors: ['Unauthenticated'],
+  },
+  {
+    operationId: 'updateMe',
+    method: 'patch',
+    path: '/me',
+    tag: 'Authentification',
+    summary: 'Modifier son nom, son prénom ou son e-mail (F-20, RG-18)',
+    description: [
+      "Les trois champs sont renvoyés à chaque appel. `currentPassword` n'est exigé que si l'e-mail change : absent, `VALIDATION_ERROR` sur `currentPassword` (`FIELD_REQUIRED`) ; faux, `VALIDATION_ERROR` (`FIELD_PASSWORD_INCORRECT`).",
+      "La session ouverte reste valable. Aucun e-mail n'est envoyé (RG-13).",
+    ].join('\n'),
+    auth: 'user',
+    body: updateProfileInputSchema,
+    success: { status: 200, description: "L'utilisateur mis à jour", schema: userSchema },
+    errors: [
+      'Unauthenticated',
+      'ValidationError',
+      error(409, ['USER_EMAIL_IN_USE'], 'Adresse déjà utilisée (`USER_EMAIL_IN_USE`, RG-01)'),
+      'RateLimited',
+    ],
   },
   {
     operationId: 'deleteMe',

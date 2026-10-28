@@ -487,6 +487,25 @@ components:
           minimum: 1
       additionalProperties: false
       minProperties: 1
+    UpdateProfileInput:
+      type: object
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+        lastName:
+          type: string
+          minLength: 1
+        email:
+          $ref: "#/components/schemas/Email"
+        currentPassword:
+          type: string
+          description: Exigé seulement quand l'e-mail change (RG-18) ; jamais renvoyé
+      required:
+        - firstName
+        - lastName
+        - email
+      additionalProperties: false
   parameters: {}
 paths:
   /setup:
@@ -612,6 +631,40 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Unauthenticated"
+    patch:
+      tags:
+        - Authentification
+      operationId: updateMe
+      summary: Modifier son nom, son prénom ou son e-mail (F-20, RG-18)
+      description: |-
+        Les trois champs sont renvoyés à chaque appel. `currentPassword` n'est exigé que si l'e-mail change : absent, `VALIDATION_ERROR` sur `currentPassword` (`FIELD_REQUIRED`) ; faux, `VALIDATION_ERROR` (`FIELD_PASSWORD_INCORRECT`).
+        La session ouverte reste valable. Aucun e-mail n'est envoyé (RG-13).
+      x-auth: user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileInput"
+      responses:
+        "200":
+          description: L'utilisateur mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "409":
+          description: Adresse déjà utilisée (`USER_EMAIL_IN_USE`, RG-01)
+          x-error-codes:
+            - USER_EMAIL_IN_USE
+          content:
+            application/json: *a3
+        "429":
+          $ref: "#/components/responses/RateLimited"
     delete:
       tags:
         - Authentification
