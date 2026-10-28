@@ -140,7 +140,7 @@ Bibliothèque : **react-hook-form** si la stack retenue en phase 6 est React ou 
 | `LoginForm` | e-mail, mot de passe | A5 à A7 | Erreur unique non détaillée, mot de passe vidé, blocage 15 min (RG-03) |
 | `ResetPasswordForm` | nouveau mot de passe | A8 | Lien invalide : l'écran remplace le formulaire (A9) |
 | `EventForm` | titre, description, lieu, `DateTimeRange` début / fin, liste de créneaux | C4, C5 | Création et modification (`defaultValues`) ; les créneaux sont une liste de valeurs du formulaire (tableau de champs) |
-| `SlotForm` | date, heure de début, heure de fin, limite | C6, C7 | Formulaire distinct, dans une fenêtre (`Modal`, titre « Ajouter un créneau » ou « Modifier le créneau », bouton « Annuler ») ouverte depuis `EventForm` ou la page de l'événement : jamais imbriqué dans le HTML ; depuis `EventForm`, son résultat est ajouté à la liste de créneaux ; fin après début le même jour ; avertissement hors des dates de l'événement calculé à la saisie (RG-07) ; limite sous le nombre d'inscrits refusée sous le champ (RG-07) |
+| `SlotForm` | date, heure de début, heure de fin, limite, description (facultative, zone de texte de 500 caractères au plus, F-21) | C6, C7 | Formulaire distinct, dans une fenêtre (`Modal`, titre « Ajouter un créneau » ou « Modifier le créneau », bouton « Annuler ») ouverte depuis `EventForm` ou la page de l'événement : jamais imbriqué dans le HTML ; depuis `EventForm`, son résultat est ajouté à la liste de créneaux ; fin après début le même jour ; avertissement hors des dates de l'événement calculé à la saisie (RG-07) ; limite sous le nombre d'inscrits refusée sous le champ (RG-07) |
 
 Les actions sans champ (se désinscrire, générer un lien, retirer son droit administrateur) ne sont pas des formulaires : ce sont de simples `Button` avec `ConfirmDialog` ou `Toast`.
 
@@ -160,7 +160,7 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 
 ### SlotCard
 - Rôle : un créneau d'un événement ; composant central du produit (F-05 à F-09).
-- Contenu : horaires (`font.weight-bold`), `SlotStatusTag`, `AttendeeList`, zone d'actions.
+- Contenu : horaires (`font.weight-bold`), description facultative (F-21, texte brut sous les horaires, retours à la ligne conservés, absente si le créneau n'en a pas ; retour à la ligne dans les mots longs pour tenir en 360 px), `SlotStatusTag`, `AttendeeList`, zone d'actions. La description s'affiche dans les trois variantes, `readonly` comprise.
 - Variantes :
   - `volunteer` : action unique « Je m'inscris » ou « Me désinscrire ».
   - `admin` : compteur « inscrits / limite » ou « N inscrits », boutons Modifier et Supprimer, alerte « Aucun inscrit » si limité et vide, et `AttendeeChip removable` pour retirer un inscrit (C2, RG-08). L'administrateur s'inscrit comme un utilisateur : le créneau affiche aussi « Je m'inscris » ou « Me désinscrire » selon les états du tableau ci-dessous.

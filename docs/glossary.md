@@ -36,7 +36,7 @@ Règles d'usage :
 | Terme (FR) | Code | Définition | Règles | À ne pas employer |
 | --- | --- | --- | --- | --- |
 | Événement | `Event` | Occasion organisée par le club (compétition, journée de ski…). Attributs : titre (`title`), description, lieu (`location`), début (`startsAt`), fin (`endsAt`, après le début). Peut exister sans créneau. | RG-06, RG-09, RG-10 | « activité », « sortie » |
-| Créneau | `Slot` | Plage horaire d'un événement pendant laquelle des bénévoles sont attendus. Appartient à un seul événement ; attributs : début (`startsAt`), fin (`endsAt`), capacité (`capacity`). | RG-07, RG-08, RG-10 | `Shift`, « tranche », « session », « poste » |
+| Créneau | `Slot` | Plage horaire d'un événement pendant laquelle des bénévoles sont attendus. Appartient à un seul événement ; attributs : début (`startsAt`), fin (`endsAt`), capacité (`capacity`), description facultative (`description`, texte brut de 500 caractères au plus). | RG-07, RG-08, RG-10 | `Shift`, « tranche », « session », « poste » |
 | Capacité | `capacity` | Nombre maximal d'inscriptions d'un créneau. Vide (`null`) = places illimitées. Ne peut pas être abaissée sous le nombre d'inscrits. | RG-07 | « quota », « maxAttendees », « limite » dans le code (« limite de places » reste correct à l'écran) |
 | Places restantes | `remainingPlaces` | Valeur calculée : `capacity` moins le nombre d'inscriptions. N'existe que pour un créneau limité. Jamais stockée. | RG-07 | |
 | Complet | `full` | État calculé : créneau limité dont le nombre d'inscriptions a atteint `capacity`. Un créneau illimité n'est jamais complet. | RG-07 | « fermé », « saturé » |

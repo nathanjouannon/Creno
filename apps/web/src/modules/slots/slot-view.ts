@@ -5,6 +5,7 @@ export interface SlotViewSource {
   startsAt: Date;
   endsAt: Date;
   capacity: number | null;
+  description: string | null;
   registrations: {
     id: number;
     userId: number | null;
@@ -50,6 +51,7 @@ export function toSlotView(slot: SlotViewSource, now: Date, viewerId: number) {
     startsAt: slot.startsAt.toISOString(),
     endsAt: slot.endsAt.toISOString(),
     capacity: slot.capacity,
+    description: slot.description,
     ...slotState(slot, slot.registrations.length, now),
     attendees: slot.registrations.map((registration) => ({
       registrationId: registration.id,

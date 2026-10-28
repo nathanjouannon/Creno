@@ -40,6 +40,7 @@ function record(slots: Partial<EventDetailRecord['slots'][number]>[]): EventDeta
       startsAt,
       endsAt,
       capacity: null,
+      description: null,
       createdAt: startsAt,
       registrations: [],
       ...slot,

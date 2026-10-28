@@ -17,6 +17,7 @@ function slot(overrides: Partial<Slot> = {}): Slot {
     startsAt: '2030-03-14T07:00:00.000Z',
     endsAt: '2030-03-14T09:00:00.000Z',
     capacity: 4,
+    description: null,
     registeredCount: 2,
     remainingPlaces: 2,
     full: false,
@@ -183,5 +184,51 @@ describe('SlotCard admin: filling (F-09)', () => {
     render(<SlotCard variant="readonly" slot={slot()} timeZone="Europe/Paris" />);
     expect(screen.getByText('Marie D.')).toBeInTheDocument();
     expect(screen.queryByRole('button')).toBeNull();
+  });
+});
+
+describe('SlotCard description (F-21)', () => {
+  const variants = ['volunteer', 'admin', 'readonly'] as const;
+
+  it.each(variants)('[F-21 S2, S6] RG-07: the description shows in the %s variant', (variant) => {
+    render(
+      <SlotCard
+        variant={variant}
+        slot={slot({ description: 'Prévoir de quoi se changer' })}
+        timeZone="Europe/Paris"
+      />,
+    );
+    expect(screen.getByText('Prévoir de quoi se changer')).toBeInTheDocument();
+  });
+
+  it.each(variants)('[F-21 S1] a slot without description shows no text zone (%s)', (variant) => {
+    const { container } = render(
+      <SlotCard variant={variant} slot={slot({ description: null })} timeZone="Europe/Paris" />,
+    );
+    expect(container.querySelector('p.whitespace-pre-line')).toBeNull();
+  });
+
+  it('[F-21 S4] RG-07: a tag typed in the description shows as text, never as markup', () => {
+    const { container } = render(
+      <SlotCard
+        variant="volunteer"
+        slot={slot({ description: '<b>Gants</b> fournis' })}
+        timeZone="Europe/Paris"
+      />,
+    );
+    expect(screen.getByText('<b>Gants</b> fournis')).toBeInTheDocument();
+    expect(container.querySelector('b')).toBeNull();
+  });
+
+  it('keeps the line breaks and wraps long words so 360 px never scrolls sideways', () => {
+    render(
+      <SlotCard
+        variant="volunteer"
+        slot={slot({ description: 'ligne un\nligne deux' })}
+        timeZone="Europe/Paris"
+      />,
+    );
+    const text = screen.getByText(/ligne un/);
+    expect(text).toHaveClass('whitespace-pre-line', 'break-words');
   });
 });

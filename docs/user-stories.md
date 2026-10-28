@@ -264,6 +264,40 @@ Scénario 8 : suppression du dernier créneau (RG-06)
 - When : l'administrateur supprime ce créneau
 - Then : l'événement est conservé sans créneau
 
+### « Description d'un créneau » (F-21)
+
+En tant qu'**administrateur**, je veux décrire un créneau afin de donner aux bénévoles les consignes pratiques (tenue, matériel, lieu de rendez-vous).
+
+Scénario 1 : créneau sans description (RG-07)
+- Given : un administrateur qui ajoute un créneau
+- When : il laisse le champ « Description » vide
+- Then : le créneau est créé et s'affiche comme avant, sans zone de description
+
+Scénario 2 : description saisie, lue par tous (RG-07)
+- Given : un administrateur qui ajoute un créneau
+- When : il saisit la description « Prévoir de quoi se changer » et valide
+- Then : la description apparaît sur le créneau pour l'administrateur et pour un bénévole
+
+Scénario 3 : description trop longue (RG-07)
+- Given : un administrateur qui ajoute ou modifie un créneau
+- When : il saisit une description de plus de 500 caractères
+- Then : le créneau n'est pas enregistré, le message « La description ne peut pas dépasser 500 caractères. » s'affiche sous le champ et ce qu'il a saisi est conservé
+
+Scénario 4 : texte brut (RG-07)
+- Given : un administrateur qui saisit la description `<b>Gants</b> fournis`
+- When : le créneau s'affiche
+- Then : le texte apparaît tel quel, balises comprises, sans mise en forme ni lien cliquable
+
+Scénario 5 : modification d'un créneau commencé (RG-07, RG-15)
+- Given : un créneau commencé, avec 3 inscrits, dans un événement qui n'est pas passé
+- When : l'administrateur modifie la description
+- Then : la description est enregistrée et les 3 inscriptions sont inchangées
+
+Scénario 6 : événement passé (RG-15)
+- Given : un événement passé dont un créneau a une description
+- When : un administrateur ouvre l'événement
+- Then : la description s'affiche en lecture seule, sans action de modification
+
 ### « Consulter les événements et leurs créneaux » (F-06)
 
 En tant qu'**utilisateur**, je veux voir les événements à venir et leurs créneaux afin de savoir où le club a besoin de moi.

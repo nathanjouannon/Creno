@@ -30,6 +30,7 @@ function slotFormValues(slot: Slot, timeZone: string): SlotFormValues {
     startTime: start.time,
     endTime: toLocalParts(slot.endsAt, timeZone).time,
     capacity: slot.capacity === null ? '' : String(slot.capacity),
+    description: slot.description ?? '',
   };
 }
 

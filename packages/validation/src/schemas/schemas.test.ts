@@ -40,6 +40,32 @@ describe('input schemas return field codes, never messages (ADR-0009)', () => {
     });
   });
 
+  it('[F-21 S1, S3] RG-07: a slot description is optional, trimmed, 500 characters at most', () => {
+    expect(slotInputSchema.parse(slot).description).toBeUndefined();
+    expect(slotInputSchema.parse({ ...slot, description: null }).description).toBeNull();
+    expect(slotInputSchema.parse({ ...slot, description: '   ' }).description).toBe('');
+    expect(slotInputSchema.parse({ ...slot, description: '  Gants fournis  ' }).description).toBe(
+      'Gants fournis',
+    );
+    expect(
+      slotInputSchema.parse({ ...slot, description: 'a'.repeat(500) }).description,
+    ).toHaveLength(500);
+    expect(fieldCodes(slotInputSchema, { ...slot, description: 'a'.repeat(501) })).toEqual({
+      description: 'FIELD_DESCRIPTION_TOO_LONG',
+    });
+    // the limit applies after trimming: spaces around do not count
+    expect(
+      slotInputSchema.safeParse({ ...slot, description: ` ${'a'.repeat(500)} ` }).success,
+    ).toBe(true);
+  });
+
+  it('[F-21 S3] RG-07: an update can change the description alone, and refuses a long one', () => {
+    expect(slotUpdateSchema.parse({ description: null })).toEqual({ description: null });
+    expect(fieldCodes(slotUpdateSchema, { description: 'a'.repeat(501) })).toEqual({
+      description: 'FIELD_DESCRIPTION_TOO_LONG',
+    });
+  });
+
   it('RG-07: the end of a slot must be after its start, reported on endsAt', () => {
     expect(fieldCodes(slotInputSchema, { startsAt: slot.endsAt, endsAt: slot.startsAt })).toEqual({
       endsAt: 'FIELD_END_NOT_AFTER_START',

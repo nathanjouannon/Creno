@@ -58,6 +58,7 @@ describe('toSlotView (RG-09, RG-11)', () => {
         startsAt,
         endsAt: new Date('2027-01-15T11:00:00Z'),
         capacity: 4,
+        description: null,
         registrations: [
           { id: 1, userId: 9, user: { firstName: 'Léa', lastName: 'Bernard' } },
           { id: 2, userId: null, user: null },

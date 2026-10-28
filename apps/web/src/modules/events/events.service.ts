@@ -58,6 +58,7 @@ export function createEventsService({ repository, clock }: Dependencies) {
           startsAt: new Date(slot.startsAt),
           endsAt: new Date(slot.endsAt),
           capacity: slot.capacity,
+          description: slot.description || null, // RG-07: blank = none
         })),
       });
       return toEventDetailView(event, clock.now(), user.id);

@@ -10,7 +10,7 @@ Principe : un squelette qui tourne de bout en bout d'abord (M0), puis des tranch
 | --- | --- | --- | --- |
 | **M0 – Squelette** | Un dépôt qui se lance, passe ses tests, se construit en image Docker et applique ses migrations ; contrat d'API généré depuis Zod ; style généré depuis les tokens ; `/health` | T-001 à T-006 | — |
 | **M1 – Installation et accès** | Installer une instance, se connecter, se déconnecter, pages protégées par rôle, composants de base | T-007 à T-010 | F-19, F-02, F-03 |
-| **M2 – Événements et créneaux** | L'administrateur crée, modifie et supprime des événements et des créneaux | T-011 à T-013 | F-04, F-05 |
+| **M2 – Événements et créneaux** | L'administrateur crée, modifie et supprime des événements et des créneaux, avec une description facultative par créneau (T-024, ajoutée après T-013) | T-011 à T-013, T-024 | F-04, F-05, F-21 |
 | **M3 – Inscriptions** | Les bénévoles consultent et s'inscrivent ; l'administrateur suit le remplissage et retire un inscrit | T-014 à T-016 | F-06, F-07, F-08, F-09 |
 | **M4 – Invitations et membres** | Inviter par lien, créer son compte, gérer les membres et les droits, réinitialiser un mot de passe | T-017 à T-019 | F-01, F-10, F-02 (réinitialisation) |
 | **M5 – Compte et mise en service** | Suppression de compte, conformité RGPD et accessibilité, sauvegardes et exploitation, recette du MVP | T-020 à T-023 | F-11 |
@@ -43,9 +43,10 @@ Principe : un squelette qui tourne de bout en bout d'abord (M0), puis des tranch
 | T-020 | [Suppression de son compte](https://github.com/nathanjouannon/Creno/issues/20) | M5 | F-11 | T-014, T-018, T-010 |
 | T-021 | [Mentions d'information et accessibilité](https://github.com/nathanjouannon/Creno/issues/21) | M5 | F-11 | T-015, T-016, T-019, T-020 |
 | T-022 | [Sauvegardes, purges, supervision et mise en production](https://github.com/nathanjouannon/Creno/issues/22) | M5 | — | T-006, T-009, T-018 |
-| T-023 | [Recette de bout en bout du MVP](https://github.com/nathanjouannon/Creno/issues/23) | M5 | F-01 à F-11, F-19 | T-008, T-009, T-013, T-015, T-016, T-017, T-019, T-020, T-021 |
+| T-023 | [Recette de bout en bout du MVP](https://github.com/nathanjouannon/Creno/issues/23) | M5 | F-01 à F-11, F-19, F-21 | T-008, T-009, T-013, T-015, T-016, T-017, T-019, T-020, T-021 |
+| T-024 | [Description d'un créneau](https://github.com/nathanjouannon/Creno/issues/54) | M2 | F-21 | T-013, T-015 |
 
-Fonctionnalités de `prd.md` au MVP et la tâche qui les termine : F-01 → T-017 ; F-02 → T-009 et T-019 ; F-03 → T-010 et chaque tâche de route ; F-04 → T-013 ; F-05 → T-013 ; F-06 à F-08 → T-015 ; F-09 → T-016 ; F-10 → T-019 ; F-11 → T-020 ; F-19 → T-008.
+Fonctionnalités de `prd.md` au MVP et la tâche qui les termine : F-01 → T-017 ; F-02 → T-009 et T-019 ; F-03 → T-010 et chaque tâche de route ; F-04 → T-013 ; F-05 → T-013 ; F-06 à F-08 → T-015 ; F-09 → T-016 ; F-10 → T-019 ; F-11 → T-020 ; F-19 → T-008 ; F-21 → T-024.
 
 ## 3. Ordre et parallélisme
 

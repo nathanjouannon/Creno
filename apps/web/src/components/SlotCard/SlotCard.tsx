@@ -9,7 +9,7 @@ type Attendee = Slot['attendees'][number];
 type Variant = 'volunteer' | 'admin' | 'readonly';
 
 type SlotSource = Pick<Slot, 'startsAt' | 'endsAt' | 'capacity' | 'registeredCount'> &
-  Partial<Pick<Slot, 'started' | 'full' | 'remainingPlaces' | 'attendees'>>;
+  Partial<Pick<Slot, 'started' | 'full' | 'remainingPlaces' | 'attendees' | 'description'>>;
 
 interface Props {
   variant: Variant;
@@ -103,6 +103,10 @@ export function SlotCard({
             />
           )}
         </div>
+        {/* F-21, RG-07: plain text, never interpreted; line breaks kept, long words wrapped (360 px) */}
+        {slot.description ? (
+          <p className="whitespace-pre-line break-words text-small text-text">{slot.description}</p>
+        ) : null}
         {volunteerZone || variant === 'readonly' ? (
           <AttendeeList
             attendees={attendees}

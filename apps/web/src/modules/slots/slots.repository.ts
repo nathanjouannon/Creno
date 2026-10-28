@@ -25,9 +25,12 @@ export interface NewSlot {
   startsAt: Date;
   endsAt: Date;
   capacity: number | null;
+  description: string | null;
 }
 
-export type SlotChanges = Partial<Pick<NewSlot, 'startsAt' | 'endsAt' | 'capacity'>>;
+export type SlotChanges = Partial<
+  Pick<NewSlot, 'startsAt' | 'endsAt' | 'capacity' | 'description'>
+>;
 
 export interface SlotTransaction {
   findForChange(id: number): Promise<SlotForChange | null>;

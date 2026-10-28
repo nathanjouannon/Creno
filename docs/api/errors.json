@@ -202,6 +202,10 @@
       "message": "La limite doit être d'au moins 1 place (ou vide pour illimité).",
       "cause": "RG-07"
     },
+    "FIELD_DESCRIPTION_TOO_LONG": {
+      "message": "La description ne peut pas dépasser 500 caractères.",
+      "cause": "RG-07 (F-21) : description d'un créneau de plus de 500 caractères ; portée par le champ `description`"
+    },
     "FIELD_TIMEZONE_INVALID": {
       "message": "Choisis un fuseau horaire de la liste.",
       "cause": "RG-16 : valeur absente de la base IANA"

@@ -28,7 +28,7 @@ export interface NewEvent {
   location: string | null;
   startsAt: Date;
   endsAt: Date;
-  slots: { startsAt: Date; endsAt: Date; capacity: number | null }[];
+  slots: { startsAt: Date; endsAt: Date; capacity: number | null; description: string | null }[];
 }
 
 export type EventChanges = Partial<Omit<NewEvent, 'slots'>>;
