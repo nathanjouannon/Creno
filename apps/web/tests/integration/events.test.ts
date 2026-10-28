@@ -231,7 +231,7 @@ describe('POST /events (F-04)', () => {
 });
 
 describe('GET /events (F-06, F-09, RG-09)', () => {
-  it('RG-09: upcoming holds upcoming and ongoing events by start, not the ones that just ended', async () => {
+  it('[F-06 S1] RG-09: upcoming holds upcoming and ongoing events by start, not the ones that just ended', async () => {
     const later = await insertEvent('2027-01-20T08:00:00Z', '2027-01-20T10:00:00Z', 'Plus tard');
     const ongoing = await insertEvent('2027-01-14T08:00:00Z', '2027-01-14T10:00:00Z', 'En cours');
     await insertEvent('2027-01-14T07:00:00Z', NOW, 'Terminé pile maintenant');
@@ -247,7 +247,7 @@ describe('GET /events (F-06, F-09, RG-09)', () => {
     ]);
   });
 
-  it('RG-09: an administrator lists past events, most recent end first', async () => {
+  it('[F-06 S4] RG-09: an administrator lists past events, most recent end first', async () => {
     const older = await insertEvent('2027-01-10T08:00:00Z', '2027-01-10T10:00:00Z');
     const recent = await insertEvent('2027-01-12T08:00:00Z', '2027-01-12T10:00:00Z');
     await insertEvent('2027-01-20T08:00:00Z', '2027-01-20T10:00:00Z');
@@ -258,7 +258,7 @@ describe('GET /events (F-06, F-09, RG-09)', () => {
     expect(response.body.every((e: { status: string }) => e.status === 'past')).toBe(true);
   });
 
-  it('RG-14: a user asking for past events gets 403 FORBIDDEN', async () => {
+  it('[F-06 S4] RG-14: a user asking for past events gets 403 FORBIDDEN', async () => {
     as('user');
     const response = await list('past');
     expect(response.status).toBe(403);
@@ -276,7 +276,7 @@ describe('GET /events (F-06, F-09, RG-09)', () => {
 });
 
 describe('GET /events/{eventId} (F-06, F-09, RG-09)', () => {
-  it('RG-07, RG-09, RG-11: slots with their computed state and attendees as "Prénom N."', async () => {
+  it('[F-06 S2] [F-06 S3] RG-07, RG-09, RG-11: slots with their computed state and attendees as "Prénom N."', async () => {
     const created = (await create({ ...input, slots: [{ ...slot, capacity: 2 }] })).body;
     const slotId = created.slots[0].id;
     const mine = await database.prisma.registration.create({ data: { slotId, userId } });
@@ -308,7 +308,7 @@ describe('GET /events/{eventId} (F-06, F-09, RG-09)', () => {
     expect((await get(created.id)).body.slots[0].started).toBe(false);
   });
 
-  it('[F-04 S7] RG-09, RG-15: a past event is 404 EVENT_NOT_FOUND for a user and read only for an administrator', async () => {
+  it('[F-04 S7] [F-06 S4 bis] RG-09, RG-15: a past event is 404 EVENT_NOT_FOUND for a user and read only for an administrator', async () => {
     const past = await insertEvent('2027-01-14T07:00:00Z', NOW);
 
     as('user');
@@ -416,7 +416,7 @@ describe('DELETE /events/{eventId} (F-04, RG-10)', () => {
 });
 
 describe('RG-14: a user cannot administer events', () => {
-  it('POST, PATCH and DELETE answer 403 FORBIDDEN and nothing is modified', async () => {
+  it('[F-03 S2] RG-14: POST, PATCH and DELETE answer 403 FORBIDDEN and nothing is modified', async () => {
     const created = (await create(input)).body;
 
     as('user');
