@@ -221,7 +221,7 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 | --- | --- | --- |
 | `unregister` | `primary` « Me désinscrire » | B6, RG-08 |
 | `delete` | `danger` « Supprimer » | C8 (événement ou créneau avec inscrits, indique N, RG-10), E2 (compte, RG-11) |
-| `remove-registration` | `danger` « Retirer » | C10 (l'administrateur retire un inscrit, « Marie D. ne sera plus inscrite au créneau… », RG-08) |
+| `remove-registration` | `danger` « Retirer » | C10 (l'administrateur retire un inscrit, « Marie D. ne sera plus inscrit(e) au créneau… », RG-08) |
 
 - États : `open` · `submitting` (boutons `loading`) · `error`. Fermeture : Échap, clic sur « Annuler », clic sur le voile. Le focus est piégé dans la fenêtre.
 - Règle : suppression d'un événement ou créneau sans inscrit : aucune fenêtre (RG-10).
