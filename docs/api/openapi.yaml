@@ -633,6 +633,25 @@ paths:
             - USER_LAST_ADMIN
           content:
             application/json: *a3
+  /me/deletion-check:
+    get:
+      tags:
+        - Authentification
+      operationId: checkAccountDeletion
+      summary: Vérifier que son compte peut être supprimé (F-11, RG-04)
+      description: Ne supprime rien. Permet à l'interface de refuser dès le clic, sans écran de confirmation, le dernier administrateur ; `DELETE /me` refait le contrôle dans sa transaction.
+      x-auth: user
+      responses:
+        "204":
+          description: Le compte peut être supprimé
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "409":
+          description: Dernier administrateur (`USER_LAST_ADMIN`, RG-04)
+          x-error-codes:
+            - USER_LAST_ADMIN
+          content:
+            application/json: *a3
   /password-resets/{token}:
     get:
       tags:
