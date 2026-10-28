@@ -101,6 +101,11 @@ Modules métier (noms du glossaire) :
 ## 5. Contraintes pour le code
 
 - Inscription à la dernière place et retrait du droit administrateur : transactions avec verrou ou contrainte, couverts par des tests de concurrence (RG-04, RG-07).
+  - **Mécanisme retenu pour RG-07 (T-014) : verrou de ligne sur le créneau.** La transaction d'inscription (`registrations.repository.ts`, `inSlotTransaction`) commence par un `UPDATE` du créneau qui ne change rien (`capacity + 0`) : PostgreSQL pose alors le verrou de la ligne jusqu'à la fin de la transaction. Les inscriptions simultanées au même créneau font la queue et chacune compte les inscrits validés par la précédente.
+  - **Pourquoi pas la transaction sérialisable avec nouvelle tentative** (celle de RG-03 et de la modification d'un créneau) : sur une même ligne, les conflits de sérialisation se multiplient avec le nombre de requêtes simultanées et le nombre de rejeux est borné : une requête qui l'épuise finirait en `500` au lieu de `SLOT_FULL`. Le verrou de ligne n'a aucun rejeu (non comparé par mesure, choix par construction ; le test des 50 requêtes en est le juge).
+  - **Pourquoi pas un verrou consultatif ou un `SELECT … FOR UPDATE`** : ils demandent du SQL brut, interdit hors migration (`security.md`, section 4). L'`UPDATE` passe par Prisma.
+  - **Cohérence avec l'abaissement de limite** (`slots.repository.ts`, transaction sérialisable) : la modification du créneau écrit la même ligne, donc elle est rejouée ou refusée si une inscription est validée entre-temps. Le test de `registrations.test.ts` vérifie qu'elles ne laissent jamais plus d'inscrits que de places.
+  - La contrainte d'unicité `(slot_id, user_id)` reste la dernière garde contre une double inscription (RG-08).
 - Les ID sont énumérables : chaque route vérifie les droits côté serveur (RG-14).
 - Les messages d'erreur viennent du catalogue `api/errors.md` ; le client se base sur le `code`.
 - Toute entrée externe (formulaire, paramètre de route, corps de requête) est validée par un schéma Zod avant traitement.
