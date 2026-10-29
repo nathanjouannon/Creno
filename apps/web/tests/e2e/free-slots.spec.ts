@@ -183,6 +183,21 @@ test('[F-22 S14, S15] both modes: proposed slots with their limit, and my own ho
   expect(slot._count.registrations).toBe(1);
 });
 
+test('[F-22 S16] RG-19: the mode changed while the window was open, the refusal is shown on the current page', async ({
+  page,
+}) => {
+  const event = await insertEvent('BOTH', [{ capacity: 4 }]);
+  await signIn(page, member);
+  await page.goto(`/events/${event.id}`);
+  await page.getByRole('button', { name: 'Choisir mes horaires' }).click();
+  await database.event.update({ where: { id: event.id }, data: { registrationMode: 'FIXED' } });
+  const dialog = await chooseHours(page, '10:00', '12:00');
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByText('Cet événement ne propose pas de créneaux libres.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Choisir mes horaires' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Je m'inscris au créneau/ })).toBeVisible();
+});
+
 test('keyboard: hours are chosen and saved without a mouse', async ({ page }) => {
   const event = await insertEvent('FREE');
   await signIn(page, member);

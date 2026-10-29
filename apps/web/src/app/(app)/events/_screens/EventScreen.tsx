@@ -133,8 +133,13 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
   // F-22, RG-20: the caller's own free slot; refusals are shown in the window by the form
   async function createFreeSlot(values: { startsAt: string; endsAt: string }): Promise<ApiResult> {
     const result = await postJson(`/api/events/${event.id}/free-slots`, values);
-    // The administrator changed the mode meanwhile: the page shows the current one (RG-19)
-    if (result.ok || result.error.code === 'EVENT_FREE_SLOTS_NOT_ALLOWED') await reload();
+    if (!result.ok && result.error.code === 'EVENT_FREE_SLOTS_NOT_ALLOWED') {
+      // RG-19: the administrator changed the mode meanwhile; the window closes on the current page (flow 10)
+      close();
+      await settle(result);
+      return { ok: true, data: undefined };
+    }
+    if (result.ok) await reload();
     return result;
   }
 

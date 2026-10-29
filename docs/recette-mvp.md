@@ -6,7 +6,7 @@ Statut : compte rendu de T-023, établi le 2026-10-28 sur `main` (après T-025).
 
 `apps/web/tests/e2e/mvp-scenario.spec.ts` (`[MVP]`), joué en 360 px sur la version de production : installation de l'instance (F-19), création d'un événement avec un créneau limité à 2 et un créneau illimité (F-04, F-05), lien d'invitation (F-01), trois bénévoles qui créent leur compte depuis le lien (F-01) et s'inscrivent (F-07), créneau « Complet » pour le troisième (RG-07), suivi du remplissage par l'administrateur (F-09), retrait d'un inscrit, hausse de la limite, inscription des places libérées. **Résultat : vert.**
 
-F-22 (T-026) : `apps/web/tests/e2e/free-slots.spec.ts`, en 360 px (et 1000 px pour l'accessibilité) : événement en créneaux fixes inchangé, parcours bénévole en créneaux libres (choix des horaires, durée trop courte, recouvrement, désinscription) et en mode « les deux », saisie au clavier, suivi et retrait par l'administrateur, création en créneaux libres, changement de mode refusé puis accepté, axe sur B8 à C11. **Résultat : vert**, et suite E2E complète verte (118 tests).
+F-22 (T-026) : `apps/web/tests/e2e/free-slots.spec.ts`, en 360 px (et 1000 px pour l'accessibilité) : événement en créneaux fixes inchangé, parcours bénévole en créneaux libres (choix des horaires, durée trop courte, recouvrement, désinscription) et en mode « les deux », saisie au clavier, suivi et retrait par l'administrateur, création en créneaux libres, changement de mode refusé puis accepté, axe sur B8 à C11. **Résultat : vert**, et suite E2E complète verte (119 tests).
 
 ## 2. Matrice « scénario de story → test »
 
