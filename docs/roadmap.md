@@ -6,7 +6,7 @@ Principe : un squelette qui tourne de bout en bout d'abord (M0), puis des tranch
 
 ## 1. MVP : développé, sauf les créneaux libres
 
-Le MVP regroupe F-01 à F-11, F-19, F-20, F-21 et F-22 (`prd.md`, section 5). Tout est développé (tickets T-001 à T-025 fermés, scénario cible de bout en bout vert, `recette-mvp.md`) sauf F-22, les créneaux libres (T-026), qui **clôt le MVP**. F-20 « Mon profil » (T-025), prévue d'abord en v1.1, a été avancée au MVP.
+Le MVP regroupe F-01 à F-11, F-19, F-20, F-21 et F-22 (`prd.md`, section 5). Tout est développé (tickets T-001 à T-026, scénario cible de bout en bout vert, `recette-mvp.md`) ; F-22, les créneaux libres (T-026), **clôt le MVP**. F-20 « Mon profil » (T-025), prévue d'abord en v1.1, a été avancée au MVP.
 
 | Jalon | Ce qui a été livré | Tâches | Fonctionnalités | État |
 | --- | --- | --- | --- | --- |
@@ -16,9 +16,9 @@ Le MVP regroupe F-01 à F-11, F-19, F-20, F-21 et F-22 (`prd.md`, section 5). To
 | M3 – Inscriptions | Consulter, s'inscrire, se désinscrire ; suivi du remplissage et retrait d'un inscrit | T-014 à T-016 | F-06 à F-09 | Fait |
 | M4 – Invitations et membres | Lien d'invitation, gestion des membres et des droits, réinitialisation du mot de passe | T-017 à T-019 | F-01, F-10 | Fait |
 | M5 – Compte et mise en service | Suppression de compte, mentions et accessibilité, sauvegardes et exploitation, recette | T-020 à T-023, T-025 | F-11, F-20 | Fait, recette manuelle à faire |
-| M6 – Créneaux libres | Mode d'inscription d'un événement (créneaux fixes, libres, ou les deux) ; le bénévole choisit ses horaires | [T-026](https://github.com/nathanjouannon/Creno/issues/65) | F-22 | À faire : documentation prête (ADR-0016), décisions à relire |
+| M6 – Créneaux libres | Mode d'inscription d'un événement (créneaux fixes, libres, ou les deux) ; le bénévole choisit ses horaires | [T-026](https://github.com/nathanjouannon/Creno/issues/65) | F-22 | Fait, recette manuelle à faire |
 
-T-026 est une grosse tâche (modèle, services, API, deux interfaces) : son ticket demande de la découper une fois les décisions prises. Découpage proposé, un ticket par pull request :
+T-026 était une grosse tâche (modèle, services, API, deux interfaces). Le découpage ci-dessous était proposé ; à la demande du propriétaire du produit, elle a été livrée en une seule pull request :
 
 1. Base et services : migration (mode, colonnes de `registrations`, contrainte, index) avec son retour arrière, schéma Prisma, services du mode (RG-19) et du créneau libre (RG-20), tests de concurrence ;
 2. Contrat et routes : schémas Zod, registre de routes, codes d'erreur, `pnpm api:generate`, `pnpm api:check`, `pnpm api:lint` ;
@@ -29,7 +29,7 @@ T-026 est une grosse tâche (modèle, services, API, deux interfaces) : son tick
 
 Ordre : T-026, puis la recette manuelle, puis la version. La mise en service est **conditionnelle** (`recette-mvp.md`, section 6) :
 
-1. Développer F-22 (T-026) et ajouter ses scénarios à la recette automatisée (scénario E2E, matrice de `testing.md`) ;
+1. ~~Développer F-22 (T-026) et ajouter ses scénarios à la recette automatisée (scénario E2E, matrice de `testing.md`)~~ : fait ;
 2. Remplir la recette manuelle sur appareils réels (iPhone, Android, Chrome, Safari, Firefox, Edge).
 3. Refaire les mesures de performance sur le serveur de production (les premières viennent d'une machine de développement).
 4. Cocher la liste de `definition-of-done.md` dans la pull request.
@@ -100,7 +100,7 @@ F-15 est prioritaire si les bénévoles ne répondent pas sans rappel (`prd.md`,
 | Risque | Effet | Parade |
 | --- | --- | --- |
 | Recette manuelle jamais faite | Défaut d'affichage découvert par les bénévoles | La remplir avant d'annoncer l'instance à un club réel |
-| T-026 modifie le modèle d'inscription (`registrations.slot_id` devient facultatif) | Régression sur la concurrence (RG-07) et la conservation des données (RG-11), recette manuelle retardée | ADR-0016 relu avant le code ; mode `FIXED` par défaut ; migration additive avec retour arrière ; tests de concurrence rejoués ; tâche découpée en quatre pull requests |
+| T-026 modifie le modèle d'inscription (`registrations.slot_id` devient facultatif) | Régression sur la concurrence (RG-07) et la conservation des données (RG-11), recette manuelle retardée | ADR-0016 relu avant le code ; mode `FIXED` par défaut ; migration additive avec retour arrière ; tests de concurrence rejoués (fait, T-026) |
 | F-13 ajoutée tard | Historique à rétrofiter dans chaque service, désormais pour deux formes d'inscription | La cadrer tôt en v1.1 |
 | Traduction (#69) ajoutée après de nouveaux écrans | Textes en dur à extraire | Terminer #69 avant d'ajouter beaucoup d'écrans, ou écrire les nouveaux textes déjà dans les fichiers de langue |
 | Annonce publique avant licence et démo | Projet non référencé, mauvaise première impression | Respecter les prérequis de #70 |

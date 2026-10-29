@@ -30,7 +30,7 @@ Créno est pensé pour une association, pas pour une grande ONG :
 **Pour l'administrateur**
 
 - Installer l'instance (club et premier administrateur) en quelques minutes.
-- Créer des événements avec des créneaux (horaires, nombre de places limité ou non, description).
+- Créer des événements avec des créneaux (horaires, nombre de places limité ou non, description), des créneaux libres où chacun choisit ses horaires, ou les deux.
 - Inviter des bénévoles par un lien d'invitation généré depuis un événement.
 - Suivre le remplissage de chaque créneau, retirer un inscrit.
 - Gérer les membres : droit d'administrateur, lien de réinitialisation de mot de passe.
@@ -39,7 +39,7 @@ Créno est pensé pour une association, pas pour une grande ONG :
 
 - Créer son compte depuis un lien d'invitation, se connecter par e-mail et mot de passe.
 - Consulter les événements, voir qui est inscrit et les places restantes.
-- S'inscrire, se désinscrire ou changer de créneau seul.
+- S'inscrire, se désinscrire ou changer de créneau seul ; sur un événement en créneaux libres, choisir ses propres heures de début et de fin.
 - Consulter et modifier son profil, supprimer son compte et ses données.
 
 Le périmètre exact, les priorités et la suite sont dans [`docs/prd.md`](docs/prd.md) et [`docs/roadmap.md`](docs/roadmap.md).

@@ -1,6 +1,6 @@
 # ADR-0016 : Créneaux libres et mode d'inscription d'un événement
 
-Statut : proposée (2026-10-29), à valider avec la pull request de documentation de F-22. Les points 1 à 4 de la décision viennent du propriétaire du produit ; les autres sont des propositions de l'auteur de la documentation, marquées « proposé ».
+Statut : acceptée (2026-10-29), validée avec la pull request de documentation de F-22 ([#71](https://github.com/nathanjouannon/Creno/pull/71)) et mise en œuvre par T-026. Les points 1 à 4 de la décision viennent du propriétaire du produit ; les autres étaient des propositions de l'auteur de la documentation, marquées « proposé ».
 
 ## Contexte
 Au MVP, un bénévole s'inscrit seulement à un créneau défini par l'administrateur (`Slot`). Certains événements n'ont pas de découpage naturel : l'administrateur veut que chacun donne le temps qu'il a, de telle heure à telle heure. Le ticket T-026 ([#65](https://github.com/nathanjouannon/Creno/issues/65)) demande trois modes par événement : créneaux fixes (comportement actuel), créneaux libres (le bénévole crée lui-même sa plage), ou les deux.
@@ -16,7 +16,7 @@ Cela remet en cause le modèle `Registration` (un lien `userId`–`slotId`), le 
 6. **Cohérence mode / contenu** (proposé) : un mode n'accepte que ses types de créneaux. Changer de mode est refusé tant que l'événement contient un type que le nouveau mode n'accepte pas ; l'administrateur supprime d'abord ces créneaux (RG-10). C'est plus strict que le ticket (« refus tant que des inscriptions du mode retiré existent ») : on interdit aussi un créneau fixe vide dans un événement `FREE`, pour qu'un événement n'ait jamais de contenu invisible ou inatteignable.
 7. **Créneaux fixes indicatifs en `BOTH`** (proposé) : ils restent inscriptibles avec leur limite et leurs règles de temps (RG-07, RG-08). « Indicatif » signifie que le bénévole n'est pas obligé de les choisir. Les créneaux libres ne comptent pas dans leur remplissage, même si les horaires se recouvrent : pas de calcul croisé, pas d'état « complet » qui dépende d'une autre table.
 8. **Un créneau libre ne se modifie pas** (proposé) : il se supprime et se recrée. Cela évite une route et un formulaire de modification et reprend le changement de créneau de F-08 (se désinscrire, puis s'inscrire).
-9. **Concurrence** (proposé) : la création d'un créneau libre, le changement de mode et la création d'un créneau fixe commencent par le même verrou de ligne sur l'événement (un `UPDATE` qui ne change rien, voir `architecture.md`, section 5), puis lisent le mode et les créneaux libres du même utilisateur avant d'écrire. Cela garantit sans SQL brut qu'une demande simultanée ne produit ni deux créneaux libres qui se recouvrent, ni un créneau créé dans un mode qui ne l'accepte plus. Les inscriptions à un créneau fixe continuent de ne verrouiller que leur créneau : aucune régression sur RG-07.
+9. **Concurrence** (proposé) : la création d'un créneau libre, le changement de mode et la création d'un créneau fixe commencent par le même verrou de ligne sur l'événement (un `UPDATE` qui ne change rien, voir `architecture.md`, section 5), puis lisent le mode et les créneaux libres du même utilisateur avant d'écrire. Mise en œuvre (T-026) : Prisma n'envoie aucune requête pour une mise à jour sans donnée ; le verrou est donc un `UPDATE` qui réécrit le mode qu'il vient de lire, à condition qu'il n'ait pas changé (`WHERE id = … AND registration_mode = …`), relu sinon (`apps/web/src/modules/shared/event-lock.ts`). Cela garantit sans SQL brut qu'une demande simultanée ne produit ni deux créneaux libres qui se recouvrent, ni un créneau créé dans un mode qui ne l'accepte plus. Les inscriptions à un créneau fixe continuent de ne verrouiller que leur créneau : aucune régression sur RG-07.
 
 ## Alternatives écartées
 - **Créer un `Slot` d'une place à chaque inscription libre** : ne change pas le modèle, mais remplit la liste des créneaux de l'administrateur de créneaux qu'il n'a pas créés, brouille la distinction fixe / libre et fausse « Créneau vide » et les compteurs.
@@ -32,38 +32,10 @@ Cela remet en cause le modèle `Registration` (un lien `userId`–`slotId`), le 
 - (-) Le verrou de ligne sur l'événement sérialise les créations de créneaux libres d'un même événement : acceptable à 20 utilisateurs simultanés (`architecture.md`, section 2) ; à mesurer par le test de concurrence de T-026.
 - (-) F-12 (inscription par un administrateur), F-13 (journal), F-14 (« Mon planning ») et F-16 (heures) devront traiter les deux formes d'inscription : F-14 et F-16 listent les créneaux libres avec leurs propres horaires.
 
-## Contrat d'API prévu (entrée de T-026)
-`api/openapi.yaml`, `api/errors.md` et `api/errors.json` sont générés (ADR-0014) : ils ne se modifient pas à la main. T-026 déclare les schémas Zod et le registre de routes suivants dans `packages/validation`, puis régénère ces fichiers, et ce chapitre cède alors la place au contrat généré.
+## Contrat d'API
+Le contrat prévu ici a été mis en œuvre par T-026 et ce chapitre cède la place au contrat généré (ADR-0014) : schémas `RegistrationMode`, `FreeSlot`, `FreeSlotInput`, champ `registrationMode` de `EventInput`, `EventUpdate`, `EventSummary` et `EventDetail`, tableau `freeSlots` de `EventDetail`, routes `POST /events/{eventId}/free-slots` et `DELETE /free-slots/{freeSlotId}` dans `api/openapi.yaml` ; codes d'erreur et codes de champ dans `api/errors.md`.
 
-**Schémas modifiés**
-- `EventInput`, `EventUpdate`, `EventSummary`, `EventDetail` : champ `registrationMode` (`FIXED`, `FREE`, `BOTH`) ; à la création, `FIXED` s'il est absent.
-- `EventDetail` : tableau `freeSlots` de `FreeSlot`, trié par début, fin puis `id` croissants ; vide en mode `FIXED`.
-- Nouveau `FreeSlot` : `id` (identifiant de l'inscription), `eventId`, `startsAt`, `endsAt`, `started` (calculé, RG-08), `displayName` (« Prénom N. », `null` si anonymisé), `isMe`.
-- Nouveau `FreeSlotInput` : `startsAt`, `endsAt`.
-
-**Routes**
-
-| Route | Authentification | Rôle | Réponses |
-| --- | --- | --- | --- |
-| `POST /events/{eventId}/free-slots` | utilisateur (administrateur compris) | Crée le créneau libre de l'utilisateur connecté | `201` `FreeSlot` ; `400` `VALIDATION_ERROR` ; `401` ; `404` `EVENT_NOT_FOUND` ; `409` `EVENT_FREE_SLOTS_NOT_ALLOWED`, `FREE_SLOT_OVERLAP`, `EVENT_PAST` |
-| `DELETE /free-slots/{freeSlotId}` | utilisateur | Supprime son propre créneau libre (se désinscrire) | `204` ; `401` ; `404` `FREE_SLOT_NOT_FOUND` (inconnu, d'un autre utilisateur, ou événement passé vu par un utilisateur) ; `409` `FREE_SLOT_STARTED`, `EVENT_PAST` |
-| `DELETE /registrations/{registrationId}` (existante) | administrateur | Retire le créneau libre d'un autre, `registrationId` = `FreeSlot.id` ; inchangée | comme aujourd'hui |
-
-`PATCH /events/{eventId}` accepte `registrationMode` ; il ajoute les réponses `409` `EVENT_MODE_HAS_SLOTS` et `EVENT_MODE_HAS_FREE_SLOTS`. `POST /events/{eventId}/slots` et `POST /events` (avec des créneaux dans le corps) ajoutent `409` `EVENT_FIXED_SLOTS_NOT_ALLOWED`. Les routes de `/slots/{slotId}/registrations` ne changent pas.
-
-**Codes d'erreur à ajouter au catalogue**
-
-| Code | HTTP | Message | Cause | Détails |
-| --- | --- | --- | --- | --- |
-| `EVENT_FREE_SLOTS_NOT_ALLOWED` | 409 | Cet événement ne propose pas de créneaux libres. | RG-19 : mode `FIXED` | |
-| `EVENT_FIXED_SLOTS_NOT_ALLOWED` | 409 | Cet événement ne propose que des créneaux libres. | RG-19 : mode `FREE` | |
-| `EVENT_MODE_HAS_SLOTS` | 409 | Pour passer en créneaux libres, supprime d'abord les créneaux fixes ({slotCount}). | RG-19 | `slotCount` |
-| `EVENT_MODE_HAS_FREE_SLOTS` | 409 | Pour passer en créneaux fixes, supprime d'abord les créneaux libres ({freeSlotCount}). | RG-19 | `freeSlotCount` |
-| `FREE_SLOT_NOT_FOUND` | 404 | Créneau libre introuvable. | Identifiant inconnu, ou d'un autre utilisateur | |
-| `FREE_SLOT_OVERLAP` | 409 | Tu as déjà des horaires qui recouvrent ceux-ci. | RG-20 | `freeSlotId` (celui qui recouvre) |
-| `FREE_SLOT_STARTED` | 409 | Ce créneau libre a commencé. Contacte un administrateur pour modifier ton inscription. | RG-08, RG-20 | `freeSlotId` |
-
-Codes de champ (`VALIDATION_ERROR`) : `FIELD_FREE_SLOT_OUT_OF_EVENT` (« Les horaires doivent rester dans les dates de l'événement. », sur `startsAt` ou `endsAt`), `FIELD_FREE_SLOT_TOO_SHORT` (« Un créneau libre dure au moins 30 minutes. », sur `endsAt`), `FIELD_START_NOT_IN_FUTURE` (« Choisis une heure de début à venir. », sur `startsAt`), `FIELD_REGISTRATION_MODE_INVALID` (« Choisis un mode d'inscription de la liste. »). `FIELD_END_NOT_AFTER_START` et `FIELD_DATE_INVALID` existent déjà. Les trois premiers dépendent de l'événement ou de l'heure courante : ils sont produits par le service, pas par le seul schéma Zod (ADR-0014, dernière conséquence).
+Un seul écart avec ce qui était prévu : `FIELD_FREE_SLOT_TOO_SHORT` ne dépend ni de l'événement ni de l'heure courante, il est donc aussi produit par le schéma Zod `freeSlotInputSchema` (et par le formulaire), en plus du service. `FIELD_FREE_SLOT_OUT_OF_EVENT` et `FIELD_START_NOT_IN_FUTURE` restent produits par le service seul.
 
 ## Documents mis à jour avec cet ADR
 `prd.md` (F-22), `user-stories.md`, `domain/business-rules.md` (RG-19, RG-20), `glossary.md`, `domain/schema.sql` et `erd.mmd`, `architecture/architecture.md`, `flows/` (04, 05, 06, 10), `design/components.md`, `design/wireframes/05-creneaux-libres-mobile.excalidraw` et `-desktop` (avec leurs `.png`), `testing.md`, `roadmap.md`.

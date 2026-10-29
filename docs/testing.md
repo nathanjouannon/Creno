@@ -73,7 +73,7 @@ Convention : un scénario de `user-stories.md` (par exemple « F-07, scénario 3
 | F-05 Créneaux | 1 à 8 | 1 à 8 (T-012) | 1, 3 ter, 4, 6 (T-013) | |
 | F-20 Mon profil | 1 à 6 | 2 à 6 (T-025) | 1 à 5 (T-025) | Scénario 6 : intégration et unitaire seulement |
 | F-21 Description de créneau | 1 à 6 | 1 à 3, 5 (T-024) | 1 à 6 (T-024) | Scénario 3 : unitaire (limite) et intégration ; scénario 4 : composant et E2E |
-| F-22 Créneaux libres | 1 à 25 | 1, 2, 4 à 11, 15 à 18, 22 à 25 (T-026) | 1 à 3, 8, 9, 12 à 14, 19 à 21 (T-026) | Scénarios 4 à 7 : unitaire (bornes, durée, début) ; scénarios 10 et 18 : concurrence en intégration seulement ; scénario 14 : trois modes en E2E ; accessibilité de la fenêtre B9 (axe, clavier) |
+| F-22 Créneaux libres | 1 à 25 | 1 à 25 (T-026, `free-slots.test.ts`) | 1 à 3, 5, 9, 12, 14, 15, 17 à 20 (T-026, `free-slots.spec.ts`) | Scénarios 4 à 9 : aussi en unitaire (schéma Zod, règles du service) ; 8, 13 et 21 : unitaire, composant et intégration, sans E2E ; 10 et 18 : concurrence en intégration seulement ; S1 (mode `FIXED` inchangé) aussi en E2E ; axe sur B8, B8 bis, B9, B9 bis, C2, C4 et C11 en 360 et 1000 px, saisie des horaires au clavier |
 | F-06 Consulter | 1 à 5 | 1 à 4 bis (T-014) | 1 à 5 (T-015) | |
 | F-07 S'inscrire | 1 à 5 | 1 à 5 (T-014) | 1 à 4 ter (T-015) | Scénario 3 : concurrence en intégration, deux navigateurs en E2E |
 | F-08 Désinscrire | 1 à 4 | 1 à 4 (T-014) | 1, 1 bis, 2 à 4 (T-015) | |
