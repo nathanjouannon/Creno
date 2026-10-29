@@ -12,7 +12,6 @@ Créno est un projet ouvert, pensé pour des associations et des bénévoles. No
 
 ## Ce qui n'est pas accepté
 
-- Les propos ou images sexualisés, les avances non désirées.
 - Les insultes, les attaques personnelles, les propos discriminatoires.
 - Le harcèlement, public ou privé.
 - La publication d'informations privées d'autrui (adresse, e-mail…) sans son accord.

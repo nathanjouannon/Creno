@@ -8,7 +8,7 @@ Ouvrez une [issue](../../issues/new/choose) avec le modèle adapté. Pour une fa
 
 ## Proposer du code
 
-1. Parlez-en d'abord dans une issue : le projet suit un plan (`docs/roadmap.md`) et des décisions déjà prises (`docs/adr/`).
+1. Parlez-en d'abord dans une issue.
 2. Installez le projet : `pnpm install`, `docker compose up -d db`, `pnpm db:migrate`, `pnpm db:seed`, puis `pnpm dev` (voir `README.md`).
 3. Créez une branche depuis `main` à jour, par exemple `feat/T-014-registrations-api`. Une branche = une pull request, sans jamais pousser sur `main`.
 4. Écrivez les tests avec le code, puis vérifiez `pnpm lint`, `pnpm typecheck` et `pnpm test`.
