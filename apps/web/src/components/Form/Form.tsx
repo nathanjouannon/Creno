@@ -33,6 +33,8 @@ interface Props {
   onInvalid?: (fields: string[]) => void;
   /** Fields to empty after a failure (the password of a login). */
   resetOnError?: string[];
+  /** A form in a window: « Annuler » next to the submit button, on the same row (B9). */
+  onCancel?: () => void;
   children: ReactNode;
 }
 
@@ -48,6 +50,7 @@ export function Form({
   errorMap,
   onInvalid,
   resetOnError = [],
+  onCancel,
   children,
 }: Props) {
   const methods = useForm({
@@ -112,9 +115,20 @@ export function Form({
         >
           {globalError ? <Alert>{globalError}</Alert> : null}
           {children}
-          <Button type="submit" variant="primary" size="block" loading={sending}>
-            {submitLabel}
-          </Button>
+          {onCancel ? (
+            <div className="flex gap-sm">
+              <Button variant="secondary" disabled={sending} onClick={onCancel} className="flex-1">
+                Annuler
+              </Button>
+              <Button type="submit" variant="primary" loading={sending} className="flex-1">
+                {submitLabel}
+              </Button>
+            </div>
+          ) : (
+            <Button type="submit" variant="primary" size="block" loading={sending}>
+              {submitLabel}
+            </Button>
+          )}
         </form>
       </SendingContext.Provider>
     </FormProvider>

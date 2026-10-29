@@ -1,5 +1,6 @@
 import { errorCatalog } from '@creno/validation';
 import type { ReactNode } from 'react';
+import { registrationModeLabels } from '@/components/RegistrationModeField/labels';
 import { formatPeriod } from '@/lib/dates';
 import type { EventDetail } from '@/lib/api-types';
 
@@ -7,13 +8,17 @@ type Variant = 'volunteer' | 'admin' | 'past';
 
 interface Props {
   variant: Variant;
-  event: Pick<EventDetail, 'title' | 'location' | 'description' | 'startsAt' | 'endsAt'>;
+  event: Pick<EventDetail, 'title' | 'location' | 'description' | 'startsAt' | 'endsAt'> &
+    Partial<Pick<EventDetail, 'registrationMode'>>;
   timeZone: string;
   /** `admin` only: the buttons Modifier and Supprimer. */
   actions?: ReactNode;
 }
 
-/** Title, place, dates and description of an event (C2). `past`: no button, read only (RG-15). */
+/**
+ * Title, place, dates and description of an event (C2). `past`: no button, read only (RG-15). An administrator also
+ * reads the registration mode when it is not the default one (C2, RG-19); volunteers read it from the page groups.
+ */
 export function EventHeader({ variant, event, timeZone, actions }: Props) {
   return (
     <header className="flex flex-col gap-sm">
@@ -23,6 +28,11 @@ export function EventHeader({ variant, event, timeZone, actions }: Props) {
           .filter(Boolean)
           .join(' · ')}
       </p>
+      {variant !== 'volunteer' && event.registrationMode && event.registrationMode !== 'FIXED' ? (
+        <p className="text-small text-text">
+          Mode : {registrationModeLabels[event.registrationMode]}
+        </p>
+      ) : null}
       {variant === 'past' ? (
         <p className="text-small text-text-muted">{errorCatalog.EVENT_PAST.message}</p>
       ) : null}
