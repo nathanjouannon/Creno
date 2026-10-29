@@ -1,0 +1,31 @@
+name: Signaler un bug
+description: Quelque chose ne fonctionne pas comme prévu.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Ce qui se passe
+      description: Le comportement observé, et celui attendu.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Pour reproduire
+      description: Les étapes, dans l'ordre.
+      placeholder: |
+        1. Aller sur…
+        2. Cliquer sur…
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environnement
+      description: Navigateur et appareil, version ou commit de Créno.
+  - type: textarea
+    id: extra
+    attributes:
+      label: Capture d'écran ou journal
+      description: Sans mot de passe, jeton ni adresse e-mail réelle.
