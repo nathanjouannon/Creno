@@ -1,90 +1,107 @@
 # Feuille de route – Créno
 
-Statut : version 1.0 (2026-10-26). Découle de `prd.md` (MVP : F-01 à F-11 et F-19), de `architecture/architecture.md` et de `api/openapi.yaml`. Les tâches sont des tickets GitHub (voir `tasks/README.md`) ; le contenu de chaque tâche est dans son issue.
+Statut : version 2.1 (2026-10-29). Découle de `prd.md`, de `architecture/architecture.md` et de `api/openapi.yaml`. Les tâches sont des tickets GitHub (voir `tasks/README.md`) ; le contenu de chaque tâche est dans son issue.
 
 Principe : un squelette qui tourne de bout en bout d'abord (M0), puis des tranches verticales : chaque jalon livre quelque chose d'utilisable, de la base de données à l'interface. Une tâche tient en une session de travail et cite les fichiers à lire.
 
-## 1. Jalons
+## 1. MVP : développé, sauf les créneaux libres
 
-| Jalon | Ce qui est livré | Tâches | Fonctionnalités |
-| --- | --- | --- | --- |
-| **M0 – Squelette** | Un dépôt qui se lance, passe ses tests, se construit en image Docker et applique ses migrations ; contrat d'API généré depuis Zod ; style généré depuis les tokens ; `/health` | T-001 à T-006 | — |
-| **M1 – Installation et accès** | Installer une instance, se connecter, se déconnecter, pages protégées par rôle, composants de base | T-007 à T-010 | F-19, F-02, F-03 |
-| **M2 – Événements et créneaux** | L'administrateur crée, modifie et supprime des événements et des créneaux, avec une description facultative par créneau (T-024, ajoutée après T-013) | T-011 à T-013, T-024 | F-04, F-05, F-21 |
-| **M3 – Inscriptions** | Les bénévoles consultent et s'inscrivent ; l'administrateur suit le remplissage et retire un inscrit | T-014 à T-016 | F-06, F-07, F-08, F-09 |
-| **M4 – Invitations et membres** | Inviter par lien, créer son compte, gérer les membres et les droits, réinitialiser un mot de passe | T-017 à T-019 | F-01, F-10, F-02 (réinitialisation) |
-| **M5 – Compte et mise en service** | Suppression de compte, conformité RGPD et accessibilité, sauvegardes et exploitation, recette du MVP | T-020 à T-023 | F-11 |
+Le MVP regroupe F-01 à F-11, F-19, F-20, F-21 et F-22 (`prd.md`, section 5). Tout est développé (tickets T-001 à T-025 fermés, scénario cible de bout en bout vert, `recette-mvp.md`) sauf F-22, les créneaux libres (T-026), qui **clôt le MVP**. F-20 « Mon profil » (T-025), prévue d'abord en v1.1, a été avancée au MVP.
 
-À la fin de M3, il manque seulement l'invitation pour utiliser Créno avec des bénévoles réels : on peut créer les premiers comptes par le `seed` ou la base en attendant M4. La mise en service pour un club réel n'a lieu qu'après M5.
-
-## 2. Tâches
-
-| N° | Ticket | Jalon | Fonctionnalités | Dépend de |
+| Jalon | Ce qui a été livré | Tâches | Fonctionnalités | État |
 | --- | --- | --- | --- | --- |
-| T-001 | [Monorepo pnpm, Next.js, outils de qualité](https://github.com/nathanjouannon/Creno/issues/1) | M0 | — | — |
-| T-002 | [Base PostgreSQL, schéma Prisma, migrations avec retour, jeu de données](https://github.com/nathanjouannon/Creno/issues/2) | M0 | — | T-001 |
-| T-003 | [Tokens de design vers variables CSS et thème Tailwind](https://github.com/nathanjouannon/Creno/issues/3) | M0 | — | T-001 |
-| T-004 | [Socle API : erreurs, validation, journaux, santé](https://github.com/nathanjouannon/Creno/issues/4) | M0 | — | T-001, T-002 |
-| T-005 | [Schémas Zod du contrat et génération d'OpenAPI et du catalogue](https://github.com/nathanjouannon/Creno/issues/5) | M0 | — | T-004 |
-| T-006 | [Image Docker, compose de production et intégration continue](https://github.com/nathanjouannon/Creno/issues/6) | M0 | — | T-002, T-003, T-005 |
-| T-007 | [Authentification : mots de passe, JWT, session, protections](https://github.com/nathanjouannon/Creno/issues/7) | M1 | F-02, F-03 | T-004 |
-| T-008 | [Installation de l'instance : club et premier administrateur](https://github.com/nathanjouannon/Creno/issues/8) | M1 | F-19 | T-002, T-004, T-007 |
-| T-009 | [Connexion, déconnexion et blocage par adresse saisie](https://github.com/nathanjouannon/Creno/issues/9) | M1 | F-02 | T-007 |
-| T-010 | [Structure de page, composants de base et protection des pages](https://github.com/nathanjouannon/Creno/issues/10) | M1 | F-03 | T-003, T-007 |
-| T-011 | [Événements : services et routes](https://github.com/nathanjouannon/Creno/issues/11) | M2 | F-04 | T-004, T-005, T-007 |
-| T-012 | [Créneaux : services et routes](https://github.com/nathanjouannon/Creno/issues/12) | M2 | F-05 | T-011 |
-| T-013 | [Interface administrateur : événements et créneaux](https://github.com/nathanjouannon/Creno/issues/13) | M2 | F-04, F-05 | T-010, T-011, T-012 |
-| T-014 | [Inscriptions : services et routes, concurrence](https://github.com/nathanjouannon/Creno/issues/14) | M3 | F-06, F-07, F-08 | T-011, T-012 |
-| T-015 | [Interface bénévole : consulter, s'inscrire, se désinscrire](https://github.com/nathanjouannon/Creno/issues/15) | M3 | F-06, F-07, F-08 | T-010, T-014 |
-| T-016 | [Interface administrateur : suivi du remplissage et retrait d'inscrit](https://github.com/nathanjouannon/Creno/issues/16) | M3 | F-09 | T-013, T-014, T-015 |
-| T-017 | [Invitations : lien, création de compte](https://github.com/nathanjouannon/Creno/issues/17) | M4 | F-01 | T-008, T-011, T-010 |
-| T-018 | [Membres, rôles, réinitialisation du mot de passe : services et routes](https://github.com/nathanjouannon/Creno/issues/18) | M4 | F-10, F-02 | T-007, T-009 |
-| T-019 | [Interface : membres et réinitialisation du mot de passe](https://github.com/nathanjouannon/Creno/issues/19) | M4 | F-10, F-02 | T-010, T-018 |
-| T-020 | [Suppression de son compte](https://github.com/nathanjouannon/Creno/issues/20) | M5 | F-11 | T-014, T-018, T-010 |
-| T-021 | [Mentions d'information et accessibilité](https://github.com/nathanjouannon/Creno/issues/21) | M5 | F-11 | T-015, T-016, T-019, T-020 |
-| T-022 | [Sauvegardes, purges, supervision et mise en production](https://github.com/nathanjouannon/Creno/issues/22) | M5 | — | T-006, T-009, T-018 |
-| T-023 | [Recette de bout en bout du MVP](https://github.com/nathanjouannon/Creno/issues/23) | M5 | F-01 à F-11, F-19, F-21 | T-008, T-009, T-013, T-015, T-016, T-017, T-019, T-020, T-021 |
-| T-024 | [Description d'un créneau](https://github.com/nathanjouannon/Creno/issues/54) | M2 | F-21 | T-013, T-015 |
+| M0 – Squelette | Monorepo, base et migrations, tokens, socle API, contrat généré depuis Zod, image Docker, CI | T-001 à T-006 | — | Fait |
+| M1 – Installation et accès | Installation de l'instance, connexion, rôles, composants de base | T-007 à T-010 | F-19, F-02, F-03 | Fait |
+| M2 – Événements et créneaux | Événements et créneaux côté administrateur, description d'un créneau | T-011 à T-013, T-024 | F-04, F-05, F-21 | Fait |
+| M3 – Inscriptions | Consulter, s'inscrire, se désinscrire ; suivi du remplissage et retrait d'un inscrit | T-014 à T-016 | F-06 à F-09 | Fait |
+| M4 – Invitations et membres | Lien d'invitation, gestion des membres et des droits, réinitialisation du mot de passe | T-017 à T-019 | F-01, F-10 | Fait |
+| M5 – Compte et mise en service | Suppression de compte, mentions et accessibilité, sauvegardes et exploitation, recette | T-020 à T-023, T-025 | F-11, F-20 | Fait, recette manuelle à faire |
+| M6 – Créneaux libres | Mode d'inscription d'un événement (créneaux fixes, libres, ou les deux) ; le bénévole choisit ses horaires | [T-026](https://github.com/nathanjouannon/Creno/issues/65) | F-22 | À faire : documentation prête (ADR-0016), décisions à relire |
 
-Fonctionnalités de `prd.md` au MVP et la tâche qui les termine : F-01 → T-017 ; F-02 → T-009 et T-019 ; F-03 → T-010 et chaque tâche de route ; F-04 → T-013 ; F-05 → T-013 ; F-06 à F-08 → T-015 ; F-09 → T-016 ; F-10 → T-019 ; F-11 → T-020 ; F-19 → T-008 ; F-21 → T-024.
+T-026 est une grosse tâche (modèle, services, API, deux interfaces) : son ticket demande de la découper une fois les décisions prises. Découpage proposé, un ticket par pull request :
 
-## 3. Ordre et parallélisme
+1. Base et services : migration (mode, colonnes de `registrations`, contrainte, index) avec son retour arrière, schéma Prisma, services du mode (RG-19) et du créneau libre (RG-20), tests de concurrence ;
+2. Contrat et routes : schémas Zod, registre de routes, codes d'erreur, `pnpm api:generate`, `pnpm api:check`, `pnpm api:lint` ;
+3. Interface administrateur : `RegistrationModeField`, suivi et retrait des créneaux libres ;
+4. Interface bénévole : `FreeSlotForm`, `FreeSlotList`, désinscription ; E2E des trois modes, accessibilité.
 
-Ordre conseillé (les dépendances exactes sont dans le tableau) :
+### Reste à faire avant la première version publiée
 
-1. M0 : T-001, puis T-002 et T-003, puis T-004, T-005, T-006.
-2. M1 : T-007, puis T-008, T-009 et T-010.
-3. M2 : T-011, T-012, T-013.
-4. M3 : T-014, T-015, T-016.
-5. M4 : T-017 ; T-018, T-019.
-6. M5 : T-020, T-021, T-022, puis T-023.
+Ordre : T-026, puis la recette manuelle, puis la version. La mise en service est **conditionnelle** (`recette-mvp.md`, section 6) :
 
-- Chemin critique : T-001 → T-004 → T-005 → T-007 → T-011 → T-012 → T-014 → T-015 → T-016 → T-023.
-- Possibles en parallèle (équipe de plusieurs personnes) : T-002, T-003 et T-004 après T-001 ; T-008, T-009 et T-010 après T-007 ; les tâches serveur d'un jalon (T-011, T-012, T-014, T-018) et les tâches d'interface précédentes.
-- Les tâches d'interface (T-013, T-015, T-016, T-019) ne démarrent qu'une fois l'API correspondante fermée : l'interface s'appuie sur le contrat, pas sur une supposition.
+1. Développer F-22 (T-026) et ajouter ses scénarios à la recette automatisée (scénario E2E, matrice de `testing.md`) ;
+2. Remplir la recette manuelle sur appareils réels (iPhone, Android, Chrome, Safari, Firefox, Edge).
+3. Refaire les mesures de performance sur le serveur de production (les premières viennent d'une machine de développement).
+4. Cocher la liste de `definition-of-done.md` dans la pull request.
 
-## 4. Règles de conduite
+Tout écart relevé devient un ticket.
+
+## 2. Après le MVP
+
+Les versions ci-dessous sont une **proposition d'ordre**, à valider par le propriétaire du produit. Une tâche n'est écrite que quand sa fonctionnalité est cadrée : les fonctionnalités F-12 à F-14 se cadrent après la première utilisation réelle (`prd.md`, section 7). Les noms réservés sont dans `glossary.md`, section 3.
+
+### v1.1 – Confort d'usage
+
+Objectif : corriger les frictions constatées après la première utilisation réelle, sans changer l'architecture. F-20 « Mon profil » (T-025) et les créneaux libres (F-22, T-026) sont au MVP, pas ici.
+
+| Fonctionnalité | Contenu | Ticket | État |
+| --- | --- | --- | --- |
+| F-14 Mon planning | Liste de mes prochaines inscriptions sur un seul écran | à écrire | Cadrer |
+| F-12 Inscription par un administrateur | Ajouter un bénévole à un créneau, même complet ou commencé, avec avertissement | à écrire | Cadrer |
+| F-13 Historique des changements | Journal consultable par l'administrateur : qui a changé quoi, quand | à écrire | Cadrer (RG et RGPD : durée de conservation, données nominatives) |
+
+Points d'attention :
+
+- F-12 et F-13 doivent traiter les deux formes d'inscription introduites par F-22 (créneau fixe et créneau libre, ADR-0016) : F-12 pourra inscrire un bénévole sur un créneau libre pour autrui, F-14 listera aussi ses créneaux libres avec leurs propres horaires.
+- F-13 touche tous les services d'écriture : la concevoir avant d'ajouter d'autres fonctionnalités qui écrivent, sinon l'historique sera rétrofité partout.
+- Ordre conseillé : F-14 (petit, sans risque), F-12, puis F-13.
+
+### v1.2 – Ouverture internationale et diffusion
+
+Objectif : rendre Créno utilisable et trouvable hors du public francophone. La première version publiée (le MVP) précède la v1.2 : c'est la « première release versionnée » qu'exige le ticket #70.
+
+| Sujet | Contenu | Ticket | Dépend de |
+| --- | --- | --- | --- |
+| Traduction anglaise | Documentation en anglais ; système de traduction de l'application, français et anglais complets | [#69](https://github.com/nathanjouannon/Creno/issues/69) | — |
+| Diffusion | Licence, première release versionnée, page de démo, annuaires (`awesome-selfhosted`, AlternativeTo, OpenAlternative), annonces | [#70](https://github.com/nathanjouannon/Creno/issues/70) | #69 |
+
+Points d'attention :
+
+- #69 remet en cause « interface en français » (`AGENTS.md`, `conventions.md`, `glossary.md`) : décider d'abord la langue de référence de `docs/`, la bibliothèque d'internationalisation (ADR) et l'emplacement des textes d'erreur (l'interface se base sur `code`, jamais sur `message`).
+- #70 exige une licence dans `LICENSE`, qui n'existe pas encore : décision du propriétaire, bloquante pour les annuaires.
+- Les deux tickets ne touchent pas aux fonctionnalités : ils peuvent se faire en parallèle de la v1.1, à condition de traduire les textes ajoutés par la v1.1 dans la même pull request une fois #69 fusionné.
+
+### v2 – Mobilisation et suivi
+
+| Fonctionnalité | Contenu | Prérequis |
+| --- | --- | --- |
+| F-15 Notifications par e-mail | Confirmation, rappel avant le créneau, créneaux non pourvus | ADR (envoi, file, fournisseur ; budget 0 €), compléter `api/events.md`, décision RGPD sur l'envoi |
+| F-17 Export des inscriptions | CSV et impression, identiques à l'écran de l'événement | Droits d'export et copie hors serveur (`security.md`) |
+| F-16 Suivi des heures et classement | Total d'heures par bénévole, somme des créneaux validés | Définir « créneau validé » ; les plages libres de T-026 alimentent le calcul |
+
+F-15 est prioritaire si les bénévoles ne répondent pas sans rappel (`prd.md`, risques).
+
+### Plus tard
+
+- F-18 : vue calendrier d'un événement côté administrateur.
+- Connexion Google, Facebook, Apple : ADR dédié (ADR-0006).
+- Autres langues que l'anglais, une fois le système de traduction en place.
+
+## 3. Règles de conduite
 
 - **Une tâche à la fois par personne ou par session d'IA** ; elle se termine par une pull request qui remplit `definition-of-done.md`.
 - **Le contrat et le code avancent ensemble** : une tâche qui change une route change son schéma Zod, régénère `api/openapi.yaml` et `api/errors.*` dans le même commit (`pnpm api:check` en CI, ADR-0014). Une tâche qui change l'architecture met à jour l'ADR et `architecture.md` dans le même commit.
 - **Chaque scénario Given/When/Then d'une story a un test** automatisé, ou une ligne de recette manuelle justifiée (`testing.md`, section 5).
-- **Au-delà du MVP**, une tâche n'est écrite que quand sa fonctionnalité est cadrée (F-12 à F-14 en v1.1, F-15 à F-17 en v2, F-18 plus tard) ; les noms réservés sont dans `glossary.md`, section 3.
+- **Les documents d'abord** : un ticket qui change un comportement met à jour `prd.md`, `user-stories.md`, `business-rules.md` et `glossary.md` avant le code.
+- **Ne jamais mélanger deux jalons ou deux versions** dans une pull request.
 
-## 5. Risques de planning
+## 4. Risques
 
 | Risque | Effet | Parade |
 | --- | --- | --- |
-| Concurrence mal gérée sur la dernière place ou le dernier administrateur (RG-04, RG-07) | Limite dépassée, plus d'administrateur | Test de concurrence dans T-014 et T-018 dès l'écriture du service, pas en fin de projet |
-| Écart entre le contrat écrit à la main et le contrat généré (T-005) | Interface et serveur divergent | T-005 se fait avant tout handler ; chaque écart est expliqué dans la pull request |
-| Outil de migration réversible mal choisi (T-002) | Retour arrière impossible en production | ADR écrit à T-002, test appliquer-défaire-rejouer en CI (T-006) |
-| Accessibilité traitée en fin de projet (T-021) | Reprise coûteuse de tous les écrans | axe lancé dès T-010 sur chaque écran, T-021 n'est que l'audit final |
-| Tâches d'interface trop grosses pour une session | Dérive du planning | Découper T-010 (composants) si elle dépasse une session ; ne jamais mélanger deux jalons dans une pull request |
-| Points ouverts de `security.md` (droits d'accès et d'export, copie hors serveur) | Mise en service sans décision | T-021 et T-022 les tranchent par écrit avant la recette |
-
-## 6. Après le MVP (non planifié)
-
-| Version | Fonctionnalités | Remarque |
-| --- | --- | --- |
-| v1.1 | F-12 inscription par un administrateur, F-13 historique, F-14 mon planning, F-20 mon profil ([T-025](https://github.com/nathanjouannon/Creno/issues/57)) | F-20 : ticket déjà écrit, il donne les droits d'accès et de rectification (`security.md`, section 6) ; les autres : écrire les tickets après la première utilisation réelle (`prd.md`, section 7) |
-| v2 | F-15 notifications par e-mail, F-16 suivi des heures, F-17 export | F-15 exige un ADR et complète `api/events.md` |
-| Plus tard | F-18 vue calendrier ; connexion Google, Facebook, Apple | ADR dédié pour l'authentification externe (ADR-0006) |
+| Recette manuelle jamais faite | Défaut d'affichage découvert par les bénévoles | La remplir avant d'annoncer l'instance à un club réel |
+| T-026 modifie le modèle d'inscription (`registrations.slot_id` devient facultatif) | Régression sur la concurrence (RG-07) et la conservation des données (RG-11), recette manuelle retardée | ADR-0016 relu avant le code ; mode `FIXED` par défaut ; migration additive avec retour arrière ; tests de concurrence rejoués ; tâche découpée en quatre pull requests |
+| F-13 ajoutée tard | Historique à rétrofiter dans chaque service, désormais pour deux formes d'inscription | La cadrer tôt en v1.1 |
+| Traduction (#69) ajoutée après de nouveaux écrans | Textes en dur à extraire | Terminer #69 avant d'ajouter beaucoup d'écrans, ou écrire les nouveaux textes déjà dans les fichiers de langue |
+| Annonce publique avant licence et démo | Projet non référencé, mauvaise première impression | Respecter les prérequis de #70 |
+| Avancement bénévole irrégulier | Délai non maîtrisé | Versions courtes ; une fonctionnalité cadrée à la fois |

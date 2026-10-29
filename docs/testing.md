@@ -46,6 +46,8 @@ Ils découlent de `architecture.md`, section 5, et de `security.md`, section 4 ;
 | --- | --- | --- |
 | **Concurrence sur la dernière place** : 50 requêtes d'inscription simultanées sur un créneau limité à 4 avec 3 inscrits ; exactement une réussit, la limite n'est jamais dépassée | RG-07 | T-014 |
 | **Concurrence sur la capacité** : une inscription simultanée à un abaissement de limite ne laisse jamais plus d'inscrits que de places | RG-07 | T-012, T-014 |
+| **Concurrence sur les créneaux libres** : deux demandes simultanées du même utilisateur sur des horaires qui se recouvrent ; une seule est enregistrée (50 demandes simultanées sur 5 utilisateurs : aucun recouvrement en base) | RG-20 | T-026 |
+| **Concurrence sur le mode** : un changement de mode vers `FREE` et une création de créneau fixe simultanés ; jamais un créneau fixe dans un événement `FREE` ; idem `FIXED` et créneau libre | RG-19 | T-026 |
 | **Concurrence sur le dernier administrateur** : deux administrateurs qui se retirent le droit en même temps ; il en reste un | RG-04 | T-018 |
 | **Concurrence sur l'installation** : deux `POST /setup` en parallèle ; un seul club et un seul administrateur | RG-17 | T-008 |
 | **Concurrence sur le blocage** : 5 échecs simultanés comptent 5 | RG-03 | T-009 |
@@ -54,7 +56,7 @@ Ils découlent de `architecture.md`, section 5, et de `security.md`, section 4 ;
 | **Pas de fuite d'existence de compte** : même réponse et même durée (à tolérance près) pour une adresse inconnue et un mauvais mot de passe | RG-03 | T-009 |
 | **Contrat à jour** : `pnpm api:check` | ADR-0014 | T-005, T-006 |
 | **Réponses conformes au contrat** : chaque réponse d'intégration est validée contre le schéma de `openapi.yaml` | ADR-0011 | T-004 |
-| **Migrations** : appliquer, défaire, rejouer sur une base vide | `environments.md` §6 | T-002, T-006 |
+| **Migrations** : appliquer, défaire, rejouer sur une base vide ; pour F-22, une base avec des inscriptions existantes garde toutes ses lignes et tous ses événements en `FIXED` | `environments.md` §6 | T-002, T-006, T-026 |
 | **Secrets** : aucun secret dans le dépôt, mots de passe et jetons absents des journaux | `security.md` | T-006, T-004 |
 
 ## 5. Des stories aux tests
@@ -71,6 +73,7 @@ Convention : un scénario de `user-stories.md` (par exemple « F-07, scénario 3
 | F-05 Créneaux | 1 à 8 | 1 à 8 (T-012) | 1, 3 ter, 4, 6 (T-013) | |
 | F-20 Mon profil | 1 à 6 | 2 à 6 (T-025) | 1 à 5 (T-025) | Scénario 6 : intégration et unitaire seulement |
 | F-21 Description de créneau | 1 à 6 | 1 à 3, 5 (T-024) | 1 à 6 (T-024) | Scénario 3 : unitaire (limite) et intégration ; scénario 4 : composant et E2E |
+| F-22 Créneaux libres | 1 à 25 | 1, 2, 4 à 11, 15 à 18, 22 à 25 (T-026) | 1 à 3, 8, 9, 12 à 14, 19 à 21 (T-026) | Scénarios 4 à 7 : unitaire (bornes, durée, début) ; scénarios 10 et 18 : concurrence en intégration seulement ; scénario 14 : trois modes en E2E ; accessibilité de la fenêtre B9 (axe, clavier) |
 | F-06 Consulter | 1 à 5 | 1 à 4 bis (T-014) | 1 à 5 (T-015) | |
 | F-07 S'inscrire | 1 à 5 | 1 à 5 (T-014) | 1 à 4 ter (T-015) | Scénario 3 : concurrence en intégration, deux navigateurs en E2E |
 | F-08 Désinscrire | 1 à 4 | 1 à 4 (T-014) | 1, 1 bis, 2 à 4 (T-015) | |

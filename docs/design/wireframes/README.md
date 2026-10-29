@@ -12,9 +12,12 @@ Chaque écran porte le même code dans les deux versions (A1, B3…) avec ses r�
 | `02-benevole-evenements` | B1 à B7 : liste, événement et états des créneaux, désinscription | 04 |
 | `03-admin-evenements` | C1 à C10 : liste admin, remplissage (inscription de l'administrateur, retrait d'un inscrit), formulaires, invitation, suppression, passés, confirmation de retrait | 01, 05, 06 |
 | `04-membres-et-compte` | D1 à D6, E1 à E3 : membres, fiche, menu du prénom, suppression du compte | 00, 07, 08 |
+| `05-creneaux-libres` | B8 et B8 bis (créneaux libres, modes « libres » et « les deux »), B9 et B9 bis (fenêtre « Choisir mes horaires » : durée trop courte, recouvrement), C2 (administrateur, créneaux libres), C4 (choix « Inscriptions »), C11 (changement de mode refusé) : F-22 | 04, 05, 06, 10 |
 
 - `.excalidraw` : source éditable (à ouvrir sur excalidraw.com ou dans l'extension VS Code).
 - `.png` : export pour la relecture.
+
+Créneaux libres (F-22, T-026) : C2 et C4 de ce fichier remplacent les versions de `03-admin-evenements` pour un événement qui utilise le mode d'inscription (les écrans C2 et C4 de `03` restent valables en mode « Créneaux fixes »). Messages d'erreur de B9 : `FIELD_FREE_SLOT_OUT_OF_EVENT`, `FIELD_FREE_SLOT_TOO_SHORT`, `FIELD_END_NOT_AFTER_START`, `FIELD_START_NOT_IN_FUTURE` sous le champ ; `FREE_SLOT_OVERLAP` dans une `Alert` en tête de la fenêtre (ADR-0016). Aucun défilement horizontal à 360 px ; chaque « Me désinscrire » ou « × » nomme la personne et les horaires.
 
 Description de créneau (F-21, T-024) : le champ « Description » de C6 et C7 et son affichage dans C2, B3 et B4 sont décrits dans `components.md` (SlotForm, SlotCard) ; les maquettes dessinées ne sont pas redessinées.
 

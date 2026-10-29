@@ -1,5 +1,6 @@
 %%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
 %% Utilisateur : consulter, s'inscrire, se désinscrire, changer de créneau (F-06, F-07, F-08, RG-07, RG-08, RG-09)
+%% Mode d'inscription de l'événement (F-22, RG-19) : les créneaux fixes ci-dessous valent en mode « fixes » et « les deux » ; les créneaux libres sont décrits dans le flux 10.
 %% Un administrateur voit les mêmes boutons « Je m'inscris » et « Me désinscrire » sur sa page de l'événement (flux 06, RG-08).
 %% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
 flowchart TD
@@ -13,7 +14,11 @@ flowchart TD
     LIST -->|"Clic sur un événement"| EV["Page de l'événement : description,<br/>lieu, dates, créneaux"]
     URL(["URL directe d'un événement passé<br/>(utilisateur sans droit administrateur)"]) --> URLR["Page introuvable (RG-09)"]:::error
 
-    EV --> NS{"L'événement a des créneaux ?"}
+    EV --> MODE{"Mode d'inscription ? (RG-19)"}
+    MODE -->|"Créneaux fixes"| NS
+    MODE -->|"Les deux : créneaux fixes<br/>proposés, puis créneaux libres"| NS
+    MODE -->|"Créneaux libres seulement,<br/>ou les deux"| FREE(["Créneaux libres : flux 10"])
+    NS{"L'événement a des créneaux fixes ?"}
     NS -->|"Non"| NS1["Affichage d'un événement sans<br/>créneau : texte à CONFIRMER"]:::todo
     NS -->|"Oui"| SL["Pour chaque créneau : horaires,<br/>noms des inscrits (RG-09)"]
     SL --> ST{"État du créneau pour cet<br/>utilisateur"}

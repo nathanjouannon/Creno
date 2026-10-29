@@ -1,5 +1,5 @@
 %%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
-%% Administrateur : créer, modifier, supprimer un événement et ses créneaux (F-04, F-05, RG-06, RG-07, RG-10, RG-15)
+%% Administrateur : créer, modifier, supprimer un événement et ses créneaux (F-04, F-05, F-22, RG-06, RG-07, RG-10, RG-15, RG-19)
 %% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = avertissement
 flowchart TD
     classDef error fill:#fde2e2,stroke:#dc2626,color:#111
@@ -12,7 +12,7 @@ flowchart TD
     EVA -->|"Clic « Modifier »"| F
     EVA -->|"Clic « Supprimer »"| D1
 
-    F["Formulaire événement : titre,<br/>description, lieu, début (jour,<br/>heure), fin (jour, heure),<br/>créneaux facultatifs"] -->|"Clic « Ajouter un créneau »"| C
+    F["Formulaire événement : titre,<br/>description, lieu, début (jour,<br/>heure), fin (jour, heure),<br/>mode d'inscription (défaut :<br/>créneaux fixes, RG-19), créneaux<br/>facultatifs"] -->|"Clic « Ajouter un créneau »"| C
     C["Formulaire créneau : date, début,<br/>fin, limite de places facultative<br/>(vide = illimité)"] -->|"Valider le créneau"| CV{"Fin après début ?"}
     CV -->|"Non"| CE["La fin doit être après le début"]:::error
     CE --> C
@@ -33,7 +33,10 @@ flowchart TD
     V -->|"Oui"| V2{"Fin de l'événement après son<br/>début ? (RG-06)"}
     V2 -->|"Non"| VE2["La fin doit être après le début"]:::error
     VE2 --> F
-    V2 -->|"Oui"| OK["Événement enregistré (avec ou sans<br/>créneau), inscriptions conservées<br/>en cas de modification ; la validité<br/>des invitations suit le nouveau<br/>début (RG-02)"]
+    V2 -->|"Oui"| MD{"Le nouveau mode refuse un contenu<br/>existant ? (RG-19)"}
+    MD -->|"Oui : créneaux fixes passant<br/>en créneaux libres, ou créneaux<br/>libres passant en créneaux fixes"| MDE["Refus : supprime d'abord les<br/>créneaux fixes (N) ou libres (N),<br/>mode inchangé (écran C11)"]:::error
+    MDE --> F
+    MD -->|"Non"| OK["Événement enregistré (avec ou sans<br/>créneau), inscriptions conservées<br/>en cas de modification ; la validité<br/>des invitations suit le nouveau<br/>début (RG-02)"]
     OK --> EV
 
     D1{"L'événement a des inscrits ?<br/>(RG-10)"}
@@ -52,3 +55,7 @@ flowchart TD
     K1 -->|"Non"| K4["Créneau supprimé immédiatement,<br/>sans confirmation"]
     K4 --> EV
     K3 -.- K5["Si c'était le dernier créneau :<br/>l'événement est conservé sans<br/>créneau (RG-06)"]
+
+    %% En mode « Créneaux libres » (FREE), le bouton « Ajouter un créneau » est absent ; un créneau fixe
+    %% envoyé quand même par l'API est refusé (RG-19). En mode « Créneaux fixes », aucun créneau libre n'est possible.
+    F -.- FM["Mode « Créneaux libres » : pas de<br/>créneau fixe, bouton « Ajouter un<br/>créneau » masqué (RG-19)"]
