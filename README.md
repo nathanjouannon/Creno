@@ -1,14 +1,76 @@
 # Créno
 
-Application web d'organisation de bénévoles pour les associations : l'administrateur publie des événements avec des créneaux, les bénévoles s'y inscrivent.
+**Créno est une application web libre de gestion de bénévoles pour les associations** : l'administrateur publie des événements avec des créneaux, les bénévoles s'y inscrivent depuis leur téléphone, et chacun voit le remplissage des créneaux. Elle remplace les formulaires et les tableurs partagés.
 
-## Prérequis
+[English summary](#english-summary) · [Documentation](docs/) · [Contribuer](CONTRIBUTING.md) · [Sécurité](SECURITY.md)
 
-- Node.js 20.19 ou plus
-- pnpm 10 (`corepack enable`)
-- Docker (base PostgreSQL locale et mise en production)
+<!-- Captures d'écran : à ajouter ici (voir la section « Aperçu »). -->
 
-## Commandes
+## Pourquoi Créno ?
+
+Beaucoup d'associations organisent leurs bénévoles avec un Google Form, un tableur partagé ou un sondage (Doodle, Framadate). Ces outils ne gèrent pas bien les **créneaux avec un nombre de places limité** : on ne voit pas qui est inscrit, on ne peut pas modifier sa réponse seul, et l'organisateur recompte à la main.
+
+Créno est pensé pour une association, pas pour une grande ONG :
+
+- **Simple** : pas de compte à créer sur un service tiers, un lien d'invitation suffit.
+- **Mobile d'abord** : conçu pour un écran de 360 px.
+- **Auto-hébergé** : une instance = une association, vos données restent chez vous (RGPD : suppression de compte, rectification).
+- **Gratuit et libre** : pas d'abonnement, du code ouvert et une documentation complète.
+
+## Fonctionnalités
+
+**Pour l'administrateur**
+
+- Installer l'instance (club et premier administrateur) en quelques minutes.
+- Créer des événements avec des créneaux (horaires, nombre de places limité ou non, description).
+- Inviter des bénévoles par un lien d'invitation généré depuis un événement.
+- Suivre le remplissage de chaque créneau, retirer un inscrit.
+- Gérer les membres : droit d'administrateur, lien de réinitialisation de mot de passe.
+
+**Pour le bénévole**
+
+- Créer son compte depuis un lien d'invitation, se connecter par e-mail et mot de passe.
+- Consulter les événements, voir qui est inscrit et les places restantes.
+- S'inscrire, se désinscrire ou changer de créneau seul.
+- Consulter et modifier son profil, supprimer son compte et ses données.
+
+Le périmètre exact, les priorités et la suite sont dans [`docs/prd.md`](docs/prd.md) et [`docs/roadmap.md`](docs/roadmap.md).
+
+## Aperçu
+
+Les captures d'écran seront ajoutées prochainement.
+
+## Démarrage rapide
+
+Prérequis : Node.js 20.19 ou plus, pnpm 10 (`corepack enable`), Docker.
+
+```
+pnpm install
+cp .env.example .env        # puis remplir les valeurs
+docker compose up -d db
+pnpm db:migrate && pnpm db:seed
+pnpm dev                    # http://localhost:3000
+```
+
+Pour installer Créno sur un serveur, voir [Mise en production](#mise-en-production).
+
+## Technologies
+
+TypeScript, Next.js, Prisma, PostgreSQL, Zod, Tailwind, Docker. Les choix et les alternatives écartées sont dans [`docs/adr/`](docs/adr/).
+
+## Contribuer
+
+Les contributions sont bienvenues : rapports de bugs, idées, documentation, code. Lisez [`CONTRIBUTING.md`](CONTRIBUTING.md) et le [code de conduite](CODE_OF_CONDUCT.md). Pour signaler une faille de sécurité, voir [`SECURITY.md`](SECURITY.md).
+
+## English summary
+
+**Créno** is a free, self-hosted web app that helps nonprofits and clubs organise volunteers. An administrator publishes events with time slots (optionally limited in places); volunteers sign up, change or cancel their registration on their own from a phone, and everyone sees how full each slot is. It replaces forms and shared spreadsheets. One instance serves one association; the interface is in French; GDPR-friendly (account deletion and rectification).
+
+Stack: TypeScript, Next.js, Prisma, PostgreSQL, Docker. Quick start: see [Démarrage rapide](#démarrage-rapide). The code and comments are in English, the documentation in French. Contributions are welcome: see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Développement
+
+### Commandes
 
 | But           | Commande                                                            |
 | ------------- | ------------------------------------------------------------------- |
