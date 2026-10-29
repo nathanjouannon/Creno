@@ -112,9 +112,13 @@ describe('EventForm (C4, C5)', () => {
     await userEvent.type(within(dialog).getByLabelText('Fin'), '10:00');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Valider le créneau' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    const free = screen.getByRole('radio', { name: 'Créneaux libres' });
-    expect(free).toBeDisabled();
-    expect(free).toHaveAccessibleDescription(/Supprime d'abord les créneaux fixes \(1\)\./);
+    // The list of slots is watched by the mode field: wait for its next render
+    await waitFor(() =>
+      expect(screen.getByRole('radio', { name: 'Créneaux libres' })).toBeDisabled(),
+    );
+    expect(screen.getByRole('radio', { name: 'Créneaux libres' })).toHaveAccessibleDescription(
+      /Supprime d'abord les créneaux fixes \(1\)\./,
+    );
   });
 
   it('[F-22 S18] C11: on a modification, options the content forbids are disabled; a refusal is shown at the top', async () => {
