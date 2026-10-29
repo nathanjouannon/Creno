@@ -20,6 +20,8 @@ Application web d'organisation de bénévoles pour les associations : l'administ
 | Tests         | `pnpm test` (`test:unit`, `test:integration`)                       |
 | Contrat d'API | `pnpm api:generate`, `pnpm api:check`, `pnpm api:lint`              |
 
+Après un `git pull` qui touche `apps/web/prisma/`, relancer `pnpm db:migrate` : il applique les migrations et régénère le client Prisma (sans cela, le client est périmé et les routes répondent `500`). Redémarrer ensuite `pnpm dev`. En production, l'image `migrate` n'exécute que `pnpm db:deploy` ; le client est généré au build.
+
 L'application refuse de démarrer si une variable d'environnement obligatoire manque ou est invalide (`docs/architecture/environments.md`).
 
 La documentation complète est dans `docs/` ; le plan de développement dans `docs/roadmap.md`.

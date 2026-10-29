@@ -61,7 +61,7 @@ La procédure complète, avec les commandes exactes, est écrite dans `README.md
 
 **Commandes clés** (noms indicatifs)
 - Installer : `pnpm install` ; lancer : `pnpm dev`
-- Base locale : `docker compose up -d db`, puis `pnpm db:migrate` et `pnpm db:seed`
+- Base locale : `docker compose up -d db`, puis `pnpm db:migrate` (applique les migrations et régénère le client Prisma) et `pnpm db:seed`. Après un `git pull` qui change le schéma, relancer `pnpm db:migrate` suffit, puis redémarrer `pnpm dev`.
 - Style : `pnpm tokens:build` (régénère les fichiers depuis `tokens.json`)
 - Qualité : `pnpm lint`, `pnpm typecheck`, `pnpm test`
 
