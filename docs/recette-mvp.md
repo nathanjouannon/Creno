@@ -1,6 +1,6 @@
 # Recette du MVP – Créno
 
-Statut : compte rendu de T-023, établi le 2026-10-28 sur `main` (après T-025). Les parties automatisées sont exécutées ; la recette manuelle sur appareils réels reste **à faire par une personne** (section 4).
+Statut : compte rendu de T-023, établi le 2026-10-28 sur `main` (après T-025). **Mise à jour du 2026-10-29** : le MVP inclut désormais F-22, les créneaux libres (T-026, [#65](https://github.com/nathanjouannon/Creno/issues/65)), développée après ce compte rendu ; la recette automatisée (section 1) et la matrice (section 2) sont à compléter de ses scénarios une fois T-026 fermé, avant la recette manuelle (section 4). Les parties automatisées sont exécutées ; la recette manuelle sur appareils réels reste **à faire par une personne** (section 4).
 
 ## 1. Scénario cible de bout en bout
 

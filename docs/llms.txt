@@ -12,7 +12,7 @@
 - [Parcours](flows/00-navigation-et-acces.mmd): flux Mermaid de chaque parcours (dossier flows/)
 - [Tokens](design/tokens.json): couleurs, typographies, espacements, rayons
 - [Composants](design/components.md): composants, variantes, états
-- [Maquettes](design/wireframes/README.md): écrans A1 à E3, mobile et desktop
+- [Maquettes](design/wireframes/README.md): écrans A1 à E3, mobile et desktop ; créneaux libres B8, B9, C11 en texte
 
 ## Domaine
 - [Glossaire](glossary.md): un terme = une définition = un nom de code
@@ -32,7 +32,7 @@
 - [Événements](api/events.md): aucun au MVP
 
 ## Plan et pratiques
-- [Feuille de route](roadmap.md): jalons et tâches T-001 à T-023
+- [Feuille de route](roadmap.md): jalons et tâches T-001 à T-026
 - [Tâches](tasks/README.md): un fichier par ticket
 - [Tests](testing.md): pyramide, seuils, tests obligatoires
 - [Définition de terminé](definition-of-done.md)
