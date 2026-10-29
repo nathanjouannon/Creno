@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import {
   addressOf,
@@ -10,6 +9,7 @@ import {
   member,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
@@ -28,9 +28,7 @@ async function signIn(page: Page, credentials: { email: string; password: string
 
 const refusal = "Tu n'as pas le droit d'accéder à cette page";
 const serious = async (page: Page) =>
-  (await new AxeBuilder({ page }).analyze()).violations.filter(
-    (v) => v.impact === 'serious' || v.impact === 'critical',
-  );
+  (await analyze(page)).violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
 const scrolls = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
 

@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import { createHash } from 'node:crypto';
 import type { Page } from '@playwright/test';
 import {
@@ -9,6 +8,7 @@ import {
   installation,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 // T-017: invitations (F-01), at 360 px. The club is in Europe/Paris (RG-16): 08:00 shown is 07:00 UTC in March.
@@ -60,7 +60,7 @@ async function signInAsAdmin(page: Page) {
 /** axe without serious or critical violation, and no horizontal scroll at 360 px. */
 async function checkScreen(page: Page) {
   await page.mouse.move(0, 0);
-  const violations = (await new AxeBuilder({ page }).analyze()).violations.filter(
+  const violations = (await analyze(page)).violations.filter(
     (v) => v.impact === 'serious' || v.impact === 'critical',
   );
   expect(violations).toEqual([]);

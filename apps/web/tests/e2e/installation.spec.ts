@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import {
   addressOf,
@@ -8,6 +7,7 @@ import {
   installation,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
@@ -112,7 +112,7 @@ test('accessibility and 360 px: no serious violation, no horizontal scroll, on t
     page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   expect(await scrolls()).toBe(false);
   expect(
-    (await new AxeBuilder({ page }).analyze()).violations.filter(
+    (await analyze(page)).violations.filter(
       (v) => v.impact === 'serious' || v.impact === 'critical',
     ),
   ).toEqual([]);
@@ -121,7 +121,7 @@ test('accessibility and 360 px: no serious violation, no horizontal scroll, on t
   await expect(page.getByText('Ce champ est obligatoire.').first()).toBeVisible();
   expect(await scrolls()).toBe(false);
   expect(
-    (await new AxeBuilder({ page }).analyze()).violations.filter(
+    (await analyze(page)).violations.filter(
       (v) => v.impact === 'serious' || v.impact === 'critical',
     ),
   ).toEqual([]);

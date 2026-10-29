@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import {
   addressOf,
@@ -11,6 +10,7 @@ import {
   member,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 // T-016: administrator filling view (F-09), at 360 px. The club is in Europe/Paris (RG-16): 08:00 shown is 07:00 UTC in March.
@@ -81,7 +81,7 @@ async function signIn(page: Page, credentials: { email: string; password: string
 /** axe without serious or critical violation, and no horizontal scroll at 360 px. */
 async function checkScreen(page: Page) {
   await page.mouse.move(0, 0);
-  const violations = (await new AxeBuilder({ page }).analyze()).violations.filter(
+  const violations = (await analyze(page)).violations.filter(
     (v) => v.impact === 'serious' || v.impact === 'critical',
   );
   expect(violations).toEqual([]);

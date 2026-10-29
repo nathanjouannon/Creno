@@ -1,6 +1,13 @@
 import { hash } from '@node-rs/argon2';
 import { PrismaClient } from '@prisma/client';
-import { test as base, type APIRequestContext, type TestInfo } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import {
+  test as base,
+  expect as baseExpect,
+  type APIRequestContext,
+  type Page,
+  type TestInfo,
+} from '@playwright/test';
 
 export const database = new PrismaClient({ datasourceUrl: process.env.E2E_DATABASE_URL });
 
@@ -31,7 +38,16 @@ export const test = base.extend({
   },
 });
 
-export { expect } from '@playwright/test';
+export { baseExpect as expect };
+
+/**
+ * Runs axe on the current screen. Next.js swaps the <title> after a client-side navigation, so wait for it first or
+ * `document-title` fires on a page that does have one. No axe rule is disabled.
+ */
+export async function analyze(page: Page) {
+  await baseExpect(page).toHaveTitle(/.+/);
+  return new AxeBuilder({ page }).analyze();
+}
 
 export const installation = {
   club: { name: 'Ski Club des Arcs', timezone: 'Europe/Paris' },

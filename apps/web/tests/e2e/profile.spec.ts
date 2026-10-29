@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import {
   addressOf,
   createMember,
@@ -8,6 +7,7 @@ import {
   member,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 // T-025: « Mon profil » (F-20, RG-18), at 360 px.
@@ -50,7 +50,7 @@ test('[F-20 S1] the menu leads to the profile, pre-filled, without horizontal sc
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
-  const { violations } = await new AxeBuilder({ page }).analyze();
+  const { violations } = await analyze(page);
   expect(violations.filter((v) => v.impact === 'serious' || v.impact === 'critical')).toEqual([]);
 });
 

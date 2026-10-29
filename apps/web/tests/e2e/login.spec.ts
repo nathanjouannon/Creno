@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import {
   addressOf,
@@ -8,6 +7,7 @@ import {
   installation,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 test.describe.configure({ mode: 'serial' });
@@ -124,7 +124,7 @@ test('accessibility and 360 px: the sign-in page and its error state', async ({ 
   const scrolls = () =>
     page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   const serious = async () =>
-    (await new AxeBuilder({ page }).analyze()).violations.filter(
+    (await analyze(page)).violations.filter(
       (v) => v.impact === 'serious' || v.impact === 'critical',
     );
   expect(await scrolls()).toBe(false);
