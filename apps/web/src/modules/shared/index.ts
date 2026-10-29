@@ -23,6 +23,7 @@ export {
 export { generateLinkToken, hashLinkToken } from './link-token';
 export { getHealthService } from './health';
 export { getPrisma } from './prisma';
+export { lockEvent } from './event-lock';
 export { checkRateLimit, clientAddress, resetRateLimits } from './rate-limit';
 export { assertSameOrigin } from './origin';
 export { isSerializationFailure } from './serialization';

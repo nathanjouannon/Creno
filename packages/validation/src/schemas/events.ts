@@ -99,6 +99,64 @@ export const slotUpdateSchema = z
   .refine(endsAfterStarts, endsAfterStartsIssue)
   .openapi('SlotUpdate', { minProperties: 1 });
 
+// RG-19, F-22: FIXED (fixed slots only, the default), FREE (free slots only) or BOTH.
+export const registrationModeSchema = z
+  .enum(['FIXED', 'FREE', 'BOTH'], {
+    errorMap: () => ({ message: 'FIELD_REGISTRATION_MODE_INVALID' }),
+  })
+  .describe(
+    "Mode d'inscription (RG-19) : `FIXED` créneaux fixes seulement (défaut), `FREE` créneaux libres seulement, `BOTH` les deux (les créneaux fixes sont alors indicatifs)",
+  )
+  .openapi('RegistrationMode');
+
+/** RG-20: the minimum length of a free slot. */
+export const FREE_SLOT_MIN_MINUTES = 30;
+
+/** RG-20: at least 30 minutes between the start and the end (instants). */
+export function lastsMinimum(value: { startsAt?: string; endsAt?: string }): boolean {
+  if (value.startsAt === undefined || value.endsAt === undefined) return true;
+  const minutes = (new Date(value.endsAt).getTime() - new Date(value.startsAt).getTime()) / 60_000;
+  return minutes <= 0 || minutes >= FREE_SLOT_MIN_MINUTES; // a reversed range is reported by endsAfterStarts
+}
+
+export const freeSlotSchema = z
+  .object({
+    id: entityId().describe(
+      "Identifiant de l'inscription ; sert aussi à `DELETE /registrations/{registrationId}` (retrait par un administrateur)",
+    ),
+    eventId: entityId(),
+    startsAt: outDateTime(),
+    endsAt: outDateTime(),
+    started: z
+      .boolean()
+      .describe("Vrai si l'heure courante est supérieure ou égale au début (RG-08, RG-20)"),
+    displayName: z
+      .string()
+      .nullable()
+      .describe(
+        "« Prénom N. » (RG-09) ; `null` pour une inscription anonymisée (RG-11), que l'interface affiche « ancien membre »",
+      ),
+    isMe: z.boolean().describe("Vrai pour un créneau libre de l'utilisateur connecté"),
+  })
+  .describe(
+    "Créneau libre (F-22, RG-20) : inscription sans créneau fixe, avec les horaires choisis par l'utilisateur. Ni limite de places, ni état « complet ».",
+  )
+  .openapi('FreeSlot');
+
+// RG-20: the end comes after the start, 30 minutes at least. The bounds of the event and the current time are
+// checked by the service, which knows them (FIELD_FREE_SLOT_OUT_OF_EVENT, FIELD_START_NOT_IN_FUTURE).
+export const freeSlotInputSchema = z
+  .object({
+    startsAt: dateTime().describe("Strictement après l'heure courante, dans les dates de l'événement"),
+    endsAt: dateTime().describe(
+      "Au moins 30 minutes après `startsAt`, au plus tard à la fin de l'événement (RG-20)",
+    ),
+  })
+  .strict()
+  .refine(endsAfterStarts, endsAfterStartsIssue)
+  .refine(lastsMinimum, { message: 'FIELD_FREE_SLOT_TOO_SHORT', path: ['endsAt'] })
+  .openapi('FreeSlotInput');
+
 const text = () => z.string().nullable();
 
 export const eventSummarySchema = z
@@ -109,14 +167,20 @@ export const eventSummarySchema = z
     startsAt: outDateTime(),
     endsAt: outDateTime(),
     status: eventStatusSchema,
-    slotCount: z.number().int().min(0),
+    registrationMode: registrationModeSchema,
+    slotCount: z.number().int().min(0).describe('Nombre de créneaux fixes'),
   })
   .openapi('EventSummary');
 
 export const eventDetailSchema = eventSummarySchema
   .extend({
     description: text(),
-    slots: z.array(slotSchema).describe('Triés par date de début croissante'),
+    slots: z.array(slotSchema).describe('Créneaux fixes, triés par date de début croissante'),
+    freeSlots: z
+      .array(freeSlotSchema)
+      .describe(
+        'Créneaux libres (F-22), triés par début, fin puis `id` croissants ; vide en mode `FIXED`',
+      ),
   })
   .openapi('EventDetail');
 
@@ -131,7 +195,13 @@ export const eventInputSchema = z
     location: text().optional(),
     startsAt: dateTime(),
     endsAt: dateTime().describe('Après `startsAt` (RG-06)'),
-    slots: z.array(slotInputSchema).default([]),
+    registrationMode: registrationModeSchema
+      .default('FIXED')
+      .describe("Mode d'inscription (RG-19) ; `FIXED` s'il est absent"),
+    slots: z
+      .array(slotInputSchema)
+      .default([])
+      .describe('Créneaux fixes ; refusés en mode `FREE` (RG-19)'),
   })
   .strict()
   .refine(endsAfterStarts, endsAfterStartsIssue)
@@ -144,6 +214,7 @@ export const eventUpdateSchema = z
     location: text(),
     startsAt: dateTime(),
     endsAt: dateTime(),
+    registrationMode: registrationModeSchema,
   })
   .partial()
   .strict()
@@ -158,3 +229,4 @@ export const listEventsQuerySchema = z
 export const eventIdParamsSchema = z.object({ eventId: idParam() }).strict();
 export const slotIdParamsSchema = z.object({ slotId: idParam() }).strict();
 export const registrationIdParamsSchema = z.object({ registrationId: idParam() }).strict();
+export const freeSlotIdParamsSchema = z.object({ freeSlotId: idParam() }).strict();

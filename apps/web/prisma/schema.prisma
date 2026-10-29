@@ -18,6 +18,15 @@ enum UserRole {
   @@map("user_role")
 }
 
+// RG-19, F-22: how volunteers register to an event.
+enum RegistrationMode {
+  FIXED
+  FREE
+  BOTH
+
+  @@map("registration_mode")
+}
+
 // RG-16, RG-17: a single row (id = 1, enforced by CHECK).
 model Club {
   id        Int      @id @default(1)
@@ -71,18 +80,21 @@ model ResetToken {
   @@map("reset_tokens")
 }
 
-// RG-06
+// RG-06, RG-19: registrationMode FIXED by default, so events created before F-22 keep their behaviour.
 model Event {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String?
-  location    String?
-  startsAt    DateTime @map("starts_at") @db.Timestamptz(6)
-  endsAt      DateTime @map("ends_at") @db.Timestamptz(6)
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id               Int              @id @default(autoincrement())
+  title            String
+  description      String?
+  location         String?
+  startsAt         DateTime         @map("starts_at") @db.Timestamptz(6)
+  endsAt           DateTime         @map("ends_at") @db.Timestamptz(6)
+  registrationMode RegistrationMode @default(FIXED) @map("registration_mode")
+  createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
 
   slots       Slot[]
   invitations Invitation[]
+  // F-22, RG-20: registrations without a slot, with their own times
+  freeSlots   Registration[]
 
   @@index([endsAt], map: "events_ends_at_idx")
   @@map("events")
@@ -106,15 +118,21 @@ model Slot {
   @@map("slots")
 }
 
-// RG-07, RG-08, RG-11: userId null = former member.
+// RG-07, RG-08, RG-11, RG-20: userId null = former member. Two exclusive forms (ADR-0016, CHECK
+// registrations_kind_check added in SQL): a fixed slot (slotId only) or a free slot (eventId, startsAt, endsAt, at
+// least 30 minutes). The partial index registrations_event_id_idx (WHERE event_id IS NOT NULL) is in SQL too.
 model Registration {
-  id        Int      @id @default(autoincrement())
-  slotId    Int      @map("slot_id")
-  userId    Int?     @map("user_id")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id        Int       @id @default(autoincrement())
+  slotId    Int?      @map("slot_id")
+  eventId   Int?      @map("event_id")
+  startsAt  DateTime? @map("starts_at") @db.Timestamptz(6)
+  endsAt    DateTime? @map("ends_at") @db.Timestamptz(6)
+  userId    Int?      @map("user_id")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  slot Slot  @relation(fields: [slotId], references: [id], onDelete: Cascade)
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  slot  Slot?  @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  event Event? @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@unique([slotId, userId])
   @@index([userId], map: "registrations_user_id_idx")

@@ -91,9 +91,13 @@ export function createMembersRepository(prisma: PrismaClient) {
         work({
           find: (userId) => client.user.findUnique({ where: { id: userId }, select }),
           countAdmins: () => client.user.count({ where: { role: 'ADMIN' } }),
+          // RG-11: a fixed slot is judged on the start of its slot, a free slot on its own start (RG-20)
           deleteRegistrationsOfUnstartedSlots: async (userId, now) => {
             await client.registration.deleteMany({
-              where: { userId, slot: { startsAt: { gt: now } } },
+              where: {
+                userId,
+                OR: [{ slot: { startsAt: { gt: now } } }, { slotId: null, startsAt: { gt: now } }],
+              },
             });
           },
           anonymizeRegistrations: async (userId) => {

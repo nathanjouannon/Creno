@@ -108,6 +108,14 @@ export const errorCatalog = {
     details: '',
     clientAction: "Recharger l'événement",
   },
+  FREE_SLOT_NOT_FOUND: {
+    status: 404,
+    message: 'Créneau libre introuvable.',
+    cause:
+      "RG-20 : identifiant inconnu, créneau libre d'un autre utilisateur, ou d'un événement passé vu par un utilisateur (RG-09)",
+    details: '',
+    clientAction: "Recharger l'événement",
+  },
   USER_EMAIL_TAKEN: {
     status: 409,
     message: 'Un compte existe déjà avec cette adresse. Connecte-toi.',
@@ -182,6 +190,51 @@ export const errorCatalog = {
     details: '`slotId`',
     clientAction: "Recharger l'événement",
   },
+  EVENT_FREE_SLOTS_NOT_ALLOWED: {
+    status: 409,
+    message: 'Cet événement ne propose pas de créneaux libres.',
+    cause: "RG-19 : créneau libre demandé sur un événement en mode `FIXED`",
+    details: '',
+    clientAction: "Recharger l'événement ; l'interface ne propose plus « Choisir mes horaires »",
+  },
+  EVENT_FIXED_SLOTS_NOT_ALLOWED: {
+    status: 409,
+    message: 'Cet événement ne propose que des créneaux libres.',
+    cause: "RG-19 : créneau fixe demandé sur un événement en mode `FREE`",
+    details: '',
+    clientAction: "Recharger l'événement ; l'interface ne propose plus « Ajouter un créneau »",
+  },
+  EVENT_MODE_HAS_SLOTS: {
+    status: 409,
+    message: "Pour passer en créneaux libres, supprime d'abord les créneaux fixes ({slotCount}).",
+    cause: "RG-19 : passage en mode `FREE` d'un événement qui a des créneaux fixes",
+    details: '`slotCount`',
+    clientAction: 'Afficher le message en tête du formulaire, le mode reste inchangé',
+  },
+  EVENT_MODE_HAS_FREE_SLOTS: {
+    status: 409,
+    message:
+      "Pour passer en créneaux fixes, supprime d'abord les créneaux libres ({freeSlotCount}).",
+    cause: "RG-19 : passage en mode `FIXED` d'un événement qui a des créneaux libres",
+    details: '`freeSlotCount`',
+    clientAction: 'Afficher le message en tête du formulaire, le mode reste inchangé',
+  },
+  FREE_SLOT_OVERLAP: {
+    status: 409,
+    message: 'Tu as déjà des horaires qui recouvrent ceux-ci.',
+    cause:
+      "RG-20 : recouvrement avec un autre créneau libre du même utilisateur dans l'événement (se toucher n'est pas se recouvrir)",
+    details: '`freeSlotId` (le créneau libre qui recouvre)',
+    clientAction: 'Afficher le message en tête de la fenêtre, garder la saisie',
+  },
+  FREE_SLOT_STARTED: {
+    status: 409,
+    message:
+      'Ce créneau libre a commencé. Contacte un administrateur pour modifier ton inscription.',
+    cause: 'RG-08, RG-20 : désinscription après le début (heure courante supérieure ou égale au début)',
+    details: '`freeSlotId`',
+    clientAction: "Recharger l'événement",
+  },
   RATE_LIMITED: {
     status: 429,
     message: 'Trop de requêtes, réessaie plus tard.',
@@ -243,6 +296,24 @@ export const fieldErrorCatalog = {
     message: 'La description ne peut pas dépasser 500 caractères.',
     cause:
       "RG-07 (F-21) : description d'un créneau de plus de 500 caractères ; portée par le champ `description`",
+  },
+  FIELD_FREE_SLOT_OUT_OF_EVENT: {
+    message: "Les horaires doivent rester dans les dates de l'événement.",
+    cause:
+      "RG-20 : début avant celui de l'événement (champ `startsAt`) ou fin après la sienne (champ `endsAt`) ; vérifié par le service",
+  },
+  FIELD_FREE_SLOT_TOO_SHORT: {
+    message: 'Un créneau libre dure au moins 30 minutes.',
+    cause: 'RG-20 : moins de 30 minutes entre le début et la fin ; porté par le champ `endsAt`',
+  },
+  FIELD_START_NOT_IN_FUTURE: {
+    message: 'Choisis une heure de début à venir.',
+    cause:
+      "RG-08, RG-20 : début d'un créneau libre égal ou antérieur à l'heure courante ; porté par le champ `startsAt`, vérifié par le service",
+  },
+  FIELD_REGISTRATION_MODE_INVALID: {
+    message: "Choisis un mode d'inscription de la liste.",
+    cause: 'RG-19 : valeur autre que `FIXED`, `FREE` ou `BOTH`',
   },
   FIELD_TIMEZONE_INVALID: {
     message: 'Choisis un fuseau horaire de la liste.',

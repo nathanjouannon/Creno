@@ -285,6 +285,13 @@ components:
         - ongoing
         - past
       description: Calculé. `upcoming` avant le début, `ongoing` entre début et fin, `past` après la fin.
+    RegistrationMode:
+      type: string
+      enum:
+        - FIXED
+        - FREE
+        - BOTH
+      description: "Mode d'inscription (RG-19) : `FIXED` créneaux fixes seulement (défaut), `FREE` créneaux libres seulement, `BOTH` les deux (les créneaux fixes sont alors indicatifs)"
     EventSummary:
       type: object
       properties:
@@ -304,9 +311,12 @@ components:
           format: date-time
         status:
           $ref: "#/components/schemas/EventStatus"
+        registrationMode:
+          $ref: "#/components/schemas/RegistrationMode"
         slotCount:
           type: integer
           minimum: 0
+          description: Nombre de créneaux fixes
       required:
         - id
         - title
@@ -314,6 +324,7 @@ components:
         - startsAt
         - endsAt
         - status
+        - registrationMode
         - slotCount
     Attendee:
       type: object
@@ -386,6 +397,40 @@ components:
         - full
         - started
         - attendees
+    FreeSlot:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Identifiant de l'inscription ; sert aussi à `DELETE /registrations/{registrationId}` (retrait par un administrateur)
+        eventId:
+          type: integer
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        started:
+          type: boolean
+          description: Vrai si l'heure courante est supérieure ou égale au début (RG-08, RG-20)
+        displayName:
+          type:
+            - string
+            - "null"
+          description: « Prénom N. » (RG-09) ; `null` pour une inscription anonymisée (RG-11), que l'interface affiche « ancien membre »
+        isMe:
+          type: boolean
+          description: Vrai pour un créneau libre de l'utilisateur connecté
+      required:
+        - id
+        - eventId
+        - startsAt
+        - endsAt
+        - started
+        - displayName
+        - isMe
+      description: "Créneau libre (F-22, RG-20) : inscription sans créneau fixe, avec les horaires choisis par l'utilisateur. Ni limite de places, ni état « complet »."
     EventDetail:
       allOf:
         - $ref: "#/components/schemas/EventSummary"
@@ -399,10 +444,16 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/Slot"
-              description: Triés par date de début croissante
+              description: Créneaux fixes, triés par date de début croissante
+            freeSlots:
+              type: array
+              items:
+                $ref: "#/components/schemas/FreeSlot"
+              description: Créneaux libres (F-22), triés par début, fin puis `id` croissants ; vide en mode `FIXED`
           required:
             - description
             - slots
+            - freeSlots
     SlotInput:
       type: object
       properties:
@@ -451,11 +502,17 @@ components:
           type: string
           format: date-time
           description: Après `startsAt` (RG-06)
+        registrationMode:
+          allOf:
+            - $ref: "#/components/schemas/RegistrationMode"
+            - default: FIXED
+              description: Mode d'inscription (RG-19) ; `FIXED` s'il est absent
         slots:
           type: array
           items:
             $ref: "#/components/schemas/SlotInput"
           default: []
+          description: Créneaux fixes ; refusés en mode `FREE` (RG-19)
       required:
         - title
         - startsAt
@@ -481,6 +538,8 @@ components:
         endsAt:
           type: string
           format: date-time
+        registrationMode:
+          $ref: "#/components/schemas/RegistrationMode"
       additionalProperties: false
       minProperties: 1
     SlotUpdate:
@@ -523,6 +582,21 @@ components:
         - firstName
         - lastName
         - email
+      additionalProperties: false
+    FreeSlotInput:
+      type: object
+      properties:
+        startsAt:
+          type: string
+          format: date-time
+          description: Strictement après l'heure courante, dans les dates de l'événement
+        endsAt:
+          type: string
+          format: date-time
+          description: Au moins 30 minutes après `startsAt`, au plus tard à la fin de l'événement (RG-20)
+      required:
+        - startsAt
+        - endsAt
       additionalProperties: false
   parameters: {}
 paths:
@@ -1008,8 +1082,10 @@ paths:
       tags:
         - Événements
       operationId: createEvent
-      summary: Créer un événement (F-04, F-05, RG-06, RG-07)
-      description: Administrateur seulement. Les créneaux sont facultatifs ; un événement peut être créé sans créneau.
+      summary: Créer un événement (F-04, F-05, F-22, RG-06, RG-07, RG-19)
+      description: |-
+        Administrateur seulement. Les créneaux sont facultatifs ; un événement peut être créé sans créneau.
+        `registrationMode` vaut `FIXED` s'il est absent. En mode `FREE`, aucun créneau fixe n'est accepté (`EVENT_FIXED_SLOTS_NOT_ALLOWED`, RG-19).
       x-auth: admin
       requestBody:
         required: true
@@ -1030,12 +1106,18 @@ paths:
           $ref: "#/components/responses/Unauthenticated"
         "403":
           $ref: "#/components/responses/Forbidden"
+        "409":
+          description: Créneaux fixes envoyés pour un événement en mode `FREE` (`EVENT_FIXED_SLOTS_NOT_ALLOWED`, RG-19)
+          x-error-codes:
+            - EVENT_FIXED_SLOTS_NOT_ALLOWED
+          content:
+            application/json: *a3
   /events/{eventId}:
     get:
       tags:
         - Événements
       operationId: getEvent
-      summary: Détail d'un événement avec ses créneaux et inscrits (F-06, F-09, RG-09)
+      summary: Détail d'un événement avec ses créneaux fixes, ses créneaux libres et leurs inscrits (F-06, F-09, F-22, RG-09)
       description: Un événement passé répond `404 EVENT_NOT_FOUND` à un utilisateur, comme s'il n'existait pas ; un administrateur le voit en lecture seule.
       x-auth: user
       parameters:
@@ -1060,8 +1142,11 @@ paths:
       tags:
         - Événements
       operationId: updateEvent
-      summary: Modifier un événement (F-04, RG-06, RG-15)
-      description: Administrateur seulement. Champs facultatifs ; ceux envoyés remplacent les anciens. Les inscriptions sont conservées.
+      summary: Modifier un événement (F-04, F-22, RG-06, RG-15, RG-19)
+      description: |-
+        Administrateur seulement. Champs facultatifs ; ceux envoyés remplacent les anciens. Les inscriptions sont conservées.
+        Changer `registrationMode` est refusé tant que l'événement contient un type de créneau que le nouveau mode n'accepte pas : créneaux fixes en passant à `FREE`, créneaux libres en passant à `FIXED` (RG-19).
+        Le changement de mode est atomique avec la création des créneaux : un créneau ne peut pas être créé dans un mode qui ne l'accepte plus.
       x-auth: admin
       parameters:
         - schema:
@@ -1092,13 +1177,19 @@ paths:
         "404":
           $ref: "#/components/responses/EventNotFound"
         "409":
-          $ref: "#/components/responses/EventPast"
+          description: "`EVENT_PAST` (RG-15), `EVENT_MODE_HAS_SLOTS` (`details.slotCount`) ou `EVENT_MODE_HAS_FREE_SLOTS` (`details.freeSlotCount`, RG-19)"
+          x-error-codes:
+            - EVENT_PAST
+            - EVENT_MODE_HAS_SLOTS
+            - EVENT_MODE_HAS_FREE_SLOTS
+          content:
+            application/json: *a3
     delete:
       tags:
         - Événements
       operationId: deleteEvent
       summary: Supprimer un événement (F-04, RG-10, RG-15)
-      description: Administrateur seulement. Supprime aussi ses créneaux, inscriptions et invitations. La confirmation qui indique le nombre d'inscrits est demandée par l'interface (RG-10), pas par l'API.
+      description: Administrateur seulement. Supprime aussi ses créneaux, inscriptions (créneaux fixes et libres) et invitations. La confirmation qui indique le nombre d'inscrits est demandée par l'interface (RG-10), pas par l'API.
       x-auth: admin
       parameters:
         - schema:
@@ -1123,8 +1214,10 @@ paths:
       tags:
         - Créneaux
       operationId: createSlot
-      summary: Ajouter un créneau (F-05, RG-07)
-      description: Administrateur seulement. Un créneau peut sortir des dates de l'événement (RG-07).
+      summary: Ajouter un créneau (F-05, RG-07, RG-19)
+      description: |-
+        Administrateur seulement. Un créneau peut sortir des dates de l'événement (RG-07).
+        Refusé si l'événement est en mode `FREE` (RG-19), y compris quand le mode change au même moment.
       x-auth: admin
       parameters:
         - schema:
@@ -1155,7 +1248,12 @@ paths:
         "404":
           $ref: "#/components/responses/EventNotFound"
         "409":
-          $ref: "#/components/responses/EventPast"
+          description: "`EVENT_PAST` (RG-15) ou `EVENT_FIXED_SLOTS_NOT_ALLOWED` (mode `FREE`, RG-19)"
+          x-error-codes:
+            - EVENT_PAST
+            - EVENT_FIXED_SLOTS_NOT_ALLOWED
+          content:
+            application/json: *a3
   /slots/{slotId}:
     patch:
       tags:
@@ -1304,9 +1402,10 @@ paths:
       tags:
         - Inscriptions
       operationId: removeRegistration
-      summary: Retirer l'inscription d'un autre utilisateur (F-09, RG-08)
+      summary: Retirer l'inscription d'un autre utilisateur (F-09, F-22, RG-08, RG-20)
       description: |-
         Administrateur seulement. Possible même sur un créneau commencé, tant que l'événement n'est pas passé (RG-15).
+        Retire aussi un créneau libre : `registrationId` est alors `FreeSlot.id` (RG-20).
         La confirmation (« Marie D. ne sera plus inscrite à ce créneau ») est demandée par l'interface.
       x-auth: admin
       parameters:
@@ -1331,6 +1430,87 @@ paths:
             application/json: *a3
         "409":
           $ref: "#/components/responses/EventPast"
+  /events/{eventId}/free-slots:
+    post:
+      tags:
+        - Inscriptions
+      operationId: createFreeSlot
+      summary: "Choisir ses horaires : créer son créneau libre (F-22, RG-19, RG-20)"
+      description: |-
+        Inscrit l'utilisateur connecté, administrateur compris, sur les horaires qu'il choisit. L'événement doit être en mode `FREE` ou `BOTH`.
+        Horaires dans les dates de l'événement, durée d'au moins 30 minutes, début strictement après l'heure courante : sinon `VALIDATION_ERROR` avec `FIELD_FREE_SLOT_OUT_OF_EVENT`, `FIELD_FREE_SLOT_TOO_SHORT`, `FIELD_END_NOT_AFTER_START` ou `FIELD_START_NOT_IN_FUTURE`.
+        Plusieurs créneaux libres par utilisateur et par événement, à condition qu'ils ne se recouvrent pas (se toucher est permis). Ni limite de places, ni état « complet ».
+        Atomique : deux demandes simultanées du même utilisateur ne laissent jamais deux créneaux libres qui se recouvrent, et un changement de mode simultané est pris en compte.
+      x-auth: user
+      parameters:
+        - schema:
+            type: integer
+            minimum: 1
+          required: true
+          name: eventId
+          in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FreeSlotInput"
+      responses:
+        "201":
+          description: Créneau libre créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FreeSlot"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/EventNotFound"
+        "409":
+          description: "`EVENT_FREE_SLOTS_NOT_ALLOWED` (mode `FIXED`, RG-19), `FREE_SLOT_OVERLAP` (RG-20, `details.freeSlotId`) ou `EVENT_PAST` (RG-15, administrateur seulement, un utilisateur reçoit `404`)"
+          x-error-codes:
+            - EVENT_FREE_SLOTS_NOT_ALLOWED
+            - FREE_SLOT_OVERLAP
+            - EVENT_PAST
+          content:
+            application/json: *a3
+  /free-slots/{freeSlotId}:
+    delete:
+      tags:
+        - Inscriptions
+      operationId: deleteFreeSlot
+      summary: Se désinscrire d'un créneau libre (F-22, RG-08, RG-20)
+      description: |-
+        Supprime un créneau libre de l'utilisateur connecté, tant qu'il n'a pas commencé. La confirmation est demandée par l'interface.
+        Le créneau libre d'un autre utilisateur répond `404` ; un administrateur le retire par `DELETE /registrations/{registrationId}`.
+      x-auth: user
+      parameters:
+        - schema:
+            type: integer
+            minimum: 1
+          required: true
+          name: freeSlotId
+          in: path
+      responses:
+        "204":
+          description: Désinscrit
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          description: Créneau libre inconnu, d'un autre utilisateur, ou d'un événement passé pour un utilisateur (`FREE_SLOT_NOT_FOUND`)
+          x-error-codes:
+            - FREE_SLOT_NOT_FOUND
+          content:
+            application/json: *a3
+        "409":
+          description: "`FREE_SLOT_STARTED` (RG-08, RG-20) ou `EVENT_PAST` (RG-15, administrateur seulement)"
+          x-error-codes:
+            - FREE_SLOT_STARTED
+            - EVENT_PAST
+          content:
+            application/json: *a3
   /users:
     get:
       tags:
