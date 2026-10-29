@@ -1,0 +1,44 @@
+%%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
+%% Utilisateur : choisir ses propres horaires sur un événement (F-22, RG-08, RG-15, RG-19, RG-20)
+%% Un administrateur suit le même parcours pour ses propres horaires ; son suivi et le retrait d'un inscrit sont dans le flux 06.
+%% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus
+flowchart TD
+    classDef error fill:#fde2e2,stroke:#dc2626,color:#111
+
+    EV(["Page de l'événement, mode « Créneaux<br/>libres » ou « Les deux » (flux 04)"]) --> LIST["Bloc « Créneaux libres » : Prénom N.<br/>et horaires par début croissant ;<br/>en « Les deux », après les<br/>« Créneaux proposés »"]
+    LIST --> PAST{"Événement passé ? (RG-15)"}
+    PAST -->|"Oui"| RO["Lecture seule : ni « Choisir mes<br/>horaires », ni « Me désinscrire »"]
+    PAST -->|"Non"| ACT["Bouton « Choisir mes horaires » ;<br/>« Me désinscrire » sur mes lignes<br/>qui n'ont pas commencé"]
+
+    ACT -->|"Clic « Choisir mes horaires »"| FORM["Fenêtre : début et fin préremplis<br/>avec ceux de l'événement (B9)"]
+    FORM -->|"Annuler"| LIST
+    FORM -->|"Clic « Enregistrer »"| V1{"Fin après début ?"}
+    V1 -->|"Non"| E1["La fin doit être après le début"]:::error
+    V1 -->|"Oui"| V2{"Dans les dates de l'événement ?<br/>(RG-20)"}
+    V2 -->|"Non"| E2["Les horaires doivent rester dans<br/>les dates de l'événement"]:::error
+    V2 -->|"Oui"| V3{"Durée d'au moins 30 minutes ?<br/>(RG-20)"}
+    V3 -->|"Non"| E3["Un créneau libre dure au moins<br/>30 minutes"]:::error
+    V3 -->|"Oui"| V4{"Début strictement après l'heure<br/>courante ? (RG-08, RG-20)"}
+    V4 -->|"Non"| E4["Choisis une heure de début à venir"]:::error
+    V4 -->|"Oui"| V5{"Recouvre un de mes créneaux libres<br/>de cet événement ? (RG-20)"}
+    V5 -->|"Oui, ou demande simultanée<br/>déjà enregistrée"| E5["Tu as déjà des horaires qui<br/>recouvrent ceux-ci"]:::error
+    V5 -->|"Non"| V6{"Le mode accepte toujours les<br/>créneaux libres ? (RG-19)"}
+    V6 -->|"Non : l'administrateur a changé<br/>le mode entre-temps"| E6["Cet événement ne propose pas de<br/>créneaux libres"]:::error
+    V6 -->|"Oui"| OK["Créneau libre enregistré : ma ligne<br/>« Prénom N. (toi) · horaires » apparaît,<br/>aucune limite de places"]
+    E1 --> FORM
+    E2 --> FORM
+    E3 --> FORM
+    E4 --> FORM
+    E5 --> FORM
+    E6 --> LIST
+    OK --> LIST
+
+    LIST -->|"Clic « Me désinscrire » sur ma<br/>ligne"| U0{"Mon créneau libre a commencé ?<br/>(RG-08)"}
+    U0 -->|"Oui"| U1["Pas de bouton : « Contacte un<br/>administrateur pour modifier ton<br/>inscription »"]:::error
+    U0 -->|"Non"| U2{"Confirmation : « Tu ne seras plus<br/>inscrit(e) de 10:00 à 12:30 »"}
+    U2 -->|"Refuse"| LIST
+    U2 -->|"Confirme"| U3["Ligne supprimée ; pour changer<br/>d'horaires : choisir de nouveaux<br/>horaires (un créneau libre ne se<br/>modifie pas)"]
+    U3 --> LIST
+
+    %% Plusieurs créneaux libres par événement sont permis tant qu'ils ne se recouvrent pas ; ils peuvent
+    %% recouvrir des inscriptions à des créneaux fixes sans avertissement (RG-08, RG-20).

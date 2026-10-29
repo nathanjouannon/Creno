@@ -1,5 +1,5 @@
 %%{init: {"flowchart": {"htmlLabels": true, "wrappingWidth": 360, "padding": 24, "nodeSpacing": 50, "rankSpacing": 60, "curve": "basis"}, "themeVariables": {"fontSize": "15px"}}}%%
-%% Administrateur : suivi du remplissage et événements passés (F-09, F-03, RG-07, RG-08, RG-09, RG-15)
+%% Administrateur : suivi du remplissage et événements passés (F-09, F-03, F-22, RG-07, RG-08, RG-09, RG-15, RG-20)
 %% La vue de remplissage est la page de l'événement côté administrateur (même écran). La vue calendrier (F-18) viendra plus tard.
 %% Légende : rectangle = écran, stade = action, losange = décision, rouge = erreur / refus, orange = à confirmer
 flowchart TD
@@ -11,7 +11,11 @@ flowchart TD
     W -->|"Oui"| LOAD["Chargement de la page"]
     LOAD --> VUE["Page de l'événement côté<br/>administrateur : tous les créneaux<br/>sur un seul écran, avec leurs<br/>inscrits"]
 
-    VUE --> T{"Type de créneau"}
+    VUE --> FS{"Mode d'inscription avec créneaux<br/>libres ? (FREE ou BOTH, RG-19)"}
+    FS -->|"Oui"| FS1["Bloc « Créneaux libres » : Prénom N.<br/>et horaires par début croissant,<br/>nombre d'inscrits, ni limite ni<br/>alerte « Aucun inscrit » (RG-20)"]
+    FS1 --> RM
+    FS -->|"Non"| FS0["Pas de bloc créneaux libres"]
+    VUE --> T{"Type de créneau fixe"}
     T -->|"Limité"| T1["Compteur « inscrits / limite »,<br/>par exemple 3 / 4"]
     T -->|"Illimité"| T2["Mention « N inscrits »"]
     T1 --> Z{"Aucun inscrit ?"}
@@ -28,7 +32,7 @@ flowchart TD
     VUE --> OWN["Sur chaque créneau à venir : boutons<br/>« Je m'inscris » et « Me désinscrire »<br/>comme pour un utilisateur (flux 04,<br/>RG-08)"]
     VUE --> RM{"Événement passé ? (RG-15)"}
     RM -->|"Oui"| RM0["Aucun bouton « Retirer » : lecture<br/>seule"]
-    RM -->|"Non"| RM1["Bouton « Retirer » à côté de chaque<br/>inscrit, y compris sur un créneau<br/>commencé (RG-08)"]
+    RM -->|"Non"| RM1["Bouton « Retirer » à côté de chaque<br/>inscrit (créneau fixe ou libre), y<br/>compris sur un créneau commencé<br/>(RG-08, RG-20)"]
     RM1 -->|"Clic « Retirer »"| RM2{"Confirmation : le nom ne sera<br/>plus inscrit à ce créneau"}
     RM2 -->|"Annuler"| VUE
     RM2 -->|"Confirmer"| RM3["Inscription supprimée : nom retiré,<br/>compteur et places restantes mis à<br/>jour"]

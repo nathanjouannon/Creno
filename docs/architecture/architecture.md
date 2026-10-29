@@ -19,7 +19,7 @@ Statut : version 1.0 (2026-10-26). S'appuie sur `00-vision.md`, `prd.md`, `gloss
 | Chargement | LCP inférieur à 2,5 s sur mobile en 4G | |
 | Disponibilité | 99 % par mois (environ 7 h d'arrêt toléré), sans astreinte | |
 | Sauvegarde | Sauvegarde quotidienne de la base, chiffrée et conservée sur le serveur, 7 jours + 1 par mois ; perte de données maximale 24 h, restauration en moins de 4 h | |
-| Concurrence | Une place de créneau limité n'est jamais attribuée deux fois ; au moins un administrateur en permanence | RG-04, RG-07 |
+| Concurrence | Une place de créneau limité n'est jamais attribuée deux fois ; au moins un administrateur en permanence ; deux créneaux libres d'un même utilisateur ne se recouvrent jamais | RG-04, RG-07, RG-20 |
 | Sécurité | HTTPS partout, mots de passe hachés (argon2id), permissions vérifiées côté serveur, aucun secret dans Git ; blocage de 15 minutes après 5 échecs par adresse saisie, existante ou non, et limite par adresse IP (détails : `security.md`) | RG-01, RG-03, RG-14 |
 | RGPD | Données limitées à nom, prénom, e-mail ; effacement à la suppression du compte ; hébergement dans l'Union européenne ; mentions d'information ; aucun cookie tiers (le cookie de session est strictement nécessaire, donc sans bandeau) | RG-11, PRD section 6 |
 | Accessibilité | WCAG 2.2 niveau AA, vérifiée par tests automatisés (axe) et contrôle manuel avant la première mise en ligne | Décision du 2026-10-26 |
@@ -91,12 +91,12 @@ Modules métier (noms du glossaire) :
 | `club` | Installation (club et premier administrateur), paramètres du club | `Club` | RG-04, RG-16 |
 | `members` | Utilisateurs, rôles, suppression de compte | `User` | RG-04, RG-11, RG-14 |
 | `invitations` | Liens d'invitation, création de compte | `Invitation` | RG-02 |
-| `events` | Événements | `Event` | RG-06, RG-09, RG-10, RG-15 |
-| `slots` | Créneaux et capacité | `Slot` | RG-07, RG-10 |
-| `registrations` | Inscription, désinscription, retrait par un administrateur | `Registration` | RG-07, RG-08, RG-11 |
+| `events` | Événements, mode d'inscription (`registrationMode`) | `Event` | RG-06, RG-09, RG-10, RG-15, RG-19 |
+| `slots` | Créneaux fixes et capacité (création refusée si le mode de l'événement ne les accepte pas) | `Slot` | RG-07, RG-10, RG-19 |
+| `registrations` | Inscription à un créneau fixe, créneaux libres (création, suppression, recouvrement), désinscription, retrait par un administrateur | `Registration` (les deux formes) | RG-07, RG-08, RG-11, RG-20 |
 | `shared` | Configuration, erreurs, validation, horloge, fuseau | — | RG-16 |
 
-États `upcoming`, `ongoing`, `past`, `started`, `full` : calculés dans les services à partir de l'heure courante, jamais stockés.
+États `upcoming`, `ongoing`, `past`, `started` (créneau fixe ou libre), `full` : calculés dans les services à partir de l'heure courante, jamais stockés.
 
 ## 5. Contraintes pour le code
 
@@ -106,6 +106,8 @@ Modules métier (noms du glossaire) :
   - **Pourquoi pas un verrou consultatif ou un `SELECT … FOR UPDATE`** : ils demandent du SQL brut, interdit hors migration (`security.md`, section 4). L'`UPDATE` passe par Prisma.
   - **Cohérence avec l'abaissement de limite** (`slots.repository.ts`, transaction sérialisable) : la modification du créneau écrit la même ligne, donc elle est rejouée ou refusée si une inscription est validée entre-temps. Le test de `registrations.test.ts` vérifie qu'elles ne laissent jamais plus d'inscrits que de places.
   - La contrainte d'unicité `(slot_id, user_id)` reste la dernière garde contre une double inscription (RG-08).
+  - **Créneaux libres et mode d'inscription (F-22, T-026, ADR-0016).** La création d'un créneau libre, le changement de mode d'un événement et la création d'un créneau fixe commencent par le même verrou de ligne : un `UPDATE` de l'événement qui ne change rien, par Prisma. Le service lit ensuite, après le verrou, le mode, les dates de l'événement et les créneaux libres du même utilisateur dans cet événement, vérifie RG-19 et RG-20 puis écrit. Les écritures de deux créneaux libres qui se recouvrent, ou d'un créneau créé pendant un changement de mode, font donc la queue et la seconde est refusée. Les inscriptions à un créneau fixe ne prennent que le verrou de leur créneau : RG-07 n'est pas modifié. Le coût (sérialisation par événement) est sans effet à 20 utilisateurs simultanés ; le test de concurrence de T-026 le mesure (`testing.md`, section 4).
+  - La contrainte `CHECK` `registrations_kind_check` est la dernière garde contre une ligne mêlant les deux formes ou un créneau libre de moins de 30 minutes.
 - Les ID sont énumérables : chaque route vérifie les droits côté serveur (RG-14).
 - Les messages d'erreur viennent du catalogue `api/errors.md` ; le client se base sur le `code`.
 - Toute entrée externe (formulaire, paramètre de route, corps de requête) est validée par un schéma Zod avant traitement.
@@ -197,6 +199,7 @@ Options étudiées (correspondance estimée à ces critères) :
 | [0013](../adr/0013-blocage-connexion-par-adresse.md) | Blocage de connexion par adresse saisie | Acceptée |
 | [0014](../adr/0014-contrat-api-genere-depuis-zod.md) | Contrat d'API écrit d'abord, puis généré depuis Zod | Acceptée |
 | [0015](../adr/0015-migrations-sql-versionnees-avec-retour.md) | Migrations SQL versionnées avec script de retour, exécutées par Prisma Migrate | Acceptée |
+| [0016](../adr/0016-creneaux-libres-et-mode-d-inscription.md) | Créneaux libres (inscription avec horaires choisis) et mode d'inscription d'un événement | Proposée (F-22, T-026) |
 
 ## 8. Points à confirmer
 

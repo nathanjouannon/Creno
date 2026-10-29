@@ -7,6 +7,7 @@ erDiagram
     User ||--o{ ResetToken : "a"
     User |o--o{ Registration : "effectue"
     Event ||--o{ Slot : "comporte"
+    Event ||--o{ Registration : "reçoit des créneaux libres"
     Event ||--o{ Invitation : "donne lieu à"
     Slot ||--o{ Registration : "reçoit"
 
@@ -52,6 +53,7 @@ erDiagram
         string location
         datetime startsAt "RG-06"
         datetime endsAt "après startsAt (RG-06)"
+        string registrationMode "FIXED (défaut), FREE ou BOTH (RG-19)"
         datetime createdAt
     }
 
@@ -67,7 +69,10 @@ erDiagram
 
     Registration {
         int id PK "auto-incrémenté"
-        int slotId FK "supprimée avec le créneau (RG-10)"
+        int slotId FK "créneau fixe ; null pour un créneau libre ; supprimée avec le créneau (RG-10)"
+        int eventId FK "créneau libre seulement, null sinon ; supprimée avec l'événement (RG-10)"
+        datetime startsAt "créneau libre seulement (RG-20)"
+        datetime endsAt "créneau libre seulement, 30 minutes au moins après startsAt (RG-20)"
         int userId FK "null = ancien membre (RG-11)"
         datetime createdAt
     }
@@ -81,6 +86,8 @@ erDiagram
 
     %% Contraintes non exprimables dans le diagramme :
     %% - Registration : unique (slotId, userId) lorsque userId n'est pas null (RG-08).
+    %% - Registration : deux formes exclusives. Créneau fixe = slotId seul ; créneau libre (F-22) = eventId, startsAt et endsAt, sans slotId ; exposé par l'API sous le nom freeSlot (RG-20).
+    %% - Créneau libre : dans les dates de l'événement, 30 minutes au moins, sans recouvrement avec un autre créneau libre du même utilisateur et du même événement, mode de l'événement FREE ou BOTH ; vérifié par le service dans une transaction qui verrouille l'événement (RG-19, RG-20).
     %% - Registration.userId : ON DELETE SET NULL ; les inscriptions futures de l'utilisateur sont supprimées avant, les passées conservées (RG-11).
     %% - Suppression de compte : la ligne User est supprimée en entier, ce qui efface nom, prénom et e-mail (RG-11).
     %% - Slot : capacity >= 1 si renseignée ; endsAt > startsAt. Event : endsAt > startsAt (RG-06).

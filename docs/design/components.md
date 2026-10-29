@@ -1,6 +1,6 @@
 # Composants – Créno
 
-Statut : brouillon v0.1 (2026-10-25). Source : `wireframes/` (écrans A1 à E3), `mockups/B3-evenement-creneaux-mobile.html`, `flows/*.mmd`, `prd.md`, `domain/business-rules.md`.
+Statut : brouillon v0.2 (2026-10-29, créneaux libres F-22). Source : `wireframes/` (écrans A1 à E3, et `wireframes/05-creneaux-libres.md` pour B8, B9, C11), `mockups/B3-evenement-creneaux-mobile.html`, `flows/*.mmd`, `prd.md`, `domain/business-rules.md`.
 
 Règle : aucune couleur, taille, espacement ni rayon en dur, uniquement les tokens de `tokens.json` (notés `color.primary`, `space.md`…). Un composant = un nom dans le code (PascalCase, en anglais) ; les libellés affichés sont en français et tutoient l'utilisateur.
 
@@ -135,6 +135,11 @@ Bibliothèque : **react-hook-form** si la stack retenue en phase 6 est React ou 
 - Rôle : groupe « début / fin » (jour + heure) pour un événement ou un créneau, composé de `FormField` (`DateInput` + `TimeInput`). Porte l'erreur « La fin doit être après le début » (RG-06, C5), validée au niveau du schéma du formulaire.
 - États : `default` · `error` (les deux champs de fin en erreur).
 
+### RegistrationModeField
+- Rôle : choix du mode d'inscription d'un événement (RG-19) dans `EventForm`. Groupe de boutons radio `fieldset` / `legend` « Inscriptions », trois options avec une phrase d'aide chacune : « Créneaux fixes » (« Tu définis les créneaux, les bénévoles s'y inscrivent. »), « Créneaux libres » (« Chaque bénévole choisit ses heures de début et de fin. »), « Les deux » (« Tes créneaux sont proposés, et chacun peut aussi choisir ses heures. »).
+- États : `default` (« Créneaux fixes » sélectionné) · `option-disabled` (une option que le contenu actuel interdit, avec la raison sous elle : « Supprime d'abord les créneaux fixes (2) » ou « Supprime d'abord les créneaux libres (3) », RG-19) · `error` (refus du serveur `EVENT_MODE_HAS_SLOTS` ou `EVENT_MODE_HAS_FREE_SLOTS`, `Alert danger` sous le groupe, valeur d'origine rétablie).
+- Règle : le serveur reste l'autorité (RG-14) ; l'interface ne fait que prévenir le refus. Le sens ne repose pas sur la couleur : l'option désactivée porte sa raison en texte.
+
 ### Formulaires métier
 
 | Formulaire | `Form` + `FormField` | Écrans | Particularités |
@@ -143,7 +148,8 @@ Bibliothèque : **react-hook-form** si la stack retenue en phase 6 est React ou 
 | `InvitationSignupForm` | nom, prénom, e-mail, mot de passe | A1 à A3 | E-mail déjà utilisé : `Alert` + bouton « Aller à la connexion » (RG-01) |
 | `LoginForm` | e-mail, mot de passe | A5 à A7 | Erreur unique non détaillée, mot de passe vidé, blocage 15 min (RG-03) |
 | `ResetPasswordForm` | nouveau mot de passe | A8 | Lien invalide : l'écran remplace le formulaire (A9) |
-| `EventForm` | titre, description, lieu, `DateTimeRange` début / fin, liste de créneaux | C4, C5 | Création et modification (`defaultValues`) ; les créneaux sont une liste de valeurs du formulaire (tableau de champs) |
+| `EventForm` | titre, description, lieu, `DateTimeRange` début / fin, `RegistrationModeField` « Inscriptions », liste de créneaux (masquée si le mode est `FREE`) | C4, C5, C11 | Création et modification (`defaultValues`) ; les créneaux sont une liste de valeurs du formulaire (tableau de champs). Le mode vaut « Créneaux fixes » par défaut (RG-19) |
+| `FreeSlotForm` | `DateTimeRange` début / fin d'un créneau libre | B9 | Fenêtre (`Modal`, titre « Choisir mes horaires », boutons « Annuler » et « Enregistrer ») ouverte depuis la page de l'événement ; date de l'événement et heures de l'événement préremplies ; erreurs sous les champs (hors des dates, moins de 30 minutes, fin avant début, début passé, recouvrement) ; saisie conservée en cas d'erreur (RG-20) |
 | `SlotForm` | date, heure de début, heure de fin, limite, description (facultative, zone de texte de 500 caractères au plus, F-21) | C6, C7 | Formulaire distinct, dans une fenêtre (`Modal`, titre « Ajouter un créneau » ou « Modifier le créneau », bouton « Annuler ») ouverte depuis `EventForm` ou la page de l'événement : jamais imbriqué dans le HTML ; depuis `EventForm`, son résultat est ajouté à la liste de créneaux ; fin après début le même jour ; avertissement hors des dates de l'événement calculé à la saisie (RG-07) ; limite sous le nombre d'inscrits refusée sous le champ (RG-07) |
 
 Les actions sans champ (se désinscrire, générer un lien, retirer son droit administrateur) ne sont pas des formulaires : ce sont de simples `Button` avec `ConfirmDialog` ou `Toast`.
@@ -181,6 +187,7 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 | `just-filled` | default | « Complet » | `Button disabled` | Toast « Ce créneau vient d'être complété. » (B7, RG-07) |
 | `loading` | default | inchangé | `Button loading` | — |
 
+- En mode `BOTH`, les `SlotCard` sont regroupées sous « Créneaux proposés » sans changer de variante ni d'états : le créneau reste inscriptible et limité (RG-07, RG-19) ; les créneaux libres ne comptent pas dans son remplissage.
 - États (côté admin, flux 06) : `normal` · `empty-alert` (limité à 0 inscrit, `Card alert`, message « (!) Aucun inscrit » en `color.danger`) · `unlimited` (« N inscrits », jamais d'alerte). Un administrateur peut retirer un inscrit même sur un créneau `started` ; l'ajout d'un inscrit par l'administrateur n'existe pas au MVP (F-12, v1.1).
 
 ### SlotStatusTag
@@ -194,9 +201,20 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 - Variantes : `default` · `me` (fond `color.primary`, texte `color.on-primary`, « Alex M. (toi) ») · `former-member` (« ancien membre », RG-11) · `removable` (vue administrateur : ajoute une croix « × » ; un clic ouvre `ConfirmDialog remove-registration`, absent sur un événement passé, RG-15).
 - États de la liste : `filled` · `empty` (texte `color.text-muted`, absent côté bénévole si le créneau est vide).
 
+### FreeSlotList
+- Rôle : créneaux libres d'un événement (F-22, RG-20), sous le titre « Créneaux libres » (« Créneaux libres, N inscrits » côté administrateur) ; en mode `BOTH`, il suit le groupe « Créneaux proposés » des `SlotCard`. Une ligne par créneau libre, par début croissant : « Léa B. · 10:00 – 12:30 », dans une `Card` unique pour tenir en 360 px (retour à la ligne entre le nom et les horaires si besoin).
+- Contenu d'une ligne : `AttendeeChip` (même règles de nom : « Prénom N. », « ancien membre », `me` « Léa B. (toi) »), horaires (`font.weight-bold`), `SlotStatusTag` `neutral` « Commencé » si le créneau libre a commencé, zone d'action.
+- Variantes :
+  - `volunteer` : sur la ligne de l'utilisateur, si elle n'a pas commencé, bouton `secondary` « Me désinscrire » (`ConfirmDialog` `unregister`) ; commencée : texte « Contacte un administrateur pour modifier ton inscription ». Sous la liste, bouton « Choisir mes horaires » (`primary` si l'utilisateur n'a aucun créneau libre, `secondary` sinon).
+  - `admin` : mêmes boutons pour l'administrateur lui-même, plus `AttendeeChip removable` sur chaque ligne d'un autre (`ConfirmDialog` `remove-registration`), même sur un créneau libre commencé (RG-08).
+  - `readonly` : événement passé (RG-15), sans bouton « Choisir mes horaires », ni « Me désinscrire », ni « Retirer ».
+- États de la liste : `filled` · `empty` (côté bénévole : « Personne ne s'est encore inscrit. Choisis tes horaires. » ; côté administrateur : « Aucun inscrit pour le moment. » en `color.text-muted`, jamais l'alerte « Aucun inscrit » des créneaux limités : un créneau libre n'a pas de limite) · `loading`.
+- Règle : aucun « Complet », aucun nombre de places (RG-20) ; chaque bouton « Me désinscrire » ou « Retirer » a un nom accessible qui contient le nom et les horaires (« Retirer Marc D., 11:00 – 13:00 »).
+
 ### EventHeader
 - Rôle : titre, lieu, dates (début → fin) et description d'un événement. Variantes : `volunteer` · `admin` (ajoute les boutons Inviter / Modifier / Supprimer) · `past` (sans bouton).
-- États : `default` · `no-slot` : texte « Aucun créneau pour le moment » (**à confirmer**, B5 et flux 04).
+- États : `default` · `no-slot` : texte « Aucun créneau pour le moment » (**à confirmer**, B5 et flux 04). `no-slot` ne s'applique qu'aux modes `FIXED` et `BOTH` sans créneau fixe ; en mode `FREE` ou `BOTH`, la liste vide des créneaux libres a son propre message (`FreeSlotList` `empty`).
+- Mode d'inscription (F-22) : l'en-tête ne l'affiche pas ; il se lit aux groupes de la page. `FIXED` : `SlotCard` seulement (aucun changement) ; `FREE` : `FreeSlotList` seulement ; `BOTH` : groupe « Créneaux proposés » (les `SlotCard`, avec la phrase « Inscris-toi sur un de ces créneaux, ou choisis tes propres horaires. ») puis `FreeSlotList`.
 
 ### MemberListItem (Card `clickable`)
 - Contenu : « Nom Prénom · Rôle », e-mail dessous. Variante unique ; le rôle est un texte, pas un tag.
@@ -234,9 +252,9 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 
 | Variante | Bouton d'action | Cas |
 | --- | --- | --- |
-| `unregister` | `primary` « Me désinscrire » | B6, RG-08 |
-| `delete` | `danger` « Supprimer » | C8 (événement ou créneau avec inscrits, indique N, RG-10), E2 (compte, RG-11) |
-| `remove-registration` | `danger` « Retirer » | C10 (l'administrateur retire un inscrit, « Marie D. ne sera plus inscrit(e) au créneau… », RG-08) |
+| `unregister` | `primary` « Me désinscrire » | B6, B8, RG-08 ; pour un créneau libre, le texte rappelle les horaires (« Tu ne seras plus inscrit(e) de 10:00 à 12:30. », RG-20) |
+| `delete` | `danger` « Supprimer » | C8 (événement ou créneau avec inscrits, indique N ; pour un événement, N compte aussi les créneaux libres, RG-10), E2 (compte, RG-11) |
+| `remove-registration` | `danger` « Retirer » | C10 (l'administrateur retire un inscrit, « Marie D. ne sera plus inscrit(e) au créneau… », RG-08) ; pour un créneau libre : « Marc D. ne sera plus inscrit(e) à ce créneau libre » (RG-20) |
 
 - États : `open` · `submitting` (boutons `loading`) · `error`. Fermeture : Échap, clic sur « Annuler », clic sur le voile. Le focus est piégé dans la fenêtre.
 - Règle : suppression d'un événement ou créneau sans inscrit : aucune fenêtre (RG-10).
@@ -268,12 +286,15 @@ Tous les points sont tranchés ; les tokens correspondants sont dans `tokens.jso
 | A8, A9 | ResetPasswordForm, Alert `danger` (A9) |
 | B1, B2 | AppHeader, MainNav, EventListItem, EmptyState |
 | B3, B4, B7 | EventHeader, SlotCard `volunteer`, SlotStatusTag, AttendeeList, Toast |
+| B8 | FreeSlotList `volunteer` / `readonly`, Button « Choisir mes horaires », ConfirmDialog `unregister`, Toast (F-22) |
+| B9 | FreeSlotForm (Form, FormField, DateTimeRange), FieldError, Alert `danger` (F-22) |
 | B5 | EventHeader `no-slot` |
 | B6 | ConfirmDialog `unregister` |
 | C1, C9 | EventListItem, Button, MainNav `admin` |
-| C2 | EventHeader `admin`, SlotCard `admin`, AttendeeChip `removable` |
+| C2 | EventHeader `admin`, SlotCard `admin`, AttendeeChip `removable`, FreeSlotList `admin` / `readonly` (F-22) |
 | C3 | LinkDialog `invitation` |
-| C4, C5 | EventForm (Form, FormField, DateTimeRange), SlotCard `admin` en liste |
+| C4, C5 | EventForm (Form, FormField, DateTimeRange, RegistrationModeField), SlotCard `admin` en liste |
+| C11 | RegistrationModeField `option-disabled` / `error`, Alert `danger` (changement de mode refusé, RG-19) |
 | C6, C7 | SlotForm (Form, FormField, DateTimeRange) ; C6 : texte d'avertissement « Ce créneau est hors des dates de l'événement » (`Alert warning`, validation possible, RG-07) |
 | C8 | ConfirmDialog `delete` |
 | C10 | ConfirmDialog `remove-registration` |

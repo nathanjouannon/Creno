@@ -1,6 +1,6 @@
 # Glossaire – Créno
 
-Statut : brouillon v0.1 (2026-10-25). Un terme = une définition = un nom dans le code. Source : `prd.md`, `domain/business-rules.md`, `flows/`, `design/`.
+Statut : brouillon v0.2 (2026-10-29). Un terme = une définition = un nom dans le code. Source : `prd.md`, `domain/business-rules.md`, `flows/`, `design/`.
 
 Règles d'usage :
 - Le code, la base de données, l'API et les composants utilisent les noms de la colonne « Code » (anglais). L'interface, les messages et les documents utilisent les termes français.
@@ -36,12 +36,14 @@ Règles d'usage :
 
 | Terme (FR) | Code | Définition | Règles | À ne pas employer |
 | --- | --- | --- | --- | --- |
-| Événement | `Event` | Occasion organisée par le club (compétition, journée de ski…). Attributs : titre (`title`), description, lieu (`location`), début (`startsAt`), fin (`endsAt`, après le début). Peut exister sans créneau. | RG-06, RG-09, RG-10 | « activité », « sortie » |
-| Créneau | `Slot` | Plage horaire d'un événement pendant laquelle des bénévoles sont attendus. Appartient à un seul événement ; attributs : début (`startsAt`), fin (`endsAt`), capacité (`capacity`), description facultative (`description`, texte brut de 500 caractères au plus). | RG-07, RG-08, RG-10 | `Shift`, « tranche », « session », « poste » |
-| Capacité | `capacity` | Nombre maximal d'inscriptions d'un créneau. Vide (`null`) = places illimitées. Ne peut pas être abaissée sous le nombre d'inscrits. | RG-07 | « quota », « maxAttendees », « limite » dans le code (« limite de places » reste correct à l'écran) |
+| Événement | `Event` | Occasion organisée par le club (compétition, journée de ski…). Attributs : titre (`title`), description, lieu (`location`), début (`startsAt`), fin (`endsAt`, après le début). Mode d'inscription (`registrationMode`). Peut exister sans créneau. | RG-06, RG-09, RG-10, RG-19 | « activité », « sortie » |
+| Créneau (fixe) | `Slot` | Plage horaire définie par l'administrateur pendant laquelle des bénévoles sont attendus. On dit « créneau fixe » seulement pour le distinguer d'un créneau libre ; « créneau » seul désigne toujours un `Slot`. Appartient à un seul événement ; attributs : début (`startsAt`), fin (`endsAt`), capacité (`capacity`), description facultative (`description`, texte brut de 500 caractères au plus). | RG-07, RG-08, RG-10 | `Shift`, « tranche », « session », « poste » ; `Slot` pour un créneau libre |
+| Mode d'inscription | `registrationMode` (`FIXED`, `FREE`, `BOTH`) | Réglage d'un événement : créneaux fixes seulement (défaut), créneaux libres seulement, ou les deux. En `BOTH`, les créneaux fixes sont proposés à titre indicatif. Changer de mode est refusé tant que l'événement contient un type de créneau que le nouveau mode n'accepte pas. | RG-19 | `type`, `mode` seul, « formule » |
+| Créneau libre | `freeSlot` | Plage choisie par le bénévole lui-même (heure de début et de fin) dans les dates d'un événement, 30 minutes au moins. C'est une `Registration` sans créneau fixe : `slotId` vide, rattachée à l'événement (`eventId`) avec ses propres `startsAt` et `endsAt`. Sans limite de places, jamais « complet ». Un utilisateur peut en avoir plusieurs par événement, sans recouvrement. | RG-19, RG-20 | `Slot` (réservé aux créneaux fixes), `customSlot`, `range`, `freeRange`, « plage libre » |
+| Capacité | `capacity` | Nombre maximal d'inscriptions d'un créneau fixe. Vide (`null`) = places illimitées. Ne peut pas être abaissée sous le nombre d'inscrits. | RG-07 | « quota », « maxAttendees », « limite » dans le code (« limite de places » reste correct à l'écran) |
 | Places restantes | `remainingPlaces` | Valeur calculée : `capacity` moins le nombre d'inscriptions. N'existe que pour un créneau limité. Jamais stockée. | RG-07 | |
 | Complet | `full` | État calculé : créneau limité dont le nombre d'inscriptions a atteint `capacity`. Un créneau illimité n'est jamais complet. | RG-07 | « fermé », « saturé » |
-| Inscription | `Registration` | Lien entre un utilisateur et un créneau (`userId`, `slotId`). Unique par couple. Supprimée à la désinscription. Après suppression du compte, l'inscription passée est conservée avec `userId` vide. | RG-07, RG-08, RG-11 | `Signup`, `Booking`, « réservation », « participation » ; « inscription » ne désigne jamais la création d'un compte |
+| Inscription | `Registration` | Lien entre un utilisateur et un créneau fixe (`userId`, `slotId`), unique par couple ; ou, pour un créneau libre, entre un utilisateur et un événement avec ses propres horaires (`userId`, `eventId`, `startsAt`, `endsAt`, `slotId` vide). Supprimée à la désinscription. Après suppression du compte, l'inscription passée est conservée avec `userId` vide. | RG-07, RG-08, RG-11, RG-20 | `Signup`, `Booking`, « réservation », « participation » ; « inscription » ne désigne jamais la création d'un compte |
 | Inscrit | `attendee` | Utilisateur qui a une inscription sur un créneau (rôle d'affichage, pas une entité). Affiché « Prénom N. ». | RG-09 | « participant », « volontaire » |
 | S'inscrire | `register` | Créer une inscription sur un créneau (jusqu'à son début, avec une place disponible). | RG-07, RG-08 | « réserver », « rejoindre » |
 | Se désinscrire | `unregister` | Supprimer sa propre inscription (jusqu'au début du créneau, avec confirmation). | RG-08 | « annuler » (réservé à la suppression d'un événement ou créneau) |
@@ -63,7 +65,7 @@ Règles d'usage :
 | Événement à venir | `upcoming` | `now` < `startsAt`. | RG-02, RG-09 |
 | Événement en cours | `ongoing` | `startsAt` ≤ `now` < `endsAt`. Toujours visible des utilisateurs ; plus d'invitation possible. | RG-02, RG-09 |
 | Événement passé | `past` | `endsAt` ≤ `now`. Masqué des utilisateurs, visible des administrateurs en lecture seule (onglet « Passés »). | RG-09 |
-| Créneau commencé | `started` | `startsAt` du créneau ≤ `now` : plus d'inscription ni de désinscription par l'utilisateur. | RG-08 |
+| Créneau commencé | `started` | `startsAt` du créneau (fixe ou libre) ≤ `now` : plus d'inscription ni de désinscription par l'utilisateur. | RG-08, RG-20 |
 
 ## 2. Mots d'interface
 
@@ -75,6 +77,8 @@ Ces mots s'affichent mais ne sont pas des concepts du modèle.
 | Bénévole | Un `User` considéré dans son rôle de volontaire, ou l'ensemble des utilisateurs | « Inviter des bénévoles », persona du PRD |
 | Club | L'association propriétaire de l'instance, représentée par l'entité `Club` (voir section 1) | « Rejoindre le club » |
 | Passés | Les événements passés (administrateur) | Onglet de navigation |
+| Créneaux proposés | Les créneaux fixes d'un événement en mode `BOTH` (indicatifs, toujours inscriptibles) | Titre de groupe sur la page de l'événement |
+| Mes horaires | Le créneau libre de l'utilisateur connecté | Bouton « Choisir mes horaires », étiquette « toi » |
 | Créer mon compte | Création d'un `User` depuis une `Invitation` | Formulaire d'invitation |
 
 ## 3. Termes réservés (versions futures)

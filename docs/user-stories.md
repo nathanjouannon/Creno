@@ -1,6 +1,6 @@
 # User stories – Créno
 
-Statut : brouillon v0.3 (2026-10-26, aligné sur la revue des règles de gestion, le glossaire et la phase architecture). Chaque histoire porte l'identifiant de la fonctionnalité du tableau MoSCoW de `prd.md` (F-01, F-02…). Les règles de gestion (RG-xx) sont définies dans [`domain/business-rules.md`](domain/business-rules.md) et référencées dans les scénarios.
+Statut : brouillon v0.4 (2026-10-29). F-20 (Mon profil) est passée au MVP ; F-22 (créneaux libres) est ajoutée au MVP. Alignement précédent : v0.3 (2026-10-26, revue des règles de gestion, glossaire, phase architecture). Chaque histoire porte l'identifiant de la fonctionnalité du tableau MoSCoW de `prd.md` (F-01, F-02…). Les règles de gestion (RG-xx) sont définies dans [`domain/business-rules.md`](domain/business-rules.md) et référencées dans les scénarios.
 
 Rôles : **administrateur** (`ADMIN`) et **utilisateur** (`USER`, appelé « bénévole » ou « membre » dans l'interface, voir `glossary.md`). Un administrateur dispose aussi de toutes les actions d'un utilisateur, y compris s'inscrire à un créneau (RG-08).
 
@@ -507,6 +507,169 @@ Scénario 4 : connexion impossible après suppression
 - When : l'ancien titulaire essaie de se connecter avec ses anciens identifiants
 - Then : la connexion échoue avec le message « E-mail ou mot de passe incorrect »
 
+### « Mon profil » (F-20)
+
+En tant qu'**utilisateur**, je veux consulter et corriger mon nom, mon prénom et mon e-mail afin d'exercer mes droits d'accès et de rectification sans passer par un administrateur.
+
+Scénario 1 : consulter (RG-18)
+- Given : un utilisateur connecté
+- When : il choisit « Mon profil » dans le menu de son prénom
+- Then : son nom, son prénom et son e-mail s'affichent dans un formulaire modifiable
+
+Scénario 2 : modifier son nom ou son prénom (RG-09, RG-18)
+- Given : un utilisateur inscrit à un créneau
+- When : il change son prénom et enregistre, sans changer d'e-mail
+- Then : le changement est enregistré sans demander de mot de passe, et le créneau affiche aussitôt le nouveau « Prénom N. »
+
+Scénario 3 : changer d'e-mail (RG-01, RG-18)
+- Given : un utilisateur qui saisit une nouvelle adresse et son mot de passe actuel
+- When : il enregistre
+- Then : le nouvel e-mail est enregistré, il reste connecté et l'ancienne adresse ne permet plus de se connecter
+
+Scénario 4 : mot de passe actuel absent ou faux (RG-18)
+- Given : un utilisateur qui saisit une nouvelle adresse
+- When : il enregistre sans mot de passe, ou avec un mot de passe faux
+- Then : rien n'est modifié et le message « Ce champ est obligatoire. » ou « Le mot de passe actuel est incorrect. » s'affiche sous le champ du mot de passe
+
+Scénario 5 : adresse déjà utilisée (RG-01)
+- Given : un autre utilisateur dont l'adresse est `Marie@Club.fr`
+- When : l'utilisateur saisit `marie@club.fr` avec son mot de passe actuel et enregistre
+- Then : rien n'est modifié et le message « Cette adresse est déjà utilisée par un autre compte. » s'affiche
+
+Scénario 6 : champ vide ou e-mail mal formé (RG-01)
+- Given : un utilisateur qui vide son nom, ou saisit une adresse sans « @ »
+- When : il enregistre
+- Then : rien n'est envoyé et le message du champ s'affiche
+
+### « Créneaux libres » (F-22)
+
+En tant qu'**administrateur**, je veux choisir comment les bénévoles s'inscrivent à un événement (créneaux fixes, créneaux libres, ou les deux) afin de m'adapter à ce que l'événement demande. En tant que **bénévole**, je veux choisir moi-même mon heure de début et ma fin afin de donner le temps que j'ai vraiment.
+
+Scénario 1 : mode par défaut (RG-19)
+- Given : un administrateur qui crée un événement
+- When : il ne touche pas au réglage « Inscriptions »
+- Then : l'événement est en créneaux fixes et se comporte exactement comme avant, sans aucune action de créneau libre pour les bénévoles ; les événements existants sont aussi en créneaux fixes
+
+Scénario 2 : choisir le mode à la création (RG-19)
+- Given : un administrateur sur le formulaire d'un événement
+- When : il choisit « Créneaux libres » ou « Les deux » et enregistre
+- Then : le mode est enregistré et la page de l'événement le reflète pour les bénévoles et pour les administrateurs
+
+Scénario 3 : s'inscrire sur ses propres horaires (RG-20)
+- Given : un événement en créneaux libres, du 09:00 au 18:00, et un bénévole connecté
+- When : il clique sur « Choisir mes horaires », saisit 10:00 et 12:30 et valide
+- Then : « Léa B. · 10:00 – 12:30 » apparaît dans les créneaux libres, avec la mention « toi » pour elle, et le bouton « Me désinscrire » est proposé sur cette ligne
+
+Scénario 4 : horaires hors de l'événement (RG-20)
+- Given : un événement du 09:00 au 18:00
+- When : un bénévole saisit 08:00 à 10:00, ou 17:00 à 19:00
+- Then : rien n'est enregistré, le message « Les horaires doivent rester dans les dates de l'événement. » s'affiche sous le champ concerné et ce qu'il a saisi est conservé
+
+Scénario 5 : durée trop courte (RG-20)
+- Given : un bénévole qui saisit 10:00 à 10:20
+- When : il valide
+- Then : rien n'est enregistré et le message « Un créneau libre dure au moins 30 minutes. » s'affiche sous la fin ; 10:00 à 10:30 est accepté
+
+Scénario 6 : fin avant le début (RG-20)
+- Given : un bénévole qui saisit 12:00 à 10:00
+- When : il valide
+- Then : rien n'est enregistré et le message « La fin doit être après le début. » s'affiche sous la fin
+
+Scénario 7 : début déjà passé (RG-08, RG-20)
+- Given : un événement en cours, il est 11:00
+- When : un bénévole saisit un début à 10:00 (ou à 11:00 précises)
+- Then : rien n'est enregistré et le message « Choisis une heure de début à venir. » s'affiche sous le début
+
+Scénario 8 : plusieurs créneaux libres qui ne se chevauchent pas (RG-20)
+- Given : un bénévole déjà inscrit de 10:00 à 12:00
+- When : il ajoute 12:00 à 14:00, puis 15:00 à 16:00
+- Then : les trois créneaux libres sont enregistrés (deux créneaux qui se touchent ne se chevauchent pas)
+
+Scénario 9 : chevauchement refusé (RG-20)
+- Given : un bénévole déjà inscrit de 10:00 à 12:00
+- When : il saisit 11:00 à 13:00 sur le même événement
+- Then : rien n'est enregistré et le message « Tu as déjà des horaires qui recouvrent ceux-ci. » s'affiche ; les 10:00 à 12:00 sont conservés
+
+Scénario 10 : deux demandes simultanées (RG-20)
+- Given : un bénévole qui envoie en même temps 10:00 à 12:00 et 11:00 à 13:00
+- When : les deux demandes arrivent
+- Then : une seule est enregistrée, l'autre est refusée comme au scénario 9
+
+Scénario 11 : pas de limite de places (RG-20)
+- Given : cinq bénévoles
+- When : tous saisissent 10:00 à 12:00 sur le même événement
+- Then : les cinq inscriptions sont enregistrées, aucun nombre de places ni mention « Complet » ne s'affiche
+
+Scénario 12 : se désinscrire d'un créneau libre (RG-08, RG-20)
+- Given : un bénévole inscrit de 10:00 à 12:00 sur un événement qui n'est pas passé, à 09:00
+- When : il clique sur « Me désinscrire » puis confirme
+- Then : la ligne disparaît ; s'il refuse la confirmation, elle est conservée
+
+Scénario 13 : créneau libre commencé (RG-08, RG-20)
+- Given : un bénévole inscrit de 10:00 à 12:00, il est 10:00 précises ou plus tard
+- When : il ouvre l'événement
+- Then : le bouton « Me désinscrire » n'est pas proposé et le message « Contacte un administrateur pour modifier ton inscription » s'affiche
+
+Scénario 14 : les deux modes ensemble (RG-19)
+- Given : un événement en mode « Les deux » avec un créneau fixe limité à 4 et un bénévole
+- When : il ouvre l'événement
+- Then : le créneau fixe est sous le titre « Créneaux proposés », avec sa limite et son bouton « Je m'inscris », et le bouton « Choisir mes horaires » est proposé en dessous ; il peut faire l'un, l'autre, ou les deux
+
+Scénario 15 : le créneau fixe garde sa limite en mode « les deux » (RG-07, RG-19)
+- Given : un créneau fixe limité à 2 déjà complet, et trois bénévoles inscrits en créneau libre sur les mêmes horaires
+- When : un bénévole ouvre l'événement
+- Then : le créneau fixe affiche « Complet » et « 2 / 2 » (les créneaux libres ne comptent pas dans son remplissage) ; il peut tout de même choisir ses horaires
+
+Scénario 16 : mode qui n'accepte pas un type de créneau (RG-19)
+- Given : un événement en créneaux fixes
+- When : une demande de créneau libre est envoyée par l'API, ou, pour un événement en créneaux libres, une demande de création de créneau fixe
+- Then : elle est refusée avec le message « Cet événement ne propose pas de créneaux libres. » ou « Cet événement ne propose que des créneaux libres. » ; l'interface ne propose pas ces actions
+
+Scénario 17 : changer de mode sans conflit (RG-19)
+- Given : un événement en créneaux fixes sans aucun créneau libre
+- When : l'administrateur passe à « Les deux » ou à « Créneaux libres » (sans créneau fixe)
+- Then : le mode est enregistré et les inscriptions existantes sont inchangées
+
+Scénario 18 : changement de mode refusé (RG-19)
+- Given : un événement en « Les deux » avec 2 créneaux fixes et 3 créneaux libres
+- When : l'administrateur passe à « Créneaux libres », puis (en d'autres essais) à « Créneaux fixes »
+- Then : chaque changement est refusé avec « Pour passer en créneaux libres, supprime d'abord les créneaux fixes (2). » ou « Pour passer en créneaux fixes, supprime d'abord les créneaux libres (3). » ; le mode et les inscriptions sont inchangés
+
+Scénario 19 : suivi par l'administrateur (RG-09, RG-20)
+- Given : un événement en « Les deux » avec un créneau fixe et trois créneaux libres : Léa B. 10:00 – 12:30, Marc D. 11:00 – 13:00, Sofia T. 14:00 – 16:00
+- When : l'administrateur ouvre la page de l'événement
+- Then : sur un seul écran, il voit le créneau fixe et ses inscrits, puis les créneaux libres par heure de début avec « Prénom N. » et leurs horaires, et le nombre de personnes
+
+Scénario 20 : l'administrateur retire un créneau libre (RG-08, RG-20)
+- Given : l'administrateur devant le créneau libre de Marc D., commencé, dans un événement en cours
+- When : il clique sur « Retirer » et confirme « Marc D. ne sera plus inscrit(e) à ce créneau libre »
+- Then : la ligne disparaît ; sans confirmation, rien n'est retiré
+
+Scénario 21 : l'administrateur choisit ses propres horaires (RG-08, RG-20)
+- Given : un administrateur sur un événement en créneaux libres
+- When : il clique sur « Choisir mes horaires » et valide des horaires valides
+- Then : son créneau libre apparaît, avec les mêmes règles que pour un bénévole
+
+Scénario 22 : événement passé (RG-15)
+- Given : un événement passé avec des créneaux libres
+- When : un administrateur l'ouvre
+- Then : les créneaux libres s'affichent en lecture seule, sans « Retirer », sans « Choisir mes horaires » ni changement de mode ; un bénévole reçoit « introuvable » (RG-09)
+
+Scénario 23 : suppression d'un événement (RG-10)
+- Given : un événement avec 2 inscrits en créneau fixe et 3 créneaux libres
+- When : l'administrateur clique sur « Supprimer »
+- Then : la confirmation indique « 5 inscriptions seront supprimées » ; après confirmation, tout est supprimé
+
+Scénario 24 : suppression de compte (RG-11, RG-20)
+- Given : un utilisateur avec un créneau libre à venir et un créneau libre commencé
+- When : il supprime son compte
+- Then : le créneau libre à venir disparaît ; le créneau libre commencé reste, affiché « ancien membre » avec ses horaires
+
+Scénario 25 : réservé aux administrateurs (F-03, RG-14)
+- Given : un utilisateur sans droit administrateur
+- When : il tente de changer le mode d'un événement, par l'interface ou l'API
+- Then : l'action est refusée et le mode est inchangé
+
 ---
 
 ## Version 1.1
@@ -548,40 +711,6 @@ Scénario 3 : accès réservé (F-03)
 - Given : un utilisateur sans droit administrateur
 - When : il ouvre l'URL du journal
 - Then : l'accès est refusé
-
-### « Mon profil » (F-20)
-
-En tant qu'**utilisateur**, je veux consulter et corriger mon nom, mon prénom et mon e-mail afin d'exercer mes droits d'accès et de rectification sans passer par un administrateur.
-
-Scénario 1 : consulter (RG-18)
-- Given : un utilisateur connecté
-- When : il choisit « Mon profil » dans le menu de son prénom
-- Then : son nom, son prénom et son e-mail s'affichent dans un formulaire modifiable
-
-Scénario 2 : modifier son nom ou son prénom (RG-09, RG-18)
-- Given : un utilisateur inscrit à un créneau
-- When : il change son prénom et enregistre, sans changer d'e-mail
-- Then : le changement est enregistré sans demander de mot de passe, et le créneau affiche aussitôt le nouveau « Prénom N. »
-
-Scénario 3 : changer d'e-mail (RG-01, RG-18)
-- Given : un utilisateur qui saisit une nouvelle adresse et son mot de passe actuel
-- When : il enregistre
-- Then : le nouvel e-mail est enregistré, il reste connecté et l'ancienne adresse ne permet plus de se connecter
-
-Scénario 4 : mot de passe actuel absent ou faux (RG-18)
-- Given : un utilisateur qui saisit une nouvelle adresse
-- When : il enregistre sans mot de passe, ou avec un mot de passe faux
-- Then : rien n'est modifié et le message « Ce champ est obligatoire. » ou « Le mot de passe actuel est incorrect. » s'affiche sous le champ du mot de passe
-
-Scénario 5 : adresse déjà utilisée (RG-01)
-- Given : un autre utilisateur dont l'adresse est `Marie@Club.fr`
-- When : l'utilisateur saisit `marie@club.fr` avec son mot de passe actuel et enregistre
-- Then : rien n'est modifié et le message « Cette adresse est déjà utilisée par un autre compte. » s'affiche
-
-Scénario 6 : champ vide ou e-mail mal formé (RG-01)
-- Given : un utilisateur qui vide son nom, ou saisit une adresse sans « @ »
-- When : il enregistre
-- Then : rien n'est envoyé et le message du champ s'affiche
 
 ### « Mon planning » (F-14)
 
