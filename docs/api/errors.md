@@ -41,6 +41,7 @@ Toute erreur de l'API renvoie ce JSON (schéma `Error` de `openapi.yaml`) :
 | `EVENT_NOT_FOUND` | 404 | Événement introuvable. | Identifiant inconnu, ou événement passé vu par un utilisateur (RG-09) | | Retour à la liste des événements |
 | `SLOT_NOT_FOUND` | 404 | Créneau introuvable. | Identifiant inconnu, ou créneau d'un événement passé vu par un utilisateur (RG-09) | | Recharger l'événement |
 | `REGISTRATION_NOT_FOUND` | 404 | Inscription introuvable. | Identifiant inconnu, ou utilisateur non inscrit à ce créneau | | Recharger l'événement |
+| `FREE_SLOT_NOT_FOUND` | 404 | Créneau libre introuvable. | RG-20 : identifiant inconnu, créneau libre d'un autre utilisateur, ou d'un événement passé vu par un utilisateur (RG-09) | | Recharger l'événement |
 | `USER_EMAIL_TAKEN` | 409 | Un compte existe déjà avec cette adresse. Connecte-toi. | RG-01 : e-mail déjà utilisé, sans tenir compte de la casse (création par invitation) | | Proposer le lien vers la connexion |
 | `USER_EMAIL_IN_USE` | 409 | Cette adresse est déjà utilisée par un autre compte. | RG-01, RG-18 : e-mail déjà pris, sans tenir compte de la casse (modification du profil) | | Afficher le message sous le champ e-mail, garder la saisie |
 | `USER_LAST_ADMIN` | 409 | Nomme d'abord un autre administrateur. | RG-04 : le dernier administrateur ne peut ni se retirer le droit, ni supprimer son compte | | Afficher le message, rien ne change |
@@ -51,6 +52,12 @@ Toute erreur de l'API renvoie ce JSON (schéma `Error` de `openapi.yaml`) :
 | `SLOT_STARTED` | 409 | Ce créneau a commencé. Contacte un administrateur pour modifier ton inscription. | RG-08 : inscription ou désinscription après le début (heure courante supérieure ou égale au début) | `slotId` | Recharger l'événement |
 | `SLOT_CAPACITY_BELOW_REGISTRATIONS` | 409 | {registeredCount} personnes sont déjà inscrites : retire des inscrits avant de baisser la limite. | RG-07 : limite abaissée sous le nombre d'inscrits | `registeredCount` | Afficher le message, la limite reste inchangée |
 | `REGISTRATION_ALREADY_EXISTS` | 409 | Tu es déjà inscrit à ce créneau. | RG-08 : une seule inscription par utilisateur et créneau | `slotId` | Recharger l'événement |
+| `EVENT_FREE_SLOTS_NOT_ALLOWED` | 409 | Cet événement ne propose pas de créneaux libres. | RG-19 : créneau libre demandé sur un événement en mode `FIXED` | | Recharger l'événement ; l'interface ne propose plus « Choisir mes horaires » |
+| `EVENT_FIXED_SLOTS_NOT_ALLOWED` | 409 | Cet événement ne propose que des créneaux libres. | RG-19 : créneau fixe demandé sur un événement en mode `FREE` | | Recharger l'événement ; l'interface ne propose plus « Ajouter un créneau » |
+| `EVENT_MODE_HAS_SLOTS` | 409 | Pour passer en créneaux libres, supprime d'abord les créneaux fixes ({slotCount}). | RG-19 : passage en mode `FREE` d'un événement qui a des créneaux fixes | `slotCount` | Afficher le message en tête du formulaire, le mode reste inchangé |
+| `EVENT_MODE_HAS_FREE_SLOTS` | 409 | Pour passer en créneaux fixes, supprime d'abord les créneaux libres ({freeSlotCount}). | RG-19 : passage en mode `FIXED` d'un événement qui a des créneaux libres | `freeSlotCount` | Afficher le message en tête du formulaire, le mode reste inchangé |
+| `FREE_SLOT_OVERLAP` | 409 | Tu as déjà des horaires qui recouvrent ceux-ci. | RG-20 : recouvrement avec un autre créneau libre du même utilisateur dans l'événement (se toucher n'est pas se recouvrir) | `freeSlotId` (le créneau libre qui recouvre) | Afficher le message en tête de la fenêtre, garder la saisie |
+| `FREE_SLOT_STARTED` | 409 | Ce créneau libre a commencé. Contacte un administrateur pour modifier ton inscription. | RG-08, RG-20 : désinscription après le début (heure courante supérieure ou égale au début) | `freeSlotId` | Recharger l'événement |
 | `RATE_LIMITED` | 429 | Trop de requêtes, réessaie plus tard. | Limites de débit (`architecture/security.md`, section 4) | | Attendre `Retry-After` |
 | `INTERNAL_ERROR` | 500 | Une erreur est survenue. | Bug serveur | | Afficher le `requestId` |
 | `SERVICE_UNAVAILABLE` | 503 | Le service est momentanément indisponible. | `/health` : base de données injoignable | | Réessayer plus tard |
@@ -69,6 +76,10 @@ Un code de champ ne se rattache pas à un statut HTTP : il explique pourquoi un 
 | `FIELD_END_NOT_AFTER_START` | La fin doit être après le début. | RG-06 (événement), RG-07 (créneau) ; porté par le champ `endsAt` |
 | `FIELD_CAPACITY_TOO_LOW` | La limite doit être d'au moins 1 place (ou vide pour illimité). | RG-07 |
 | `FIELD_DESCRIPTION_TOO_LONG` | La description ne peut pas dépasser 500 caractères. | RG-07 (F-21) : description d'un créneau de plus de 500 caractères ; portée par le champ `description` |
+| `FIELD_FREE_SLOT_OUT_OF_EVENT` | Les horaires doivent rester dans les dates de l'événement. | RG-20 : début avant celui de l'événement (champ `startsAt`) ou fin après la sienne (champ `endsAt`) ; vérifié par le service |
+| `FIELD_FREE_SLOT_TOO_SHORT` | Un créneau libre dure au moins 30 minutes. | RG-20 : moins de 30 minutes entre le début et la fin ; porté par le champ `endsAt` |
+| `FIELD_START_NOT_IN_FUTURE` | Choisis une heure de début à venir. | RG-08, RG-20 : début d'un créneau libre égal ou antérieur à l'heure courante ; porté par le champ `startsAt`, vérifié par le service |
+| `FIELD_REGISTRATION_MODE_INVALID` | Choisis un mode d'inscription de la liste. | RG-19 : valeur autre que `FIXED`, `FREE` ou `BOTH` |
 | `FIELD_TIMEZONE_INVALID` | Choisis un fuseau horaire de la liste. | RG-16 : valeur absente de la base IANA |
 | `FIELD_ROLE_INVALID` | Rôle inconnu. | Valeur autre que `USER` ou `ADMIN` |
 | `FIELD_UNKNOWN` | Champ non reconnu. | Champ inattendu dans le corps ; filet de sécurité, pas affiché à l'utilisateur |

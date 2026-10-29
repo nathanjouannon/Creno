@@ -1,4 +1,5 @@
-import { Prisma, type PrismaClient } from '@prisma/client';
+import { Prisma, type PrismaClient, type RegistrationMode } from '@prisma/client';
+import { lockEvent } from '@/modules/shared';
 
 // Registrations in order, with the name to display (RG-09).
 const slotInclude = {
@@ -31,6 +32,18 @@ export interface NewSlot {
 export type SlotChanges = Partial<
   Pick<NewSlot, 'startsAt' | 'endsAt' | 'capacity' | 'description'>
 >;
+
+/** The event of a new slot: its dates (RG-15) and its mode (RG-19). */
+export interface EventForSlot {
+  startsAt: Date;
+  endsAt: Date;
+  registrationMode: RegistrationMode;
+}
+
+export interface SlotCreationTransaction {
+  findEvent(eventId: number): Promise<EventForSlot | null>;
+  create(slot: NewSlot): Promise<SlotRecord>;
+}
 
 export interface SlotTransaction {
   findForChange(id: number): Promise<SlotForChange | null>;
@@ -70,22 +83,28 @@ function findForChange(client: Prisma.TransactionClient | PrismaClient, id: numb
 
 export function createSlotsRepository(prisma: PrismaClient) {
   return {
-    findEventTimes: (eventId: number): Promise<{ startsAt: Date; endsAt: Date } | null> =>
-      prisma.event.findUnique({
-        where: { id: eventId },
-        select: { startsAt: true, endsAt: true },
-      }),
-
     findForChange: (id: number) => findForChange(prisma, id),
 
-    /** `null` when the event was deleted in between (foreign key). */
-    async create(slot: NewSlot): Promise<SlotRecord | null> {
-      try {
-        return await prisma.slot.create({ data: slot, include: slotInclude });
-      } catch (error) {
-        if (isPrismaError(error, 'P2003')) return null;
-        throw error;
-      }
+    /**
+     * RG-19 (ADR-0016): the event row lock comes first (`lockEvent`), as for a mode change, so a slot is never
+     * created in a mode that no longer accepts it. `null` when the event does not exist (any more). The decision
+     * stays in the service.
+     */
+    async inEventTransaction<T>(
+      eventId: number,
+      work: (tx: SlotCreationTransaction) => Promise<T>,
+    ): Promise<T | null> {
+      return prisma.$transaction(async (client) => {
+        if (!(await lockEvent(client, eventId))) return null;
+        return work({
+          findEvent: (id) =>
+            client.event.findUnique({
+              where: { id },
+              select: { startsAt: true, endsAt: true, registrationMode: true },
+            }),
+          create: (slot) => client.slot.create({ data: slot, include: slotInclude }),
+        });
+      });
     },
 
     /**

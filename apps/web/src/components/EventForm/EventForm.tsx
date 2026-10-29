@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useFieldArray, useFormContext } from 'react-hook-form';
+import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/Button';
 import { DateTimeRange } from '@/components/DateTimeRange';
 import { Form } from '@/components/Form';
 import { FormField } from '@/components/FormField';
 import { TextInput, Textarea } from '@/components/Input';
+import { RegistrationModeField } from '@/components/RegistrationModeField';
 import { SlotCard } from '@/components/SlotCard';
 import { emptySlotForm, SlotForm } from '@/components/SlotForm';
 import { patchJson, postJson, type ApiResult } from '@/lib/api-client';
@@ -25,6 +26,7 @@ interface Props {
 const fieldNames: Record<string, string> = {
   startsAt: 'dates.startDate',
   endsAt: 'dates.endDate',
+  registrationMode: 'registrationMode',
 };
 
 function defaultValues(event: EventDetail | undefined, timeZone: string): EventFormValues {
@@ -34,6 +36,7 @@ function defaultValues(event: EventDetail | undefined, timeZone: string): EventF
       description: '',
       location: '',
       dates: { startDate: '', startTime: '', endDate: '', endTime: '' },
+      registrationMode: 'FIXED',
       slots: [],
     };
   }
@@ -44,8 +47,29 @@ function defaultValues(event: EventDetail | undefined, timeZone: string): EventF
     description: event.description ?? '',
     location: event.location ?? '',
     dates: { startDate: start.date, startTime: start.time, endDate: end.date, endTime: end.time },
+    registrationMode: event.registrationMode,
     slots: [],
   };
+}
+
+/**
+ * RG-19: the mode, then, for a new event, its optional fixed slots, hidden in « Créneaux libres » (C4). An option the
+ * content forbids is disabled: fixed slots already listed, or saved slots and free slots of the edited event.
+ */
+function RegistrationSection({ timeZone, event }: Props) {
+  const { control } = useFormContext<EventFormValues>();
+  const mode = useWatch({ control, name: 'registrationMode' });
+  const newSlots = useWatch({ control, name: 'slots' });
+  return (
+    <>
+      <RegistrationModeField
+        name="registrationMode"
+        slotCount={event ? event.slots.length : newSlots.length}
+        freeSlotCount={event ? event.freeSlots.length : 0}
+      />
+      {event || mode === 'FREE' ? null : <NewSlots timeZone={timeZone} />}
+    </>
+  );
 }
 
 /** Optional slots of a new event (F-04): added through the slot form, listed as cards, removable before saving. */
@@ -95,8 +119,10 @@ function NewSlots({ timeZone }: { timeZone: string }) {
 }
 
 /**
- * C4, C5 (F-04, RG-06, RG-16): creation with optional slots, or modification of an existing event (`event`).
- * The registrations are kept on modification. After saving, the administrator lands on the page of the event.
+ * C4, C5, C11 (F-04, F-22, RG-06, RG-16, RG-19): creation with its registration mode and optional slots, or
+ * modification of an existing event (`event`). The registrations are kept on modification; a mode the content
+ * refuses is answered by the server in an alert at the top (C11). After saving, the administrator lands on the page
+ * of the event.
  */
 export function EventForm({ timeZone, event }: Props) {
   const router = useRouter();
@@ -109,10 +135,15 @@ export function EventForm({ timeZone, event }: Props) {
       location: values.location.trim() || null,
       startsAt: toInstant(dates.startDate, dates.startTime, timeZone),
       endsAt: toInstant(dates.endDate, dates.endTime, timeZone),
+      registrationMode: values.registrationMode,
     };
     const result = event
       ? await patchJson<EventDetail>(`/api/events/${event.id}`, body)
-      : await postJson<EventDetail>('/api/events', { ...body, slots: values.slots });
+      : await postJson<EventDetail>('/api/events', {
+          ...body,
+          // RG-19: fixed slots never go with an event in « Créneaux libres »
+          slots: values.registrationMode === 'FREE' ? [] : values.slots,
+        });
 
     if (result.ok) {
       router.push(`/events/${result.data.id}`);
@@ -148,7 +179,7 @@ export function EventForm({ timeZone, event }: Props) {
         <TextInput />
       </FormField>
       <DateTimeRange name="dates" legend="Dates de l'événement" />
-      {event ? null : <NewSlots timeZone={timeZone} />}
+      <RegistrationSection timeZone={timeZone} event={event} />
     </Form>
   );
 }

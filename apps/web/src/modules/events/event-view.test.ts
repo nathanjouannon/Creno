@@ -25,7 +25,10 @@ describe('eventStatus (RG-09, glossary)', () => {
   });
 });
 
-function record(slots: Partial<EventDetailRecord['slots'][number]>[]): EventDetailRecord {
+function record(
+  slots: Partial<EventDetailRecord['slots'][number]>[],
+  freeSlots: EventDetailRecord['freeSlots'] = [],
+): EventDetailRecord {
   return {
     id: 1,
     title: 'Course',
@@ -33,7 +36,9 @@ function record(slots: Partial<EventDetailRecord['slots'][number]>[]): EventDeta
     location: null,
     startsAt,
     endsAt,
+    registrationMode: freeSlots.length > 0 ? 'BOTH' : 'FIXED',
     createdAt: startsAt,
+    freeSlots,
     slots: slots.map((slot, index) => ({
       id: index + 1,
       eventId: 1,
@@ -91,5 +96,61 @@ describe('toEventDetailView: slot states (RG-07, RG-08, RG-09, RG-11)', () => {
       { registrationId: 2, displayName: 'Marie D.', isMe: true },
       { registrationId: 3, displayName: null, isMe: false },
     ]);
+  });
+});
+
+describe('toEventDetailView: free slots (F-22, RG-08, RG-09, RG-11, RG-20)', () => {
+  const freeSlot = (id: number, userId: number | null, start: string, end: string) => ({
+    ...registration(id, userId, 'Bernard'),
+    eventId: 1,
+    startsAt: at(start),
+    endsAt: at(end),
+  });
+  const leaFreeSlot = freeSlot(4, 9, '2027-01-15T09:00:00Z', '2027-01-15T11:30:00Z');
+
+  it('[F-22 S1] RG-19: an event in fixed slots has its mode and no free slot', () => {
+    const view = toEventDetailView(record([{}]), at('2027-01-15T06:00:00Z'), 9);
+    expect(view.registrationMode).toBe('FIXED');
+    expect(view.freeSlots).toEqual([]);
+  });
+
+  it('[F-22 S3] RG-09, RG-20: a free slot shows "Prénom N.", its times and "me"', () => {
+    const view = toEventDetailView(record([], [leaFreeSlot]), at('2027-01-15T06:00:00Z'), 9);
+    expect(view.freeSlots).toEqual([
+      {
+        id: 4,
+        eventId: 1,
+        startsAt: '2027-01-15T09:00:00.000Z',
+        endsAt: '2027-01-15T11:30:00.000Z',
+        started: false,
+        displayName: 'Marie B.',
+        isMe: true,
+      },
+    ]);
+  });
+
+  it('[F-22 S13] RG-08: a free slot has started at its exact start, not one millisecond before', () => {
+    const event = record([], [leaFreeSlot]);
+    expect(toEventDetailView(event, at('2027-01-15T08:59:59.999Z'), 9).freeSlots[0]?.started).toBe(
+      false,
+    );
+    expect(toEventDetailView(event, at('2027-01-15T09:00:00Z'), 9).freeSlots[0]?.started).toBe(
+      true,
+    );
+  });
+
+  it('[F-22 S24] RG-11: an anonymised free slot keeps its times, without a name', () => {
+    const anonymous = freeSlot(5, null, '2027-01-15T09:00:00Z', '2027-01-15T10:00:00Z');
+    const view = toEventDetailView(record([], [anonymous]), at('2027-01-15T06:00:00Z'), 9);
+    expect(view.freeSlots[0]).toMatchObject({ displayName: null, isMe: false });
+  });
+
+  it('[F-22 S15] RG-19: free slots never count in the filling of a fixed slot', () => {
+    const view = toEventDetailView(
+      record([{ capacity: 2, registrations: [registration(1, 2)] }], [leaFreeSlot]),
+      at('2027-01-15T06:00:00Z'),
+      9,
+    );
+    expect(view.slots[0]).toMatchObject({ registeredCount: 1, remainingPlaces: 1, full: false });
   });
 });

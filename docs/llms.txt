@@ -12,7 +12,7 @@
 - [Parcours](flows/00-navigation-et-acces.mmd): flux Mermaid de chaque parcours (dossier flows/)
 - [Tokens](design/tokens.json): couleurs, typographies, espacements, rayons
 - [Composants](design/components.md): composants, variantes, états
-- [Maquettes](design/wireframes/README.md): écrans A1 à E3, mobile et desktop ; créneaux libres B8, B9, C11 en texte
+- [Maquettes](design/wireframes/README.md): écrans A1 à E3, mobile et desktop ; créneaux libres B8, B9, C11 (`05-creneaux-libres`)
 
 ## Domaine
 - [Glossaire](glossary.md): un terme = une définition = un nom de code

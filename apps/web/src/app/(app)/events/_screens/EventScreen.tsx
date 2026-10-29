@@ -6,12 +6,14 @@ import { Button } from '@/components/Button';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { EmptyState } from '@/components/EmptyState';
 import { EventHeader } from '@/components/EventHeader';
+import { FreeSlotForm } from '@/components/FreeSlotForm';
+import { FreeSlotList, freeSlotHours } from '@/components/FreeSlotList';
 import { SlotCard } from '@/components/SlotCard';
 import { SlotForm, emptySlotForm, type SlotFormValues } from '@/components/SlotForm';
 import { LinkDialog } from '@/components/LinkDialog';
 import { useToast } from '@/components/Toast';
 import { deleteJson, patchJson, postJson, type ApiResult } from '@/lib/api-client';
-import type { Club, EventDetail, Slot } from '@/lib/api-types';
+import type { Club, EventDetail, FreeSlot, Slot } from '@/lib/api-types';
 import { formatDayTime, formatTime, toLocalParts } from '@/lib/dates';
 import { useApi } from '@/lib/use-api';
 import { both, ScreenState } from './ScreenState';
@@ -37,6 +39,14 @@ function slotFormValues(slot: Slot, timeZone: string): SlotFormValues {
 const slotHours = (slot: Slot, timeZone: string) =>
   `${formatTime(slot.startsAt, timeZone)} – ${formatTime(slot.endsAt, timeZone)}`;
 
+/** « de 10:00 à 12:30 », or « du 14 mars 22:00 au 15 mars 02:00 » over midnight (F-22, ConfirmDialog `unregister`). */
+function freeSlotPeriod(freeSlot: FreeSlot, timeZone: string): string {
+  const start = toLocalParts(freeSlot.startsAt, timeZone);
+  const end = toLocalParts(freeSlot.endsAt, timeZone);
+  if (start.date === end.date) return `de ${start.time} à ${end.time}`;
+  return `du ${formatDayTime(freeSlot.startsAt, timeZone)} au ${formatDayTime(freeSlot.endsAt, timeZone)}`;
+}
+
 type Pending =
   | { kind: 'delete-event'; count: number }
   | { kind: 'delete-slot'; slot: Slot }
@@ -44,6 +54,9 @@ type Pending =
   | { kind: 'edit-slot'; slot: Slot }
   | { kind: 'unregister'; slot: Slot }
   | { kind: 'remove-registration'; slot: Slot; attendee: Slot['attendees'][number] }
+  | { kind: 'choose-hours' }
+  | { kind: 'unregister-free-slot'; freeSlot: FreeSlot }
+  | { kind: 'remove-free-slot'; freeSlot: FreeSlot }
   | { kind: 'invitation'; url: string; expiresAt: string }
   | null;
 
@@ -86,9 +99,11 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
     return result;
   }
 
-  // RG-10: a confirmation giving the number of registrations, or an immediate deletion when there is none
+  // RG-10: a confirmation giving the number of registrations, fixed and free slots together, or an immediate
+  // deletion when there is none
   async function askDeleteEvent() {
-    const count = event.slots.reduce((sum, slot) => sum + slot.registeredCount, 0);
+    const count =
+      event.slots.reduce((sum, slot) => sum + slot.registeredCount, 0) + event.freeSlots.length;
     if (count > 0) return setPending({ kind: 'delete-event', count });
     setBusy(true);
     const result = await deleteEvent();
@@ -115,6 +130,25 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
     return result;
   }
 
+  // F-22, RG-20: the caller's own free slot; refusals are shown in the window by the form
+  async function createFreeSlot(values: { startsAt: string; endsAt: string }): Promise<ApiResult> {
+    const result = await postJson(`/api/events/${event.id}/free-slots`, values);
+    if (!result.ok && result.error.code === 'EVENT_FREE_SLOTS_NOT_ALLOWED') {
+      // RG-19: the administrator changed the mode meanwhile; the window closes on the current page (flow 10)
+      close();
+      await settle(result);
+      return { ok: true, data: undefined };
+    }
+    if (result.ok) await reload();
+    return result;
+  }
+
+  async function deleteFreeSlot(freeSlot: FreeSlot): Promise<ApiResult> {
+    const result = await deleteJson(`/api/free-slots/${freeSlot.id}`);
+    await reload();
+    return result;
+  }
+
   // F-01, RG-02: a new link each time; the API refuses once the event has started
   async function invite() {
     setInviting(true);
@@ -136,6 +170,12 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
 
   const variant = event.status === 'past' ? 'past' : editable ? 'admin' : 'volunteer';
   const slotVariant = variant === 'past' ? 'readonly' : variant;
+  // RG-19: which groups the page shows (design/components.md, "EventHeader", F-22)
+  const mode = event.registrationMode;
+  const fixedSlots = mode !== 'FREE';
+  const freeSlots = mode !== 'FIXED';
+  const eventDay = toLocalParts(event.startsAt, timeZone).date;
+  const severalDays = toLocalParts(event.endsAt, timeZone).date !== eventDay;
 
   return (
     <div className="flex flex-col gap-md">
@@ -175,40 +215,103 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
         }
       />
 
-      {editable ? (
+      {fixedSlots && mode === 'BOTH' ? (
+        // F-22, RG-19: in « Les deux », the fixed slots are suggestions (B8 bis), or the administrator's list (C2)
+        <div className="flex flex-col gap-xs">
+          <h2 className="text-large font-bold text-text">
+            {variant === 'admin'
+              ? `Créneaux (${event.slots.length})`
+              : variant === 'volunteer'
+                ? 'Créneaux proposés'
+                : 'Créneaux'}
+          </h2>
+          {variant === 'volunteer' ? (
+            <p className="text-small text-text-muted">
+              Inscris-toi sur un de ces créneaux, ou choisis tes propres horaires.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {editable && fixedSlots ? (
         <Button variant="secondary" onClick={() => setPending({ kind: 'add-slot' })}>
           + Ajouter un créneau
         </Button>
       ) : null}
 
-      <section aria-label="Créneaux" className="flex flex-col gap-md">
-        {event.slots.length === 0 ? (
-          <EmptyState>Aucun créneau pour le moment.</EmptyState>
-        ) : (
-          event.slots.map((slot) => (
-            <SlotCard
-              key={slot.id}
-              variant={slotVariant}
-              slot={slot}
-              loading={registeringSlot === slot.id}
-              onRegister={() => register(slot)}
-              onUnregister={() => setPending({ kind: 'unregister', slot })}
-              timeZone={timeZone}
-              showDay={
-                toLocalParts(slot.startsAt, timeZone).date !==
-                toLocalParts(event.startsAt, timeZone).date
-              }
-              onRemoveAttendee={
-                variant === 'admin'
-                  ? (attendee) => setPending({ kind: 'remove-registration', slot, attendee })
-                  : undefined
-              }
-              onEdit={() => setPending({ kind: 'edit-slot', slot })}
-              onDelete={() => askDeleteSlot(slot)}
-            />
-          ))
-        )}
-      </section>
+      {fixedSlots ? (
+        <section aria-label="Créneaux" className="flex flex-col gap-md">
+          {event.slots.length === 0 ? (
+            <EmptyState>Aucun créneau pour le moment.</EmptyState>
+          ) : (
+            event.slots.map((slot) => (
+              <SlotCard
+                key={slot.id}
+                variant={slotVariant}
+                slot={slot}
+                loading={registeringSlot === slot.id}
+                onRegister={() => register(slot)}
+                onUnregister={() => setPending({ kind: 'unregister', slot })}
+                timeZone={timeZone}
+                showDay={
+                  toLocalParts(slot.startsAt, timeZone).date !==
+                  toLocalParts(event.startsAt, timeZone).date
+                }
+                onRemoveAttendee={
+                  variant === 'admin'
+                    ? (attendee) => setPending({ kind: 'remove-registration', slot, attendee })
+                    : undefined
+                }
+                onEdit={() => setPending({ kind: 'edit-slot', slot })}
+                onDelete={() => askDeleteSlot(slot)}
+              />
+            ))
+          )}
+        </section>
+      ) : null}
+
+      {freeSlots ? (
+        <FreeSlotList
+          variant={slotVariant}
+          freeSlots={event.freeSlots}
+          timeZone={timeZone}
+          showDay={severalDays}
+          intro={
+            mode === 'FREE' && variant === 'volunteer'
+              ? 'Choisis les heures où tu es disponible.'
+              : undefined
+          }
+          onChoose={() => setPending({ kind: 'choose-hours' })}
+          onUnregister={(freeSlot) => setPending({ kind: 'unregister-free-slot', freeSlot })}
+          onRemove={(freeSlot) => setPending({ kind: 'remove-free-slot', freeSlot })}
+        />
+      ) : null}
+
+      {pending?.kind === 'choose-hours' ? (
+        <FreeSlotForm event={event} timeZone={timeZone} onClose={close} onSubmit={createFreeSlot} />
+      ) : null}
+
+      {pending?.kind === 'unregister-free-slot' ? (
+        <ConfirmDialog
+          variant="unregister"
+          title="Te désinscrire ?"
+          onConfirm={() => deleteFreeSlot(pending.freeSlot)}
+          onClose={close}
+        >
+          {`Tu ne seras plus inscrit(e) ${freeSlotPeriod(pending.freeSlot, timeZone)}.`}
+        </ConfirmDialog>
+      ) : null}
+
+      {pending?.kind === 'remove-free-slot' ? (
+        <ConfirmDialog
+          variant="remove-registration"
+          title="Retirer cet inscrit ?"
+          onConfirm={() => removeRegistration(pending.freeSlot.id)}
+          onClose={close}
+        >
+          {`${pending.freeSlot.displayName ?? 'Cet ancien membre'} ne sera plus inscrit(e) à ce créneau libre (${freeSlotHours(pending.freeSlot, timeZone, severalDays)}).`}
+        </ConfirmDialog>
+      ) : null}
 
       {pending?.kind === 'unregister' ? (
         <ConfirmDialog
@@ -291,7 +394,8 @@ function EventDetailView({ event, timeZone, editable, reload }: Props) {
 /**
  * The page of an event. Volunteer (B3, B4, B6, B7): the slots with their attendees and the registration actions;
  * the administrator has them too (RG-08). Administrator: Modifier, Supprimer, Ajouter un créneau and the actions of each slot (C2,
- * F-04, F-05). A past event shows none of them (RG-15). An unknown event, or a past one for a user, is « introuvable »
+ * F-04, F-05). By registration mode (F-22, RG-19): fixed slots only, free slots only (B8), or the fixed slots as
+ * suggestions followed by the free slots (B8 bis, C2). A past event shows none of the actions (RG-15). An unknown event, or a past one for a user, is « introuvable »
  * (RG-09): the API answers 404 and its message is shown.
  */
 export function EventScreen({ eventId, isAdmin }: { eventId: string; isAdmin: boolean }) {

@@ -4,6 +4,7 @@ import {
   acceptInvitationInputSchema,
   eventInputSchema,
   eventUpdateSchema,
+  freeSlotInputSchema,
   loginInputSchema,
   setUserRoleInputSchema,
   setupInputSchema,
@@ -176,5 +177,70 @@ describe('updateProfileInputSchema (F-20, RG-01, RG-18)', () => {
 
   it('refuses a field it does not know, such as a role (RG-14)', () => {
     expect(updateProfileInputSchema.safeParse({ ...profile, role: 'ADMIN' }).success).toBe(false);
+  });
+});
+
+describe('registration mode and free slots (F-22, RG-19, RG-20)', () => {
+  const event = { title: 'Journée de ski', startsAt: slot.startsAt, endsAt: slot.endsAt };
+  const at = (time: string) => `2027-01-14T${time}:00Z`;
+
+  it('[F-22 S1] RG-19: an event is in fixed slots when the mode is absent', () => {
+    expect(eventInputSchema.parse(event).registrationMode).toBe('FIXED');
+  });
+
+  it('[F-22 S2] RG-19: the three modes are accepted at creation and on update', () => {
+    for (const registrationMode of ['FIXED', 'FREE', 'BOTH']) {
+      expect(eventInputSchema.parse({ ...event, registrationMode }).registrationMode).toBe(
+        registrationMode,
+      );
+      expect(eventUpdateSchema.parse({ registrationMode })).toEqual({ registrationMode });
+    }
+  });
+
+  it('RG-19: an unknown mode is refused with its field code', () => {
+    expect(fieldCodes(eventInputSchema, { ...event, registrationMode: 'free' })).toEqual({
+      registrationMode: 'FIELD_REGISTRATION_MODE_INVALID',
+    });
+    expect(fieldCodes(eventUpdateSchema, { registrationMode: null })).toEqual({
+      registrationMode: 'FIELD_REGISTRATION_MODE_INVALID',
+    });
+  });
+
+  it('[F-22 S5] RG-20: a free slot lasts 30 minutes at least, reported on endsAt', () => {
+    expect(fieldCodes(freeSlotInputSchema, { startsAt: at('10:00'), endsAt: at('10:20') })).toEqual(
+      { endsAt: 'FIELD_FREE_SLOT_TOO_SHORT' },
+    );
+    expect(
+      fieldCodes(freeSlotInputSchema, { startsAt: at('10:00'), endsAt: '2027-01-14T10:29:59Z' }),
+    ).toEqual({ endsAt: 'FIELD_FREE_SLOT_TOO_SHORT' });
+    expect(fieldCodes(freeSlotInputSchema, { startsAt: at('10:00'), endsAt: at('10:30') })).toEqual(
+      {},
+    );
+  });
+
+  it('RG-20: no maximum length and no step: any minute is accepted', () => {
+    expect(
+      fieldCodes(freeSlotInputSchema, { startsAt: at('10:07'), endsAt: '2027-01-16T23:59:00Z' }),
+    ).toEqual({});
+  });
+
+  it('[F-22 S6] RG-20: the end comes after the start', () => {
+    expect(fieldCodes(freeSlotInputSchema, { startsAt: at('12:00'), endsAt: at('10:00') })).toEqual(
+      { endsAt: 'FIELD_END_NOT_AFTER_START' },
+    );
+    expect(fieldCodes(freeSlotInputSchema, { startsAt: at('12:00'), endsAt: at('12:00') })).toEqual(
+      { endsAt: 'FIELD_END_NOT_AFTER_START' },
+    );
+  });
+
+  it('RG-20: dates are required and valid; an unknown field such as a user id is refused (RG-14)', () => {
+    expect(fieldCodes(freeSlotInputSchema, { startsAt: 'demain' })).toEqual({
+      startsAt: 'FIELD_DATE_INVALID',
+      endsAt: 'FIELD_REQUIRED',
+    });
+    const withUser = { startsAt: at('10:00'), endsAt: at('11:00'), userId: 3 };
+    expect(freeSlotInputSchema.safeParse(withUser).error?.issues[0]?.code).toBe(
+      'unrecognized_keys',
+    );
   });
 });

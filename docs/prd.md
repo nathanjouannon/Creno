@@ -1,6 +1,6 @@
 # PRD – Créno
 
-Statut : version 1.1 (2026-10-29). Le MVP est développé, à l'exception de F-22 (créneaux libres, T-026) ; sa recette manuelle précède la première version publiée (`recette-mvp.md`). Fait suite à `00-vision.md` et `research/99-decision.md` (GO, développement from scratch).
+Statut : version 1.1 (2026-10-29). Le MVP est développé, F-22 (créneaux libres, T-026) compris ; sa recette manuelle précède la première version publiée (`recette-mvp.md`). Fait suite à `00-vision.md` et `research/99-decision.md` (GO, développement from scratch).
 
 ## 1. Résumé
 
@@ -66,7 +66,7 @@ Principe directeur (retour du test d'ephios) : réduire les options au strict mi
 
 Le MVP regroupe F-01 à F-11, F-19, F-20, F-21 et F-22.
 
-**État au 2026-10-29** : tout le MVP est développé et recetté en automatique (`recette-mvp.md`) sauf F-22, qui clôt le MVP (ticket T-026, [#65](https://github.com/nathanjouannon/Creno/issues/65)) ; viendront ensuite la recette manuelle sur appareils réels, puis la première version publiée. F-20 (Mon profil), prévue d'abord en v1.1, a été avancée au MVP et développée (T-025).
+**État au 2026-10-29** : tout le MVP est développé et recetté en automatique (`recette-mvp.md`), F-22 compris, qui clôt le MVP (ticket T-026, [#65](https://github.com/nathanjouannon/Creno/issues/65)) ; viendront ensuite la recette manuelle sur appareils réels, puis la première version publiée. F-20 (Mon profil), prévue d'abord en v1.1, a été avancée au MVP et développée (T-025).
 
 **Définition de « fini » d'une fonctionnalité** : ses user stories (`user-stories.md`) ont toutes leurs scénarios Given/When/Then passants, testés automatiquement ou manuellement, l'interface est utilisable sur mobile, le texte est en français, et la documentation utilisateur concernée est à jour.
 

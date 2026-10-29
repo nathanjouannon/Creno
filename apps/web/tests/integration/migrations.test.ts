@@ -34,12 +34,13 @@ async function tables(): Promise<string[]> {
   return rows.map((r) => r.tablename);
 }
 
-async function slotColumns(): Promise<string[]> {
+async function columns(table: string): Promise<string[]> {
   const rows = await db.$queryRawUnsafe<{ column_name: string }[]>(
-    `SELECT column_name FROM information_schema.columns WHERE table_name = 'slots'`,
+    `SELECT column_name FROM information_schema.columns WHERE table_name = '${table}'`,
   );
   return rows.map((r) => r.column_name);
 }
+const slotColumns = () => columns('slots');
 
 const EXPECTED_TABLES = [
   'club',
@@ -67,7 +68,10 @@ describe('migrations (ADR-0015)', () => {
   it('apply, undo, replay', async () => {
     tool('migrate');
     expect(await tables()).toEqual(EXPECTED_TABLES);
-    tool('rollback'); // undoes the last migration only: the slot description
+    tool('rollback'); // undoes the last migration only: free slots and registration modes (F-22)
+    expect(await columns('events')).not.toContain('registration_mode');
+    expect(await columns('registrations')).not.toContain('event_id');
+    tool('rollback'); // then the slot description
     expect(await tables()).toEqual(EXPECTED_TABLES);
     expect(await slotColumns()).not.toContain('description');
     tool('rollback'); // then the initial one
@@ -79,6 +83,45 @@ describe('migrations (ADR-0015)', () => {
     tool('migrate');
     expect(await tables()).toEqual(EXPECTED_TABLES);
     expect(await slotColumns()).toContain('description');
+    expect(await columns('events')).toContain('registration_mode');
+  }, 120_000);
+
+  it('F-22: existing events and registrations are kept, every event in FIXED; undo drops free slots only', async () => {
+    tool('rollback'); // back to the schema before F-22
+    const [event] = await db.$queryRawUnsafe<{ id: number }[]>(
+      `INSERT INTO events (title, starts_at, ends_at) VALUES ('Avant', '2030-01-01T08:00:00Z', '2030-01-01T18:00:00Z') RETURNING id`,
+    );
+    const [slot] = await db.$queryRawUnsafe<{ id: number }[]>(
+      `INSERT INTO slots (event_id, starts_at, ends_at, capacity) VALUES (${event!.id}, '2030-01-01T09:00:00Z', '2030-01-01T10:00:00Z', 2) RETURNING id`,
+    );
+    const [user] = await db.$queryRawUnsafe<{ id: number }[]>(
+      `INSERT INTO users (last_name, first_name, email, password_hash) VALUES ('B', 'L', 'migration@example.org', 'h') RETURNING id`,
+    );
+    await db.$executeRawUnsafe(
+      `INSERT INTO registrations (slot_id, user_id) VALUES (${slot!.id}, ${user!.id})`,
+    );
+
+    tool('migrate');
+    const modes = await db.$queryRawUnsafe<{ registration_mode: string }[]>(
+      `SELECT registration_mode::text FROM events`,
+    );
+    expect(new Set(modes.map((m) => m.registration_mode))).toEqual(new Set(['FIXED']));
+    const kept = await db.$queryRawUnsafe<{ slot_id: number; event_id: number | null }[]>(
+      `SELECT slot_id, event_id FROM registrations`,
+    );
+    expect(kept).toEqual([{ slot_id: slot!.id, event_id: null }]);
+
+    // A free slot exists only with this migration: undoing it removes the free slot, never the other rows
+    await db.$executeRawUnsafe(
+      `INSERT INTO registrations (event_id, starts_at, ends_at, user_id) VALUES (${event!.id}, '2030-01-01T11:00:00Z', '2030-01-01T12:00:00Z', ${user!.id})`,
+    );
+    tool('rollback');
+    expect(await db.$queryRawUnsafe(`SELECT slot_id FROM registrations`)).toEqual([
+      { slot_id: slot!.id },
+    ]);
+    tool('migrate');
+    // The constraint tests below start from empty tables
+    await db.$executeRawUnsafe(`TRUNCATE events, users RESTART IDENTITY CASCADE`);
   }, 120_000);
 });
 
@@ -153,6 +196,32 @@ describe('database constraints', () => {
     const reg = `INSERT INTO registrations (slot_id, user_id) VALUES (${s!.id}, ${u!.id})`;
     await db.$executeRawUnsafe(reg);
     await rejects(reg);
+  });
+
+  it('ADR-0016, RG-20: a registration is a fixed slot or a free slot of 30 minutes at least, never a mix', async () => {
+    const [u] = await db.$queryRawUnsafe<{ id: number }[]>(`SELECT id FROM users LIMIT 1`);
+    const [s] = await db.$queryRawUnsafe<{ id: number }[]>(`SELECT id FROM slots LIMIT 1`);
+    const free = (start: number, end: string) =>
+      `INSERT INTO registrations (event_id, starts_at, ends_at, user_id) VALUES (${eventId}, ${ts(start)}, ${end}, ${u!.id})`;
+    await db.$executeRawUnsafe(free(9, `'2030-01-01T09:30:00Z'`)); // exactly 30 minutes
+    await rejects(free(9, `'2030-01-01T09:29:59Z'`));
+    await rejects(free(9, ts(9)));
+    // Several free slots of one user in one event are allowed by the database (the service checks overlaps)
+    await db.$executeRawUnsafe(free(10, ts(11)));
+    // A mix of both forms, or half a free slot, is refused
+    await rejects(
+      `INSERT INTO registrations (slot_id, event_id, starts_at, ends_at, user_id) VALUES (${s!.id}, ${eventId}, ${ts(9)}, ${ts(10)}, ${u!.id})`,
+    );
+    await rejects(
+      `INSERT INTO registrations (event_id, starts_at, user_id) VALUES (${eventId}, ${ts(9)}, ${u!.id})`,
+    );
+    await rejects(`INSERT INTO registrations (user_id) VALUES (${u!.id})`);
+  });
+
+  it('RG-19: an unknown registration mode is refused', async () => {
+    await rejects(
+      `INSERT INTO events (title, starts_at, ends_at, registration_mode) VALUES ('x', ${ts(1)}, ${ts(2)}, 'ALL')`,
+    );
   });
 
   it('negative failed_count is refused', async () => {

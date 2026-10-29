@@ -68,6 +68,7 @@ describe('EventForm (C4, C5)', () => {
       location: null,
       startsAt: '2027-03-14T07:00:00.000Z',
       endsAt: '2027-03-14T17:00:00.000Z',
+      registrationMode: 'FIXED',
       slots: [
         {
           startsAt: '2027-03-14T07:00:00.000Z',
@@ -76,6 +77,87 @@ describe('EventForm (C4, C5)', () => {
           description: null,
         },
       ],
+    });
+  });
+
+  it('[F-22 S1] RG-19: « Créneaux fixes » is chosen by default, each option has its help', () => {
+    render(<EventForm timeZone="Europe/Paris" />);
+    const group = screen.getByRole('group', { name: 'Inscriptions' });
+    expect(within(group).getByRole('radio', { name: 'Créneaux fixes' })).toBeChecked();
+    expect(
+      within(group).getByRole('radio', { name: 'Créneaux libres' }),
+    ).toHaveAccessibleDescription('Chaque bénévole choisit ses heures de début et de fin.');
+  });
+
+  it('[F-22 S2] RG-19: « Créneaux libres » hides the fixed slots and is sent', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ id: 8 }), { status: 201 }));
+    render(<EventForm timeZone="Europe/Paris" />);
+    await fillEvent();
+    await userEvent.click(screen.getByRole('radio', { name: 'Créneaux libres' }));
+    expect(screen.queryByRole('button', { name: '+ Ajouter un créneau' })).not.toBeInTheDocument();
+    await save();
+    await waitFor(() => expect(push).toHaveBeenCalledWith('/events/8'));
+    expect(JSON.parse(fetchMock.mock.calls[0]![1].body)).toMatchObject({
+      registrationMode: 'FREE',
+      slots: [],
+    });
+  });
+
+  it('[F-22 S16] RG-19: with a fixed slot listed, « Créneaux libres » is disabled with its reason', async () => {
+    render(<EventForm timeZone="Europe/Paris" />);
+    await fillEvent();
+    await userEvent.click(screen.getByRole('button', { name: '+ Ajouter un créneau' }));
+    const dialog = screen.getByRole('dialog', { name: 'Ajouter un créneau' });
+    await userEvent.type(within(dialog).getByLabelText('Début'), '08:00');
+    await userEvent.type(within(dialog).getByLabelText('Fin'), '10:00');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Valider le créneau' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    // The list of slots is watched by the mode field: wait for its next render
+    await waitFor(() =>
+      expect(screen.getByRole('radio', { name: 'Créneaux libres' })).toBeDisabled(),
+    );
+    expect(screen.getByRole('radio', { name: 'Créneaux libres' })).toHaveAccessibleDescription(
+      /Supprime d'abord les créneaux fixes \(1\)\./,
+    );
+  });
+
+  it('[F-22 S18] C11: on a modification, options the content forbids are disabled; a refusal is shown at the top', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: 'EVENT_MODE_HAS_SLOTS',
+          message: "Pour passer en créneaux libres, supprime d'abord les créneaux fixes (2).",
+          details: { slotCount: 2 },
+        }),
+        { status: 409 },
+      ),
+    );
+    const event = {
+      id: 3,
+      title: 'Journée de ski',
+      description: null,
+      location: null,
+      startsAt: '2027-03-14T08:00:00.000Z',
+      endsAt: '2027-03-14T17:00:00.000Z',
+      status: 'upcoming' as const,
+      registrationMode: 'BOTH' as const,
+      slotCount: 2,
+      slots: [{}, {}] as never[],
+      freeSlots: [{}, {}, {}] as never[],
+    };
+    render(<EventForm timeZone="Europe/Paris" event={event} />);
+    expect(screen.getByRole('radio', { name: 'Les deux' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Créneaux fixes' })).toHaveAccessibleDescription(
+      /Supprime d'abord les créneaux libres \(3\)\./,
+    );
+    expect(screen.getByRole('radio', { name: 'Créneaux libres' })).toBeDisabled();
+    // A change made elsewhere meanwhile: the server refuses and its message is shown
+    await save();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "Pour passer en créneaux libres, supprime d'abord les créneaux fixes (2).",
+    );
+    expect(JSON.parse(fetchMock.mock.calls[0]![1].body)).toMatchObject({
+      registrationMode: 'BOTH',
     });
   });
 });

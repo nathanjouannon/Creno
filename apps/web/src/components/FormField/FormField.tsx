@@ -16,6 +16,11 @@ interface Props {
   invalid?: boolean;
   /** Wording of a code for this field only, as the catalog asks (`FIELD_REQUIRED` of `title`: « Le titre est obligatoire. »). */
   messages?: Partial<Record<string, string>>;
+  /**
+   * The error message of this field is shown by its group, under this id (a day and a time on one row,
+   * `DateTimeRange`): the field only takes the error look and points to it.
+   */
+  messageId?: string;
   /** An `Input` of components/Input; it receives its wiring from here. */
   children: ReactElement<Record<string, unknown>>;
 }
@@ -26,15 +31,24 @@ export function fieldMessage(code: string): string {
 }
 
 /** Label, control, help and error of one field, linked for assistive technology. */
-export function FormField({ name, label, help, required, invalid, messages, children }: Props) {
+export function FormField({
+  name,
+  label,
+  help,
+  required,
+  invalid,
+  messages,
+  messageId,
+  children,
+}: Props) {
   const { register, formState } = useFormContext();
   const sending = useFormSending();
   const id = useId();
   const errorId = `${id}-error`;
   const helpId = `${id}-help`;
   const code = (get(formState.errors, name) as { message?: string } | undefined)?.message;
-  const describedBy =
-    [help ? helpId : null, code ? errorId : null].filter(Boolean).join(' ') || undefined;
+  const errorRef = messageId ? (code || invalid ? messageId : null) : code ? errorId : null;
+  const describedBy = [help ? helpId : null, errorRef].filter(Boolean).join(' ') || undefined;
 
   return (
     <div className="flex flex-col gap-xs">
@@ -55,7 +69,9 @@ export function FormField({ name, label, help, required, invalid, messages, chil
           {help}
         </p>
       ) : null}
-      {code ? <FieldError id={errorId}>{messages?.[code] ?? fieldMessage(code)}</FieldError> : null}
+      {code && !messageId ? (
+        <FieldError id={errorId}>{messages?.[code] ?? fieldMessage(code)}</FieldError>
+      ) : null}
     </div>
   );
 }

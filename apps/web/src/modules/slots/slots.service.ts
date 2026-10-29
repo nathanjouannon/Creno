@@ -20,18 +20,23 @@ export function createSlotsService({ repository, clock }: Dependencies) {
   }
 
   return {
-    /** F-05, RG-07: the slot may exceed the dates of its event; the warning belongs to the interface. */
+    /**
+     * F-05, RG-07, RG-19: the slot may exceed the dates of its event (the warning belongs to the interface), but
+     * not exist in an event with free slots only. Decided after the event row lock (ADR-0016).
+     */
     async create(user: SessionUser, eventId: number, input: SlotInput) {
-      const event = await repository.findEventTimes(eventId);
-      if (!event) throw new AppError('EVENT_NOT_FOUND');
-      assertEventEditable(event);
-
-      const slot = await repository.create({
-        eventId,
-        startsAt: new Date(input.startsAt),
-        endsAt: new Date(input.endsAt),
-        capacity: input.capacity,
-        description: input.description || null, // RG-07: blank = none
+      const slot = await repository.inEventTransaction(eventId, async (tx) => {
+        const event = await tx.findEvent(eventId);
+        if (!event) throw new AppError('EVENT_NOT_FOUND');
+        assertEventEditable(event);
+        if (event.registrationMode === 'FREE') throw new AppError('EVENT_FIXED_SLOTS_NOT_ALLOWED');
+        return tx.create({
+          eventId,
+          startsAt: new Date(input.startsAt),
+          endsAt: new Date(input.endsAt),
+          capacity: input.capacity,
+          description: input.description || null, // RG-07: blank = none
+        });
       });
       if (!slot) throw new AppError('EVENT_NOT_FOUND');
       return toSlotView(slot, clock.now(), user.id);
