@@ -4,7 +4,7 @@
 
 [English summary](#english-summary) · [Documentation](docs/) · [Contribuer](CONTRIBUTING.md) · [Sécurité](SECURITY.md)
 
-<!-- Captures d'écran : à ajouter ici (voir la section « Aperçu »). -->
+<p align="center"><img src="docs/screenshots/event-slots.png" alt="Page d'un événement avec ses créneaux, les inscrits et les places restantes" width="360"></p>
 
 ## Pourquoi Créno ?
 
@@ -38,7 +38,17 @@ Le périmètre exact, les priorités et la suite sont dans [`docs/prd.md`](docs/
 
 ## Aperçu
 
-Les captures d'écran seront ajoutées prochainement.
+**La liste des événements à venir**
+
+![Liste des événements à venir, avec le bouton de création](docs/screenshots/events-list.png)
+
+**Un événement et ses créneaux** : inscrits, places restantes, inscription et désinscription en un clic.
+
+<img src="docs/screenshots/event-slots.png" alt="Page d'un événement avec ses créneaux" width="360">
+
+**La modification d'un créneau** : horaires, limite de places facultative, description.
+
+![Fenêtre de modification d'un créneau](docs/screenshots/slot-edit.png)
 
 ## Démarrage rapide
 
