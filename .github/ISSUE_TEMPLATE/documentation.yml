@@ -1,0 +1,17 @@
+name: Corriger la documentation
+description: Une erreur, un manque ou une contradiction dans la documentation.
+labels: [documentation]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Fichier ou page concernée
+      placeholder: docs/…
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: Le problème et la correction proposée
+    validations:
+      required: true
