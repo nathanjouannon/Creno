@@ -1,6 +1,6 @@
 # Composants – Créno
 
-Statut : brouillon v0.2 (2026-10-29, créneaux libres F-22). Source : `wireframes/` (écrans A1 à E3, et `wireframes/05-creneaux-libres.md` pour B8, B9, C11), `mockups/B3-evenement-creneaux-mobile.html`, `flows/*.mmd`, `prd.md`, `domain/business-rules.md`.
+Statut : brouillon v0.2 (2026-10-29, créneaux libres F-22). Source : `wireframes/` (écrans A1 à E3, et `wireframes/05-creneaux-libres-*.excalidraw` pour B8, B8 bis, B9, B9 bis, C2 modifié, C4 modifié, C11), `mockups/B3-evenement-creneaux-mobile.html`, `flows/*.mmd`, `prd.md`, `domain/business-rules.md`.
 
 Règle : aucune couleur, taille, espacement ni rayon en dur, uniquement les tokens de `tokens.json` (notés `color.primary`, `space.md`…). Un composant = un nom dans le code (PascalCase, en anglais) ; les libellés affichés sont en français et tutoient l'utilisateur.
 
