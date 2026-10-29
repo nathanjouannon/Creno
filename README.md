@@ -10,6 +10,14 @@
 
 Beaucoup d'associations organisent leurs bénévoles avec un Google Form, un tableur partagé ou un sondage (Doodle, Framadate). Ces outils ne gèrent pas bien les **créneaux avec un nombre de places limité** : on ne voit pas qui est inscrit, on ne peut pas modifier sa réponse seul, et l'organisateur recompte à la main.
 
+| Alternative                                                            | Pourquoi elle atteint ses limites pour des bénévoles                                                       |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Google Forms (formulaire d'inscription)                                | Pas de créneaux à places limitées, pas de liste visible des inscrits, une réponse se modifie difficilement |
+| Tableur partagé (Excel, Google Sheets)                                 | Chacun peut écraser la ligne d'un autre, pas de limite de places fiable, pas de comptes                    |
+| Doodle, Framadate (sondages de dates)                                  | Conçus pour choisir une date, pas pour répartir des bénévoles sur plusieurs créneaux                       |
+| Logiciels de planning en ligne (SignUpGenius, BenevolOps, RosterThat…) | Services hébergés chez un tiers, souvent payants au-delà d'une offre limitée                               |
+| [ephios](https://github.com/ephios-dev/ephios) (libre)                 | Libre lui aussi, orienté plannings d'équipes de secours : à comparer selon votre besoin                    |
+
 Créno est pensé pour une association, pas pour une grande ONG :
 
 - **Simple** : pas de compte à créer sur un service tiers, un lien d'invitation suffit.
@@ -55,11 +63,10 @@ Le périmètre exact, les priorités et la suite sont dans [`docs/prd.md`](docs/
 Prérequis : Node.js 20.19 ou plus, pnpm 10 (`corepack enable`), Docker.
 
 ```
-pnpm install
-cp .env.example .env        # puis remplir les valeurs
+pnpm install && cp .env.example .env   # puis remplir les valeurs de .env
 docker compose up -d db
 pnpm db:migrate && pnpm db:seed
-pnpm dev                    # http://localhost:3000
+pnpm dev                               # http://localhost:3000
 ```
 
 Pour installer Créno sur un serveur, voir [Mise en production](#mise-en-production).
