@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import {
   addressOf,
@@ -10,6 +9,7 @@ import {
   member,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 // T-024: description of a slot (F-21, RG-07), at 360 px. The club is in Europe/Paris (RG-16).
@@ -32,7 +32,7 @@ async function signIn(page: Page, credentials = installation.admin) {
 
 /** axe without serious or critical violation, and no horizontal scroll at 360 px. */
 async function checkScreen(page: Page) {
-  const violations = (await new AxeBuilder({ page }).analyze()).violations.filter(
+  const violations = (await analyze(page)).violations.filter(
     (v) => v.impact === 'serious' || v.impact === 'critical',
   );
   expect(violations).toEqual([]);

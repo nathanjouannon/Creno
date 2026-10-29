@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import {
   addressOf,
@@ -11,6 +10,7 @@ import {
   member,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 // T-019: members and password reset (F-10, F-02), at 360 px.
@@ -36,7 +36,7 @@ const signInAsAdmin = (page: Page) => signIn(page, installation.admin);
 /** axe without serious or critical violation, and no horizontal scroll at 360 px. */
 async function checkScreen(page: Page) {
   await page.mouse.move(0, 0);
-  const violations = (await new AxeBuilder({ page }).analyze()).violations.filter(
+  const violations = (await analyze(page)).violations.filter(
     (v) => v.impact === 'serious' || v.impact === 'critical',
   );
   expect(violations).toEqual([]);

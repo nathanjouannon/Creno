@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { RegistrationMode } from '@prisma/client';
 import type { Page } from '@playwright/test';
 import {
@@ -12,6 +11,7 @@ import {
   member,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 // T-026, F-22: free slots and registration modes (B8, B8 bis, B9, B9 bis, C2, C4, C11), at 360 px unless stated.
@@ -66,7 +66,7 @@ async function signIn(page: Page, credentials: { email: string; password: string
 
 async function scan(page: Page, screen: string) {
   await page.mouse.move(0, 0);
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await analyze(page);
   const blocking = results.violations
     .filter((v) => v.impact === 'serious' || v.impact === 'critical')
     .map((v) => `${screen}: ${v.id} (${v.nodes.map((n) => n.target.join(' ')).join(', ')})`);

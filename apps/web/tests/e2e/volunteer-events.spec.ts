@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import {
   addressOf,
@@ -11,6 +10,7 @@ import {
   member,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 // T-015: volunteer screens (F-06, F-07, F-08), at 360 px. The club is in Europe/Paris (RG-16): 08:00 shown is
@@ -96,7 +96,7 @@ async function signIn(page: Page, credentials: { email: string; password: string
 async function checkScreen(page: Page) {
   // Out of any card: the hover state of a list item is below 4.5:1 (token pair text-muted on surface), see the PR
   await page.mouse.move(0, 0);
-  const violations = (await new AxeBuilder({ page }).analyze()).violations.filter(
+  const violations = (await analyze(page)).violations.filter(
     (v) => v.impact === 'serious' || v.impact === 'critical',
   );
   expect(violations).toEqual([]);

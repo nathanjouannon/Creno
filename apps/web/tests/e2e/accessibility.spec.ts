@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto';
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import {
   addressOf,
@@ -11,6 +10,7 @@ import {
   member,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 // T-021: axe on every screen and every important state, at 360 px and 1000 px (testing.md, section 6), and the
@@ -28,7 +28,7 @@ const NOTICE_LINK = "Mentions d'information";
 /** axe without serious or critical violation, no horizontal scroll, and the notice link in the footer. */
 async function scan(page: Page, screen: string) {
   await page.mouse.move(0, 0);
-  const results = await new AxeBuilder({ page }).analyze();
+  const results = await analyze(page);
   const blocking = results.violations
     .filter((v) => v.impact === 'serious' || v.impact === 'critical')
     .map((v) => `${screen}: ${v.id} (${v.nodes.map((n) => n.target.join(' ')).join(', ')})`);

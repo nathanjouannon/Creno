@@ -1,4 +1,3 @@
-import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import {
   addressOf,
@@ -10,6 +9,7 @@ import {
   member,
   resetInstance,
   test,
+  analyze,
 } from './helpers';
 
 // T-020: deleting one's account (F-11, RG-04, RG-11), at 360 px.
@@ -81,7 +81,7 @@ test.describe('account deletion (F-11)', () => {
     await page.getByRole('button', { name: 'Supprimer mon compte' }).click();
     const dialog = page.getByRole('dialog', { name: 'Supprimer mon compte ?' }); // E2
     await expect(dialog).toBeVisible();
-    const violations = (await new AxeBuilder({ page }).analyze()).violations.filter(
+    const violations = (await analyze(page)).violations.filter(
       (v) => v.impact === 'serious' || v.impact === 'critical',
     );
     expect(violations).toEqual([]);
