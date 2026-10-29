@@ -26,10 +26,10 @@ FROM deps AS build
 COPY . .
 RUN pnpm build
 
-# Runs `pnpm db:migrate` against DATABASE_URL, then exits. Keeps the dev dependencies (Prisma CLI, tsx) the app image lacks.
+# Runs `pnpm db:deploy` (migrations only: the client is already generated at build) against DATABASE_URL, then exits. Keeps the dev dependencies (Prisma CLI, tsx) the app image lacks.
 FROM build AS migrate
 USER node
-CMD ["pnpm", "db:migrate"]
+CMD ["pnpm", "db:deploy"]
 
 FROM node:26.12-slim AS app
 RUN apt-get update \

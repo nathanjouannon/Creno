@@ -16,6 +16,7 @@
     "test:integration": "pnpm -r test:integration",
     "tokens:build": "pnpm --filter @creno/tokens build",
     "db:migrate": "pnpm --filter @creno/web db:migrate",
+    "db:deploy": "pnpm --filter @creno/web db:deploy",
     "db:rollback": "pnpm --filter @creno/web db:rollback",
     "db:seed": "pnpm --filter @creno/web db:seed",
     "db:purge": "pnpm --filter @creno/web db:purge",
