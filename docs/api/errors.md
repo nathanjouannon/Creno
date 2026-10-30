@@ -58,6 +58,7 @@ Toute erreur de l'API renvoie ce JSON (schéma `Error` de `openapi.yaml`) :
 | `EVENT_MODE_HAS_FREE_SLOTS` | 409 | Pour passer en créneaux fixes, supprime d'abord les créneaux libres ({freeSlotCount}). | RG-19 : passage en mode `FIXED` d'un événement qui a des créneaux libres | `freeSlotCount` | Afficher le message en tête du formulaire, le mode reste inchangé |
 | `FREE_SLOT_OVERLAP` | 409 | Tu as déjà des horaires qui recouvrent ceux-ci. | RG-20 : recouvrement avec un autre créneau libre du même utilisateur dans l'événement (se toucher n'est pas se recouvrir) | `freeSlotId` (le créneau libre qui recouvre) | Afficher le message en tête de la fenêtre, garder la saisie |
 | `FREE_SLOT_STARTED` | 409 | Ce créneau libre a commencé. Contacte un administrateur pour modifier ton inscription. | RG-08, RG-20 : désinscription après le début (heure courante supérieure ou égale au début) | `freeSlotId` | Recharger l'événement |
+| `PAYLOAD_TOO_LARGE` | 413 | Requête trop volumineuse. | Corps de requête au-delà de 128 Kio (`architecture/security.md`, section 4) | | Message générique ; ne devrait pas arriver depuis l'interface |
 | `RATE_LIMITED` | 429 | Trop de requêtes, réessaie plus tard. | Limites de débit (`architecture/security.md`, section 4) | | Attendre `Retry-After` |
 | `INTERNAL_ERROR` | 500 | Une erreur est survenue. | Bug serveur | | Afficher le `requestId` |
 | `SERVICE_UNAVAILABLE` | 503 | Le service est momentanément indisponible. | `/health` : base de données injoignable | | Réessayer plus tard |

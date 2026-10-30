@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { fakeAuthenticator, resetAuthenticator, setAuthenticator } from './auth';
 import { resetRateLimits } from './rate-limit';
-import { route } from './route';
+import { MAX_BODY_BYTES, route } from './route';
 
 const post = (body?: unknown, url = 'http://localhost/api/things') =>
   new Request(url, {
@@ -275,5 +275,53 @@ describe('route envelope: protections that come before the handler', () => {
     expect(response.status).toBe(403);
     expect((await response.json()).code).toBe('FORBIDDEN_ORIGIN');
     expect(called).toBe(false);
+  });
+});
+
+describe('route envelope: body size (security.md, section 4, #77)', () => {
+  const echo = () => {
+    const calls: unknown[] = [];
+    const handler = route({ auth: 'optional', body: z.object({ text: z.string() }) }, ({ body }) => {
+      calls.push(body);
+      return { body: { length: body.text.length } };
+    });
+    return { handler, calls };
+  };
+  // JSON overhead of `{"text":""}`
+  const sized = (bytes: number) => ({ text: 'a'.repeat(bytes - 11) });
+
+  it('refuses a body larger than the limit with 413 PAYLOAD_TOO_LARGE, before the handler', async () => {
+    const { handler, calls } = echo();
+    const response = await handler(post(sized(MAX_BODY_BYTES + 1)));
+    expect(response.status).toBe(413);
+    expect(await response.json()).toMatchObject({
+      code: 'PAYLOAD_TOO_LARGE',
+      message: 'Requête trop volumineuse.',
+    });
+    expect(calls).toEqual([]);
+  });
+
+  it('refuses on a Content-Length above the limit without reading the body', async () => {
+    const { handler, calls } = echo();
+    const request = new Request('http://localhost/api/things', {
+      method: 'POST',
+      headers: { origin: 'http://localhost:3000', 'content-length': String(MAX_BODY_BYTES + 1) },
+      body: JSON.stringify({ text: 'short' }),
+    });
+    expect((await handler(request)).status).toBe(413);
+    expect(calls).toEqual([]);
+  });
+
+  it('reads a body of exactly the limit', async () => {
+    const { handler } = echo();
+    const response = await handler(post(sized(MAX_BODY_BYTES)));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ length: MAX_BODY_BYTES - 11 });
+  });
+
+  it('counts bytes, not characters: accented text is decoded intact', async () => {
+    const { handler } = echo();
+    const response = await handler(post({ text: 'Événement à Noël' }));
+    expect(await response.json()).toEqual({ length: 16 });
   });
 });
