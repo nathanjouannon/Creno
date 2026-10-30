@@ -20,6 +20,7 @@
     "db:rollback": "pnpm --filter @creno/web db:rollback",
     "db:seed": "pnpm --filter @creno/web db:seed",
     "db:purge": "pnpm --filter @creno/web db:purge",
+    "user:reset-link": "pnpm --filter @creno/web user:reset-link",
     "api:generate": "pnpm --filter @creno/validation api:generate",
     "api:check": "pnpm --filter @creno/validation api:check",
     "api:lint": "redocly lint docs/api/openapi.yaml",

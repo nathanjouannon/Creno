@@ -229,7 +229,7 @@ Les actions sans champ (se désinscrire, générer un lien, retirer son droit ad
 | Variante | Actions affichées |
 | --- | --- |
 | `user` | « Donner le droit administrateur », « Générer un lien de réinitialisation » |
-| `other-admin` | « Générer un lien de réinitialisation » ; note « Aucune action pour lui retirer son droit. » (RG-04) |
+| `other-admin` | Aucune action ; note « Aucune action pour lui retirer son droit ni réinitialiser son mot de passe. » (RG-04, RG-12) |
 | `me-admin` | « Retirer mon droit administrateur » |
 
 - États : `default` · `loading` · `error` (refus RG-04 : `Toast` danger « Nomme d'abord un autre administrateur. »).

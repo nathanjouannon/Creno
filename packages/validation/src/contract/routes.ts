@@ -312,11 +312,20 @@ export const routes: RouteDefinition[] = [
     description: [
       'Administrateur seulement. Valable 3 jours, à usage unique. Générer un nouveau lien invalide les précédents.',
       "Le jeton n'est stocké que haché : l'URL n'est renvoyée qu'ici, une seule fois.",
+      'Jamais pour un administrateur (`USER_RESET_FORBIDDEN`) : il passe par la procédure de secours du serveur ; devenir administrateur invalide aussi les liens en cours (RG-12).',
     ].join('\n'),
     auth: 'admin',
     params: userIdParamsSchema,
     success: { status: 201, description: 'Lien créé', schema: shareableLinkSchema },
-    errors: ['Unauthenticated', 'Forbidden', 'UserNotFound'],
+    errors: [
+      'Unauthenticated',
+      error(
+        403,
+        ['FORBIDDEN', 'USER_RESET_FORBIDDEN'],
+        '`FORBIDDEN` (pas administrateur) ou `USER_RESET_FORBIDDEN` (cible administrateur, RG-12)',
+      ),
+      'UserNotFound',
+    ],
   },
   {
     operationId: 'createInvitation',

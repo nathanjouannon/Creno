@@ -358,6 +358,50 @@ describe('password reset (F-10, F-02, RG-12, RG-03)', () => {
     expect(statuses.sort()).toEqual([204, 410]);
   });
 
+  it('RG-12: no reset link for an administrator, not even another one (#82)', async () => {
+    const response = await generateLink(adminB.id);
+    expect(response.status).toBe(403);
+    expect(response.body.code).toBe('USER_RESET_FORBIDDEN');
+    expect(conforms('Error', response.body)).toBe(true);
+    expect(await database.prisma.resetToken.count()).toBe(0);
+    expect((await generateLink(adminA.id)).body.code).toBe('USER_RESET_FORBIDDEN');
+  });
+
+  it('RG-12: a link stops working when its member becomes an administrator (#82)', async () => {
+    const token = tokenOf((await generateLink(member.id)).body.url);
+    expect((await setRole(member.id, 'ADMIN')).status).toBe(200);
+    const check = await checkReset(token);
+    expect(check.status).toBe(410);
+    expect(check.body.code).toBe('AUTH_RESET_LINK_INVALID');
+    expect((await resetPassword(token, NEW_PASSWORD)).status).toBe(410);
+    expect((await login('mail.ex@exemple.fr', PASSWORD)).status).toBe(200);
+  });
+
+  it('RG-12: a link generated while the member is promoted never survives the promotion (#82)', async () => {
+    const [link, promotion] = await Promise.all([
+      generateLink(member.id),
+      setRole(member.id, 'ADMIN'),
+    ]);
+    expect(promotion.status).toBe(200);
+    // Either the link came first and the promotion removed it, or the promotion came first and the link was refused
+    expect(link.status === 201 || link.body.code === 'USER_RESET_FORBIDDEN').toBe(true);
+    expect(await database.prisma.resetToken.count()).toBe(0);
+  });
+
+  it('RG-12: the rescue command gives an administrator a link that works (#82)', async () => {
+    await database.prisma.user.update({
+      where: { id: adminB.id },
+      data: { email: 'secours.admin@exemple.fr' },
+    });
+    const link = await auth.getPasswordResetService().createRescueLink('SECOURS.admin@exemple.fr');
+    const token = tokenOf(link.url);
+    expect((await resetPassword(token, NEW_PASSWORD)).status).toBe(204);
+    expect((await login('secours.admin@exemple.fr', NEW_PASSWORD)).status).toBe(200);
+    await expect(
+      auth.getPasswordResetService().createRescueLink('secours_admin@exemple.fr'),
+    ).rejects.toMatchObject({ code: 'USER_NOT_FOUND' });
+  });
+
   it('deleting the user drops the links (cascade)', async () => {
     await generateLink(member.id);
     await database.prisma.user.delete({ where: { id: member.id } });

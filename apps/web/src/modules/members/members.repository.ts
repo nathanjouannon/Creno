@@ -14,6 +14,7 @@ export interface RoleTransaction {
   find(userId: number): Promise<MemberRecord | null>;
   countAdmins(): Promise<number>;
   setRole(userId: number, role: UserRole): Promise<MemberRecord>;
+  deleteResetTokens(userId: number): Promise<void>;
 }
 
 export interface DeletionTransaction {
@@ -82,6 +83,9 @@ export function createMembersRepository(prisma: PrismaClient) {
           countAdmins: () => client.user.count({ where: { role: 'ADMIN' } }),
           setRole: (userId, role) =>
             client.user.update({ where: { id: userId }, data: { role }, select }),
+          deleteResetTokens: async (userId) => {
+            await client.resetToken.deleteMany({ where: { userId } });
+          },
         }),
       ),
 

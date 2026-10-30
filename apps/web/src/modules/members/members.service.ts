@@ -57,7 +57,10 @@ export function createMembersService({ repository, clock, toUserView }: Dependen
           requested: role,
           adminCount: await tx.countAdmins(),
         });
-        return decided === null ? target : tx.setRole(userId, decided);
+        if (decided === null) return target;
+        // RG-12 (#82): no reset link for an administrator, so the pending ones of a new administrator go
+        if (decided === 'ADMIN') await tx.deleteResetTokens(userId);
+        return tx.setRole(userId, decided);
       });
       return toUserView(member);
     },
