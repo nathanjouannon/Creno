@@ -1,5 +1,5 @@
 import { AppError } from '@creno/validation';
-import type { Clock, SessionUser } from '@/modules/shared';
+import type { Clock, Logger, SessionUser } from '@/modules/shared';
 import type { MemberRecord, MembersRepository } from './members.repository';
 
 type Role = 'USER' | 'ADMIN';
@@ -46,8 +46,12 @@ export function createMembersService({ repository, clock, toUserView }: Dependen
       return toUserView(member);
     },
 
-    /** F-10, RG-04: read and write in one serializable transaction, so the last administrator cannot disappear. */
-    async setRole(actor: SessionUser, userId: number, role: Role) {
+    /**
+     * F-10, RG-04: read and write in one serializable transaction, so the last administrator cannot disappear. A real
+     * change is logged (security.md, section 4, #81).
+     */
+    async setRole(actor: SessionUser, userId: number, role: Role, log: Logger) {
+      let changed = false;
       const member = await repository.inRoleTransaction(async (tx) => {
         const target = await tx.find(userId);
         if (!target) throw new AppError('USER_NOT_FOUND');
@@ -57,8 +61,10 @@ export function createMembersService({ repository, clock, toUserView }: Dependen
           requested: role,
           adminCount: await tx.countAdmins(),
         });
+        changed = decided !== null;
         return decided === null ? target : tx.setRole(userId, decided);
       });
+      if (changed) log.info('role changed', { actorId: actor.id, userId, role });
       return toUserView(member);
     },
 
@@ -75,7 +81,7 @@ export function createMembersService({ repository, clock, toUserView }: Dependen
      * F-11, RG-11: unstarted registrations are freed, the others lose their owner ("ancien membre"), then the whole
      * `User` row goes, so no personal data survives. Serializable, so two administrators cannot both leave (RG-04).
      */
-    async deleteAccount(actor: SessionUser) {
+    async deleteAccount(actor: SessionUser, log: Logger) {
       await repository.inDeletionTransaction(async (tx) => {
         const self = await tx.find(actor.id);
         if (!self) throw new AppError('AUTH_REQUIRED');
@@ -85,6 +91,8 @@ export function createMembersService({ repository, clock, toUserView }: Dependen
         await tx.deleteResetTokens(actor.id);
         await tx.deleteUser(actor.id);
       });
+      // security.md, section 4 (#81): the internal id only, the person is gone
+      log.info('account deleted', { userId: actor.id });
     },
   };
 }

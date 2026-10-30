@@ -103,6 +103,30 @@ function readQuery(request: Request): Record<string, string> {
   return Object.fromEntries(new URL(request.url).searchParams);
 }
 
+/**
+ * The route as declared, such as `/api/password-resets/[token]`, for the logs (security.md, section 4, #81): each
+ * segment holding a route parameter is replaced by its name, so a link token in the URL is never written.
+ */
+export function routeTemplate(request: Request, params: Record<string, string | string[]>): string {
+  const names = new Map<string, string>();
+  for (const [name, value] of Object.entries(params)) {
+    if (typeof value === 'string') names.set(value, name);
+  }
+  return new URL(request.url).pathname
+    .split('/')
+    .map((segment) => {
+      let value = segment;
+      try {
+        value = decodeURIComponent(segment);
+      } catch {
+        // A malformed escape is kept as it is; it matches no parameter
+      }
+      const name = names.get(value);
+      return name ? `[${name}]` : segment;
+    })
+    .join('/');
+}
+
 function parse<S extends ZodTypeAny | undefined>(schema: S, value: unknown): Infer<S> {
   if (!schema) return undefined as Infer<S>;
   const result = schema.safeParse(value);
@@ -126,7 +150,12 @@ export function route<
   const handle = async (request: Request, nextContext?: NextRouteContext): Promise<Response> => {
     const requestId = newRequestId();
     const startedAt = clock.now().getTime();
-    let log = getLogger().child({ requestId, method: request.method });
+    const rawParams = nextContext?.params ? await nextContext.params : {};
+    let log = getLogger().child({
+      requestId,
+      method: request.method,
+      route: routeTemplate(request, rawParams),
+    });
     let response: Response;
     let code: ErrorCode | undefined;
 
@@ -140,7 +169,6 @@ export function route<
       if (config.auth === 'admin' && user?.role !== 'ADMIN') throw new AppError('FORBIDDEN');
       if (user) log = log.child({ userId: user.id });
 
-      const rawParams = nextContext?.params ? await nextContext.params : {};
       const params = parse(config.params, rawParams);
       const query = parse(config.query, readQuery(request));
       const body = parse(config.body, config.body ? await readBody(request) : undefined);
