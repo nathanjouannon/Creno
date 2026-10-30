@@ -49,3 +49,41 @@ describe('middleware (flow 00)', () => {
     expect((await call('/installation')).headers.get('location')).toBeNull();
   });
 });
+
+describe('middleware: Content-Security-Policy (security.md, section 4, #80)', () => {
+  const policy = (response: Response) => response.headers.get('content-security-policy') ?? '';
+  const scriptSrc = (value: string) =>
+    value.split('; ').find((d) => d.startsWith('script-src')) ?? '';
+
+  beforeEach(() => {
+    state.installed = true;
+    state.signedIn = true;
+  });
+
+  it('a page gets a policy whose scripts need its nonce, never unsafe-inline', async () => {
+    const scripts = scriptSrc(policy(await call('/events')));
+    expect(scripts).toMatch(/'nonce-[A-Za-z0-9+/]{22}=='/);
+    expect(scripts).not.toContain('unsafe-inline');
+  });
+
+  it('every page gets its own nonce', async () => {
+    const nonce = async () =>
+      scriptSrc(policy(await call('/events'))).match(/'nonce-([^']+)'/)?.[1];
+    expect(await nonce()).not.toBe(await nonce());
+  });
+
+  it('Next.js receives the same policy with the request, to put the nonce on its scripts', async () => {
+    const response = await call('/events');
+    expect(response.headers.get('x-middleware-request-content-security-policy')).toBe(
+      policy(response),
+    );
+  });
+
+  it('public pages get it too: sign-in, information notice, installation', async () => {
+    state.signedIn = false;
+    expect(policy(await call('/connexion'))).toContain("'nonce-");
+    expect(policy(await call('/mentions'))).toContain("'nonce-");
+    state.installed = false;
+    expect(policy(await call('/installation'))).toContain("'nonce-");
+  });
+});

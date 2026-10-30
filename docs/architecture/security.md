@@ -74,6 +74,7 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 
 **En-têtes HTTP** (posés par l'application ou le reverse proxy)
 - `Strict-Transport-Security` (HSTS), `Content-Security-Policy` stricte (`default-src 'self'`, pas de script en ligne hors nonce), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `frame-ancestors 'none'`, `Permissions-Policy` sans capteurs.
+- La CSP des pages est posée par l'application (middleware), avec un nonce aléatoire par page que Next.js reporte sur ses scripts : `script-src 'self' 'nonce-…' 'strict-dynamic'`, sans `'unsafe-inline'` (#80). Toutes les pages sont donc rendues à la requête. Caddy pose la même politique, sans nonce, sur les réponses qui n'en ont pas (API, fichiers statiques).
 - HTTPS obligatoire partout ; redirection du HTTP vers le HTTPS.
 
 **Limites de débit** (réponse `429 RATE_LIMITED` avec `Retry-After`, `api/errors.md`)
