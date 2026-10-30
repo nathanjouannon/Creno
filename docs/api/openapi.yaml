@@ -505,14 +505,15 @@ components:
         registrationMode:
           allOf:
             - $ref: "#/components/schemas/RegistrationMode"
-            - default: FIXED
-              description: Mode d'inscription (RG-19) ; `FIXED` s'il est absent
+            - description: Mode d'inscription (RG-19) ; `FIXED` s'il est absent
+              default: FIXED
         slots:
           type: array
           items:
             $ref: "#/components/schemas/SlotInput"
+          maxItems: 100
           default: []
-          description: Créneaux fixes ; refusés en mode `FREE` (RG-19)
+          description: Créneaux fixes, 100 au plus ; refusés en mode `FREE` (RG-19)
       required:
         - title
         - startsAt

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ZodTypeAny } from 'zod';
 import {
+  EVENT_SLOTS_MAX,
   acceptInvitationInputSchema,
   eventInputSchema,
   eventUpdateSchema,
@@ -242,5 +243,25 @@ describe('registration mode and free slots (F-22, RG-19, RG-20)', () => {
     expect(freeSlotInputSchema.safeParse(withUser).error?.issues[0]?.code).toBe(
       'unrecognized_keys',
     );
+  });
+});
+
+describe('slots sent with a new event (RG-06, #83)', () => {
+  const event = { title: 'Tournoi', startsAt: slot.startsAt, endsAt: slot.endsAt };
+
+  it('accepts 100 slots and refuses 101 with a single FIELD_TOO_MANY_SLOTS on slots', () => {
+    expect(EVENT_SLOTS_MAX).toBe(100);
+    expect(eventInputSchema.safeParse({ ...event, slots: Array(100).fill(slot) }).success).toBe(
+      true,
+    );
+    const refused = eventInputSchema.safeParse({ ...event, slots: Array(101).fill({}) });
+    expect(refused.error?.issues).toEqual([
+      expect.objectContaining({ path: ['slots'], message: 'FIELD_TOO_MANY_SLOTS' }),
+    ]);
+  });
+
+  it('GHSA-mrhx-c7xc-m3w5: a huge array of invalid slots gives one error, not one per slot', () => {
+    const result = eventInputSchema.safeParse({ ...event, slots: Array(500_000).fill({}) });
+    expect(result.error?.issues).toHaveLength(1);
   });
 });
