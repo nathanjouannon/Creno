@@ -5,7 +5,24 @@ import './openapi';
 // A missing value or a value of the wrong type is a missing value for the user.
 const required = { required_error: 'FIELD_REQUIRED', invalid_type_error: 'FIELD_REQUIRED' };
 
-export const requiredString = () => z.string(required).trim().min(1, 'FIELD_REQUIRED');
+/**
+ * RG-01, RG-06, RG-07, RG-17: longest accepted texts, in characters of the stored value (#79). The interface gives the
+ * same figures to its fields (`maxLength`), and the database checks them too.
+ */
+export const FIELD_MAX_LENGTH = {
+  firstName: 50,
+  lastName: 50,
+  email: 254,
+  password: 128,
+  clubName: 120,
+  eventTitle: 100,
+  eventLocation: 200,
+  eventDescription: 2000,
+  slotDescription: 500,
+} as const;
+
+export const requiredString = (max: number) =>
+  z.string(required).trim().min(1, 'FIELD_REQUIRED').max(max, 'FIELD_TOO_LONG');
 
 /** Identifier received in a path: a string in the URL, a positive integer for the service. */
 export const idParam = () =>
@@ -22,15 +39,21 @@ export const roleSchema = z
 export const passwordSchema = z
   .string(required)
   .min(10, 'FIELD_PASSWORD_TOO_SHORT')
-  .describe('10 caractères minimum, aucune autre règle de complexité (RG-01). Jamais renvoyé.')
+  .max(FIELD_MAX_LENGTH.password, 'FIELD_TOO_LONG')
+  .describe(
+    '10 à 128 caractères, aucune autre règle de complexité (RG-01). Jamais renvoyé.',
+  )
   .openapi('Password');
 
 export const emailSchema = z
   .string(required)
   .trim()
   .min(1, 'FIELD_REQUIRED')
+  .max(FIELD_MAX_LENGTH.email, 'FIELD_TOO_LONG')
   .email('FIELD_EMAIL_INVALID')
-  .describe('Unique sans tenir compte de la casse ; les espaces autour sont retirés (RG-01)')
+  .describe(
+    'Unique sans tenir compte de la casse ; les espaces autour sont retirés ; 254 caractères au plus (RG-01)',
+  )
   .openapi('Email');
 
 /** ISO 8601 date-time in UTC (`2027-01-15T07:00:00Z`); shown in the club time zone (RG-16). */

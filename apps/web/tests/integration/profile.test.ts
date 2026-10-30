@@ -136,6 +136,18 @@ describe('PATCH /me (F-20, RG-18)', () => {
     ]);
   });
 
+  it('RG-01: a first name over 50 characters is FIELD_TOO_LONG and nothing is saved (#79)', async () => {
+    const before = await database.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const response = await patchMe(change({ firstName: 'A'.repeat(51) }));
+    expect(response.status).toBe(400);
+    expect((await response.json()).details.fields).toEqual([
+      { field: 'firstName', code: 'FIELD_TOO_LONG' },
+    ]);
+    const after = await database.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    expect(after.firstName).toBe(before.firstName);
+    expect((await patchMe(change({ firstName: 'A'.repeat(50) }))).status).toBe(200);
+  });
+
   it('RG-14: access denied without a session; a role in the body is refused and never applied', async () => {
     shared.resetAuthenticator();
     shared.setAuthenticator(async () => null);

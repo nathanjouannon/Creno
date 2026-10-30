@@ -76,6 +76,7 @@ Un code de champ ne se rattache pas à un statut HTTP : il explique pourquoi un 
 | `FIELD_END_NOT_AFTER_START` | La fin doit être après le début. | RG-06 (événement), RG-07 (créneau) ; porté par le champ `endsAt` |
 | `FIELD_CAPACITY_TOO_LOW` | La limite doit être d'au moins 1 place (ou vide pour illimité). | RG-07 |
 | `FIELD_DESCRIPTION_TOO_LONG` | La description ne peut pas dépasser 500 caractères. | RG-07 (F-21) : description d'un créneau de plus de 500 caractères ; portée par le champ `description` |
+| `FIELD_TOO_LONG` | Ce texte est trop long. | RG-01, RG-06, RG-17 : au-delà de la longueur maximale du champ (prénom et nom 50, e-mail 254, mot de passe 128, nom du club 120, titre 100, lieu 200, description d'événement 2 000) ; le formulaire empêche de la dépasser |
 | `FIELD_FREE_SLOT_OUT_OF_EVENT` | Les horaires doivent rester dans les dates de l'événement. | RG-20 : début avant celui de l'événement (champ `startsAt`) ou fin après la sienne (champ `endsAt`) ; vérifié par le service |
 | `FIELD_FREE_SLOT_TOO_SHORT` | Un créneau libre dure au moins 30 minutes. | RG-20 : moins de 30 minutes entre le début et la fin ; porté par le champ `endsAt` |
 | `FIELD_START_NOT_IN_FUTURE` | Choisis une heure de début à venir. | RG-08, RG-20 : début d'un créneau libre égal ou antérieur à l'heure courante ; porté par le champ `startsAt`, vérifié par le service |

@@ -42,6 +42,13 @@ async function columns(table: string): Promise<string[]> {
 }
 const slotColumns = () => columns('slots');
 
+async function constraints(table: string): Promise<string[]> {
+  const rows = await db.$queryRawUnsafe<{ conname: string }[]>(
+    `SELECT conname FROM pg_constraint WHERE conrelid = '${table}'::regclass ORDER BY 1`,
+  );
+  return rows.map((r) => r.conname);
+}
+
 const EXPECTED_TABLES = [
   'club',
   'events',
@@ -68,7 +75,10 @@ describe('migrations (ADR-0015)', () => {
   it('apply, undo, replay', async () => {
     tool('migrate');
     expect(await tables()).toEqual(EXPECTED_TABLES);
-    tool('rollback'); // undoes the last migration only: free slots and registration modes (F-22)
+    tool('rollback'); // undoes the last migration only: the maximum lengths (#79)
+    expect(await constraints('users')).not.toContain('users_first_name_length_check');
+    expect(await tables()).toEqual(EXPECTED_TABLES);
+    tool('rollback'); // then free slots and registration modes (F-22)
     expect(await columns('events')).not.toContain('registration_mode');
     expect(await columns('registrations')).not.toContain('event_id');
     tool('rollback'); // then the slot description
@@ -84,9 +94,11 @@ describe('migrations (ADR-0015)', () => {
     expect(await tables()).toEqual(EXPECTED_TABLES);
     expect(await slotColumns()).toContain('description');
     expect(await columns('events')).toContain('registration_mode');
+    expect(await constraints('events')).toContain('events_title_length_check');
   }, 120_000);
 
   it('F-22: existing events and registrations are kept, every event in FIXED; undo drops free slots only', async () => {
+    tool('rollback'); // the maximum lengths (#79)
     tool('rollback'); // back to the schema before F-22
     const [event] = await db.$queryRawUnsafe<{ id: number }[]>(
       `INSERT INTO events (title, starts_at, ends_at) VALUES ('Avant', '2030-01-01T08:00:00Z', '2030-01-01T18:00:00Z') RETURNING id`,
@@ -115,6 +127,7 @@ describe('migrations (ADR-0015)', () => {
     await db.$executeRawUnsafe(
       `INSERT INTO registrations (event_id, starts_at, ends_at, user_id) VALUES (${event!.id}, '2030-01-01T11:00:00Z', '2030-01-01T12:00:00Z', ${user!.id})`,
     );
+    tool('rollback'); // the maximum lengths (#79)
     tool('rollback');
     expect(await db.$queryRawUnsafe(`SELECT slot_id FROM registrations`)).toEqual([
       { slot_id: slot!.id },
@@ -135,6 +148,32 @@ describe('database constraints', () => {
       `INSERT INTO events (title, starts_at, ends_at) VALUES ('e', ${ts(8)}, ${ts(18)}) RETURNING id`,
     );
     eventId = rows[0]!.id;
+  });
+
+  it('RG-01, RG-06, RG-17: texts longer than their maximum are refused (#79)', async () => {
+    const text = (n: number) => `'${'é'.repeat(n)}'`;
+    const user = (first: number, last: number, email: string) =>
+      `INSERT INTO users (last_name, first_name, email, password_hash) VALUES (${text(last)}, ${text(first)}, '${email}', 'h')`;
+    // char_length counts characters: 50 accented letters are 50, not 100 bytes
+    await db.$executeRawUnsafe(user(50, 50, 'long-names@example.org'));
+    await rejects(user(51, 1, 'first@example.org'));
+    await rejects(user(1, 51, 'last@example.org'));
+    await db.$executeRawUnsafe(user(1, 1, `${'a'.repeat(242)}@example.org`)); // 254
+    await rejects(user(1, 1, `${'a'.repeat(243)}@example.org`));
+
+    const event = (title: number, location: number | null, description: number | null) =>
+      `INSERT INTO events (title, location, description, starts_at, ends_at) VALUES (${text(title)}, ${location === null ? 'NULL' : text(location)}, ${description === null ? 'NULL' : text(description)}, ${ts(8)}, ${ts(9)})`;
+    await db.$executeRawUnsafe(event(100, 200, 2000));
+    await db.$executeRawUnsafe(event(1, null, null));
+    await rejects(event(101, null, null));
+    await rejects(event(1, 201, null));
+    await rejects(event(1, null, 2001));
+
+    await rejects(`INSERT INTO club (id, name, timezone) VALUES (1, ${text(121)}, 'UTC')`);
+    await db.$executeRawUnsafe(
+      `INSERT INTO club (id, name, timezone) VALUES (1, ${text(120)}, 'UTC')`,
+    );
+    await db.$executeRawUnsafe(`DELETE FROM club`);
   });
 
   it('RG-07: slot capacity 0 is refused, NULL and 1 accepted', async () => {

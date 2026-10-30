@@ -1,6 +1,6 @@
 'use client';
 
-import { loginInputSchema } from '@creno/validation';
+import { FIELD_MAX_LENGTH, loginInputSchema } from '@creno/validation';
 import { useRouter } from 'next/navigation';
 import { Form } from '@/components/Form';
 import { FormField } from '@/components/FormField';
@@ -34,10 +34,10 @@ export function LoginForm({ destination }: Props) {
       }}
     >
       <FormField name="email" label="E-mail">
-        <EmailInput autoComplete="username" />
+        <EmailInput autoComplete="username" maxLength={FIELD_MAX_LENGTH.email} />
       </FormField>
       <FormField name="password" label="Mot de passe">
-        <PasswordInput autoComplete="current-password" />
+        <PasswordInput autoComplete="current-password" maxLength={FIELD_MAX_LENGTH.password} />
       </FormField>
     </Form>
   );

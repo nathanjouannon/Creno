@@ -1,6 +1,6 @@
 'use client';
 
-import { acceptInvitationInputSchema } from '@creno/validation';
+import { FIELD_MAX_LENGTH, acceptInvitationInputSchema } from '@creno/validation';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/Button';
@@ -59,16 +59,16 @@ export function InvitationSignupForm({ token, eventId }: Props) {
       }}
     >
       <FormField name="lastName" label="Nom" required>
-        <TextInput autoComplete="family-name" />
+        <TextInput autoComplete="family-name" maxLength={FIELD_MAX_LENGTH.lastName} />
       </FormField>
       <FormField name="firstName" label="Prénom" required>
-        <TextInput autoComplete="given-name" />
+        <TextInput autoComplete="given-name" maxLength={FIELD_MAX_LENGTH.firstName} />
       </FormField>
       <FormField name="email" label="E-mail" required>
-        <EmailInput autoComplete="username" />
+        <EmailInput autoComplete="username" maxLength={FIELD_MAX_LENGTH.email} />
       </FormField>
       <FormField name="password" label="Mot de passe" help="10 caractères au minimum." required>
-        <PasswordInput autoComplete="new-password" />
+        <PasswordInput autoComplete="new-password" maxLength={FIELD_MAX_LENGTH.password} />
       </FormField>
       <PrivacyNotice />
       {emailTaken ? (
