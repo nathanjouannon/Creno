@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { contentSecurityPolicy, newNonce } from '@/lib/content-security-policy';
 import { safeDestination } from '@/lib/destination';
 import { getAuthService } from '@/modules/auth';
 import { getClubService } from '@/modules/club';
@@ -27,18 +28,29 @@ export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   // T-021: the information notice is readable by anyone, installed or not
-  if (pathname === '/mentions') return NextResponse.next();
+  if (pathname === '/mentions') return render(request);
 
   if (!(await getClubService().isInstalled())) {
-    return pathname === '/installation'
-      ? NextResponse.next()
-      : redirectTo(request, '/installation');
+    return pathname === '/installation' ? render(request) : redirectTo(request, '/installation');
   }
-  if (isPublicPage(pathname)) return NextResponse.next();
-  if (await getAuthService().resolveSession(request)) return NextResponse.next();
+  if (isPublicPage(pathname)) return render(request);
+  if (await getAuthService().resolveSession(request)) return render(request);
 
   const destination = safeDestination(`${pathname}${search}`);
   return redirectTo(request, '/connexion', destination ? { suite: destination } : undefined);
+}
+
+/**
+ * Lets the page render under its own Content-Security-Policy (security.md, section 4, #80). Next.js reads the nonce
+ * from the policy of the request and puts it on its scripts; the browser gets the same policy with the response.
+ */
+function render(request: NextRequest) {
+  const policy = contentSecurityPolicy(newNonce(), process.env.NODE_ENV !== 'production');
+  const headers = new Headers(request.headers);
+  headers.set('Content-Security-Policy', policy);
+  const response = NextResponse.next({ request: { headers } });
+  response.headers.set('Content-Security-Policy', policy);
+  return response;
 }
 
 function redirectTo(request: NextRequest, pathname: string, query?: Record<string, string>) {
