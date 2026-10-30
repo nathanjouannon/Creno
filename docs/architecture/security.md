@@ -88,7 +88,8 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 **Journaux**
 - Format JSON sur la sortie standard, avec un identifiant de requête et l'identifiant interne de l'utilisateur.
 - Jamais de mot de passe, de jeton, ni d'e-mail en clair (affiché masqué, par exemple `a***@d***.fr`).
-- Événements de sécurité journalisés : échec et blocage de connexion, génération et utilisation d'un lien de réinitialisation, changement de rôle, suppression de compte, installation.
+- Événements de sécurité journalisés : échec et blocage de connexion, génération et utilisation d'un lien de réinitialisation, changement de rôle, suppression de compte, installation. Chacun est une ligne dont le message nomme l'action (`login failed`, `login blocked for 15 minutes`, `password reset link created`, `password reset used`, `role changed`, `account deleted`, `instance installed`), avec les seuls identifiants internes (`userId`, et `actorId` pour l'auteur d'une action sur autrui) (#81).
+- La ligne écrite pour chaque requête nomme la route par son modèle (`/api/password-resets/[token]`), jamais par le chemin réel, qui peut contenir un jeton de lien.
 - Pas de détail technique (trace, SQL) dans les réponses d'erreur, seulement dans les journaux.
 
 **Données et RGPD**
