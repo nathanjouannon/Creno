@@ -127,6 +127,13 @@
       "details": "",
       "clientAction": "Message générique ; l'interface ne propose pas cette action"
     },
+    "USER_RESET_FORBIDDEN": {
+      "status": 403,
+      "message": "Le mot de passe d'un administrateur ne se réinitialise pas depuis l'application.",
+      "cause": "RG-12 : lien de réinitialisation demandé pour un administrateur, qui passe par la procédure de secours du serveur (#82)",
+      "details": "",
+      "clientAction": "Message générique ; l'interface ne propose pas cette action pour un administrateur"
+    },
     "EVENT_PAST": {
       "status": 409,
       "message": "Cet événement est terminé, il n'est plus modifiable.",

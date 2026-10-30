@@ -14,10 +14,16 @@ const usable = {
   user: { id: 7, email: 'Mail.Ex@exemple.fr' },
 };
 
-function build(overrides: Partial<PasswordResetRepository> = {}) {
+function build(
+  overrides: Partial<PasswordResetRepository> = {},
+  role: 'USER' | 'ADMIN' | null = 'USER',
+) {
+  const replaceTokens = vi.fn().mockResolvedValue(undefined);
   const repository = {
-    userExists: vi.fn().mockResolvedValue(true),
-    replaceTokens: vi.fn().mockResolvedValue(undefined),
+    inLinkTransaction: vi.fn(async (_userId: number, work: (tx: unknown) => Promise<unknown>) =>
+      work({ findRole: async () => role, replaceTokens }),
+    ),
+    findUserIdByEmail: vi.fn().mockResolvedValue(7),
     findByTokenHash: vi.fn().mockResolvedValue(usable),
     consume: vi.fn().mockResolvedValue(true),
     ...overrides,
@@ -29,7 +35,7 @@ function build(overrides: Partial<PasswordResetRepository> = {}) {
     secret: 'secret',
     hashPassword: async (password) => `hash:${password}`,
   });
-  return { service, repository };
+  return { service, repository, replaceTokens };
 }
 
 const codeOf = async (action: Promise<unknown>) => {
@@ -43,21 +49,40 @@ const codeOf = async (action: Promise<unknown>) => {
 
 describe('create', () => {
   it('[F-10 S7] RG-12: a link valid 3 days, token stored hashed', async () => {
-    const { service, repository } = build();
+    const { service, repository, replaceTokens } = build();
     const link = await service.create(7);
     expect(link.expiresAt).toBe(new Date(now.getTime() + RESET_VALIDITY_MS).toISOString());
     expect(RESET_VALIDITY_MS).toBe(3 * 24 * 3600 * 1000);
     const token = link.url.replace('https://creno.example.org/reinitialisation/', '');
-    expect(repository.replaceTokens).toHaveBeenCalledWith(
-      7,
-      hashLinkToken(token),
-      new Date(link.expiresAt),
-    );
+    expect(repository.inLinkTransaction).toHaveBeenCalledWith(7, expect.any(Function));
+    expect(replaceTokens).toHaveBeenCalledWith(hashLinkToken(token), new Date(link.expiresAt));
   });
 
   it('refuses an unknown user', async () => {
-    const { service } = build({ userExists: vi.fn().mockResolvedValue(false) });
+    const { service, replaceTokens } = build({}, null);
     expect(await codeOf(service.create(7))).toBe('USER_NOT_FOUND');
+    expect(replaceTokens).not.toHaveBeenCalled();
+  });
+
+  it('RG-12: never a link for an administrator, whoever asks (#82)', async () => {
+    const { service, replaceTokens } = build({}, 'ADMIN');
+    expect(await codeOf(service.create(7))).toBe('USER_RESET_FORBIDDEN');
+    expect(replaceTokens).not.toHaveBeenCalled();
+  });
+});
+
+describe('rescue link (#82)', () => {
+  it('RG-12: the rescue command gives an administrator a link, found by address', async () => {
+    const { service, repository, replaceTokens } = build({}, 'ADMIN');
+    const link = await service.createRescueLink(' Admin@Exemple.fr ');
+    expect(repository.findUserIdByEmail).toHaveBeenCalledWith(' Admin@Exemple.fr ');
+    expect(link.url).toMatch(/^https:\/\/creno\.example\.org\/reinitialisation\/.+/);
+    expect(replaceTokens).toHaveBeenCalledOnce();
+  });
+
+  it('refuses an address without account', async () => {
+    const { service } = build({ findUserIdByEmail: vi.fn().mockResolvedValue(null) });
+    expect(await codeOf(service.createRescueLink('nobody@exemple.fr'))).toBe('USER_NOT_FOUND');
   });
 });
 

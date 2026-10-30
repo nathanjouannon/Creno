@@ -31,20 +31,37 @@ export function createPasswordResetService({
     return record;
   }
 
+  /** RG-12: a link valid 3 days that replaces the earlier ones; the token is returned once, only its hash is stored. */
+  async function createLink(userId: number, { forAdministrator }: { forAdministrator: boolean }) {
+    const token = generateLinkToken();
+    const expiresAt = new Date(clock.now().getTime() + RESET_VALIDITY_MS);
+    await repository.inLinkTransaction(userId, async (tx) => {
+      const role = await tx.findRole();
+      if (!role) throw new AppError('USER_NOT_FOUND');
+      // RG-12 (#82): otherwise an administrator could open the link themselves and act as another one
+      if (role === 'ADMIN' && !forAdministrator) throw new AppError('USER_RESET_FORBIDDEN');
+      await tx.replaceTokens(hashLinkToken(token), expiresAt);
+    });
+    return {
+      url: new URL(`/reinitialisation/${token}`, appUrl).toString(),
+      expiresAt: expiresAt.toISOString(),
+    };
+  }
+
   return {
+    /** F-10, RG-12: from the member's page, never for an administrator (#82). */
+    create(userId: number) {
+      return createLink(userId, { forAdministrator: false });
+    },
+
     /**
-     * F-10, RG-12: a new link for the user, valid 3 days, which replaces the earlier ones. The token is returned
-     * once, here; only its hash is stored.
+     * RG-12 (#82): the rescue procedure, run on the server by someone who has access to it, for an administrator who
+     * forgot their password (README.md). Same link and same rules, without the role check of a request.
      */
-    async create(userId: number) {
-      if (!(await repository.userExists(userId))) throw new AppError('USER_NOT_FOUND');
-      const token = generateLinkToken();
-      const expiresAt = new Date(clock.now().getTime() + RESET_VALIDITY_MS);
-      await repository.replaceTokens(userId, hashLinkToken(token), expiresAt);
-      return {
-        url: new URL(`/reinitialisation/${token}`, appUrl).toString(),
-        expiresAt: expiresAt.toISOString(),
-      };
+    async createRescueLink(email: string) {
+      const userId = await repository.findUserIdByEmail(email);
+      if (userId === null) throw new AppError('USER_NOT_FOUND');
+      return createLink(userId, { forAdministrator: true });
     },
 
     /** F-02, RG-12: lets the page choose between the form and the message. */

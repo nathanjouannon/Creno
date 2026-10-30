@@ -46,6 +46,7 @@ Toute erreur de l'API renvoie ce JSON (schéma `Error` de `openapi.yaml`) :
 | `USER_EMAIL_IN_USE` | 409 | Cette adresse est déjà utilisée par un autre compte. | RG-01, RG-18 : e-mail déjà pris, sans tenir compte de la casse (modification du profil) | | Afficher le message sous le champ e-mail, garder la saisie |
 | `USER_LAST_ADMIN` | 409 | Nomme d'abord un autre administrateur. | RG-04 : le dernier administrateur ne peut ni se retirer le droit, ni supprimer son compte | | Afficher le message, rien ne change |
 | `USER_ROLE_CHANGE_FORBIDDEN` | 403 | Seul l'intéressé peut retirer son droit administrateur. | RG-04 : tentative de retirer le droit d'un autre | | Message générique ; l'interface ne propose pas cette action |
+| `USER_RESET_FORBIDDEN` | 403 | Le mot de passe d'un administrateur ne se réinitialise pas depuis l'application. | RG-12 : lien de réinitialisation demandé pour un administrateur, qui passe par la procédure de secours du serveur (#82) | | Message générique ; l'interface ne propose pas cette action pour un administrateur |
 | `EVENT_PAST` | 409 | Cet événement est terminé, il n'est plus modifiable. | RG-15 : événement passé en lecture seule (vu par un administrateur) | | Recharger la page en lecture seule |
 | `EVENT_STARTED` | 409 | Cet événement a déjà commencé : plus d'invitation possible. | RG-02 : génération d'une invitation après le début | | Masquer « Inviter des bénévoles » |
 | `SLOT_FULL` | 409 | Ce créneau vient d'être complété. | RG-07 : limite atteinte | `slotId` | Recharger l'événement, garder l'inscription précédente |

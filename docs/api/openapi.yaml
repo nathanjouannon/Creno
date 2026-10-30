@@ -888,6 +888,7 @@ paths:
       description: |-
         Administrateur seulement. Valable 3 jours, à usage unique. Générer un nouveau lien invalide les précédents.
         Le jeton n'est stocké que haché : l'URL n'est renvoyée qu'ici, une seule fois.
+        Jamais pour un administrateur (`USER_RESET_FORBIDDEN`) : il passe par la procédure de secours du serveur ; devenir administrateur invalide aussi les liens en cours (RG-12).
       x-auth: admin
       parameters:
         - schema:
@@ -906,7 +907,12 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: "`FORBIDDEN` (pas administrateur) ou `USER_RESET_FORBIDDEN` (cible administrateur, RG-12)"
+          x-error-codes:
+            - FORBIDDEN
+            - USER_RESET_FORBIDDEN
+          content:
+            application/json: *a3
         "404":
           $ref: "#/components/responses/UserNotFound"
   /events/{eventId}/invitations:
