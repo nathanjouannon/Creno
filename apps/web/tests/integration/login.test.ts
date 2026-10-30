@@ -187,6 +187,29 @@ describe('POST /auth/login (F-02, RG-03)', () => {
     expect((await login(EMAIL, PASSWORD)).status).toBe(423);
   });
 
+  it('RG-03: simultaneous attempts never check more than 5 passwords (#78)', async () => {
+    const answers = await Promise.all(
+      Array.from({ length: 10 }, (_, i) => login(EMAIL, `wrong-password-${i}`)),
+    );
+    const statuses = answers.map((r) => r.status).sort();
+    expect(statuses).toEqual([401, 401, 401, 401, 401, 423, 423, 423, 423, 423]);
+    const [row] = await attempts();
+    expect(row).toMatchObject({ failedCount: 5, lockedUntil: minutes(15) });
+  });
+
+  it('RG-03: after 4 failures, a burst gets one more check and the rest is blocked (#78)', async () => {
+    await fail(4);
+    shared.resetRateLimits();
+    const answers = await Promise.all([
+      ...Array.from({ length: 9 }, (_, i) => login(EMAIL, `wrong-password-${i}`)),
+      login(EMAIL, PASSWORD),
+    ]);
+    const statuses = answers.map((r) => r.status);
+    expect(statuses.filter((s) => s === 423)).toHaveLength(9);
+    expect(statuses.filter((s) => s !== 423)).toHaveLength(1);
+    expect(statuses).not.toContain(500);
+  });
+
   it('RG-03, ADR-0013: the typed address is never stored in clear in login_attempts', async () => {
     await fail(2, 'Secret.Person@exemple.fr');
     const rows = await database.prisma.$queryRawUnsafe<Record<string, unknown>[]>(

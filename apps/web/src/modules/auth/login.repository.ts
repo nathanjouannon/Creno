@@ -1,4 +1,4 @@
-import { Prisma, type PrismaClient, type UserRole } from '@prisma/client';
+import type { PrismaClient, UserRole } from '@prisma/client';
 import type { AttemptState } from './login-attempt';
 
 export interface LoginUser {
@@ -12,17 +12,11 @@ export interface LoginUser {
   createdAt: Date;
 }
 
+/** The counter of one address, read and written while its row is locked. */
 export interface AttemptTransaction {
-  find(identifierHash: string): Promise<AttemptState | null>;
-  save(identifierHash: string, state: AttemptState): Promise<void>;
+  find(): Promise<AttemptState | null>;
+  save(state: AttemptState): Promise<void>;
 }
-
-const RETRIES = 6;
-
-// A serialization failure (two failures at the same moment) or a duplicate key (two first failures) is replayed
-const isConflict = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  (error.code === 'P2034' || error.code === 'P2002');
 
 export function createLoginRepository(prisma: PrismaClient) {
   return {
@@ -42,52 +36,46 @@ export function createLoginRepository(prisma: PrismaClient) {
         },
       }),
 
-    async findAttempt(identifierHash: string): Promise<AttemptState | null> {
-      const row = await prisma.loginAttempt.findUnique({
-        where: { identifierHash },
-        select: { failedCount: true, lockedUntil: true },
-      });
-      return row;
-    },
-
     /** Reset after a successful login (RG-03). */
     async clearAttempts(identifierHash: string): Promise<void> {
       await prisma.loginAttempt.deleteMany({ where: { identifierHash } });
     },
 
     /**
-     * Read, decide and write the counter as one serializable unit: two simultaneous failures are replayed one
-     * after the other, so none is lost (RG-03). The decision itself stays in the service.
+     * RG-03: the attempts of one address run one after the other, so each reads the count left by the previous one
+     * and none is lost (#78). The row is created if missing (`ON CONFLICT DO NOTHING`, so two first attempts do not
+     * collide), then updated without change, which holds its row lock until the transaction ends; read committed
+     * re-reads after the wait. No retry loop, so no request fails for contention, and no raw SQL. The decision stays
+     * in the service.
      */
-    async inAttemptTransaction<T>(work: (tx: AttemptTransaction) => Promise<T>): Promise<T> {
-      for (let attempt = 1; ; attempt++) {
-        try {
-          return await prisma.$transaction(
-            (client) =>
-              work({
-                find: async (identifierHash) =>
-                  client.loginAttempt.findUnique({
-                    where: { identifierHash },
-                    select: { failedCount: true, lockedUntil: true },
-                  }),
-                save: async (identifierHash, state) => {
-                  await client.loginAttempt.upsert({
-                    where: { identifierHash },
-                    create: {
-                      identifierHash,
-                      failedCount: state.failedCount,
-                      lockedUntil: state.lockedUntil,
-                    },
-                    update: { failedCount: state.failedCount, lockedUntil: state.lockedUntil },
-                  });
-                },
-              }),
-            { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-          );
-        } catch (error) {
-          if (!isConflict(error) || attempt >= RETRIES) throw error;
-        }
-      }
+    async inAttemptTransaction<T>(
+      identifierHash: string,
+      work: (tx: AttemptTransaction) => Promise<T>,
+    ): Promise<T> {
+      return prisma.$transaction(async (client) => {
+        await client.loginAttempt.createMany({
+          data: [{ identifierHash, failedCount: 0 }],
+          skipDuplicates: true,
+        });
+        await client.loginAttempt.updateMany({
+          where: { identifierHash },
+          data: { failedCount: { increment: 0 } },
+        });
+        return work({
+          find: () =>
+            client.loginAttempt.findUnique({
+              where: { identifierHash },
+              select: { failedCount: true, lockedUntil: true },
+            }),
+          save: async (state) => {
+            await client.loginAttempt.upsert({
+              where: { identifierHash },
+              create: { identifierHash, ...state },
+              update: state,
+            });
+          },
+        });
+      });
     },
   };
 }
