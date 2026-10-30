@@ -90,6 +90,40 @@ describe('POST /auth/login (F-02, RG-03)', () => {
     expect((await login('  MAIL.ex@Exemple.FR ', PASSWORD)).status).toBe(200);
   });
 
+  it('RG-03: "%" and "_" in the typed address are not wildcards (#76)', async () => {
+    for (const variant of ['%', 'm%', 'mail_ex@exemple.fr', `${EMAIL}%`, 'mail.ex@exemple.f_']) {
+      const response = await login(variant, PASSWORD);
+      expect(response.status, variant).toBe(401);
+      expect((await response.json()).code).toBe('AUTH_INVALID_CREDENTIALS');
+      expect(response.headers.get('set-cookie')).toBeNull();
+    }
+  });
+
+  it('RG-03: a variant of the address does not get around the block (#76)', async () => {
+    await fail(5);
+    expect((await login(EMAIL, PASSWORD)).status).toBe(423);
+    expect((await login(`${EMAIL}%`, PASSWORD)).status).toBe(401);
+    expect((await login(EMAIL.replace('l', '_'), PASSWORD)).status).toBe(401);
+  });
+
+  it('RG-01: addresses that differ only where one has "_" each reach their own account (#76)', async () => {
+    const underscore = await createUser(database.prisma, {
+      email: 'jean_dupont@exemple.fr',
+      passwordHash: await auth.hashPassword('underscore-password'),
+    });
+    const letter = await createUser(database.prisma, {
+      email: 'jeanxdupont@exemple.fr',
+      passwordHash: await auth.hashPassword('letter-password-1'),
+    });
+    const underscoreLogin = await login('jean_dupont@exemple.fr', 'underscore-password');
+    expect(underscoreLogin.status).toBe(200);
+    expect((await underscoreLogin.json()).id).toBe(underscore.id);
+    const letterLogin = await login('JEANXDUPONT@exemple.fr', 'letter-password-1');
+    expect(letterLogin.status).toBe(200);
+    expect((await letterLogin.json()).id).toBe(letter.id);
+    expect((await login('jeanxdupont@exemple.fr', 'underscore-password')).status).toBe(401);
+  });
+
   it('[F-02 S2] a wrong password is 401 AUTH_INVALID_CREDENTIALS and conforms to the Error schema', async () => {
     const response = await login(EMAIL, 'wrong-password');
     const body = await response.json();
