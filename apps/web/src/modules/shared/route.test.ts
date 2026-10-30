@@ -251,7 +251,7 @@ describe('route envelope: logs', () => {
   });
 
   it('names the route by its template, never with a link token from the URL (#81)', async () => {
-    const token = 'Zm9yLXRoZS1sb2dzLW9ubHk';
+    const token = 'not-a-real-token';
     const handler = route({ auth: 'optional', params: z.object({ token: z.string() }) }, () => ({
       status: 204,
     }));
