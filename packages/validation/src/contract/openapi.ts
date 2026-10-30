@@ -41,6 +41,7 @@ Conventions
 - Les états calculés (\`status\`, \`started\`, \`full\`, \`remainingPlaces\`) sont fournis par le serveur, jamais stockés (glossaire).
 - Le serveur ne renvoie pas d'avertissement de créneau hors des dates de l'événement (RG-07) : c'est l'interface qui l'affiche, la création n'est jamais refusée pour ce motif.
 - Une requête qui modifie des données est refusée (\`403 FORBIDDEN_ORIGIN\`) si son en-tête \`Origin\` n'est pas celui de l'application (\`security.md\`).
+- Un corps de requête de plus de 128 Kio est refusé (\`413 PAYLOAD_TOO_LARGE\`) avant toute validation (\`security.md\`).
 - Limites de débit par adresse IP : 10 requêtes par minute sur \`/setup\`, \`/auth/login\`, \`/password-resets/*\` et \`/invitations/*\` ; 100 par minute sur le reste (\`429 RATE_LIMITED\` avec \`Retry-After\`).
 - Aucun événement asynchrone ni file de messages au MVP (ADR-0008), voir \`events.md\`.
 - Extensions : \`x-auth\` (\`public\`, \`user\` ou \`admin\`) donne le rôle requis par l'opération (RG-14) ; \`x-error-codes\` liste les codes de \`errors.md\` que la réponse peut porter.

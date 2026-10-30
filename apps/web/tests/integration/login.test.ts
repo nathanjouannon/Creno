@@ -213,6 +213,15 @@ describe('POST /auth/login (F-02, RG-03)', () => {
     expect(await attempts()).toEqual([]);
   });
 
+  it('a body over 128 KiB is 413 PAYLOAD_TOO_LARGE and is not an attempt (security.md, #77)', async () => {
+    const response = await login(EMAIL, 'p'.repeat(200 * 1024));
+    expect(response.status).toBe(413);
+    const body = await response.json();
+    expect(body.code).toBe('PAYLOAD_TOO_LARGE');
+    expect(conforms('Error', body)).toBe(true);
+    expect(await attempts()).toEqual([]);
+  });
+
   it('the 11th request in a minute from one address is 429 (security.md)', async () => {
     for (let i = 0; i < 10; i++) await login('nobody@exemple.fr', 'x');
     expect((await login('nobody@exemple.fr', 'x')).status).toBe(429);
