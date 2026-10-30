@@ -297,6 +297,10 @@ export const fieldErrorCatalog = {
     cause:
       "RG-07 (F-21) : description d'un créneau de plus de 500 caractères ; portée par le champ `description`",
   },
+  FIELD_TOO_MANY_SLOTS: {
+    message: 'Un événement se crée avec 100 créneaux au plus ; ajoute les autres ensuite.',
+    cause: 'RG-06 : plus de 100 créneaux envoyés avec un nouvel événement ; porté par le champ `slots`',
+  },
   FIELD_FREE_SLOT_OUT_OF_EVENT: {
     message: "Les horaires doivent rester dans les dates de l'événement.",
     cause:

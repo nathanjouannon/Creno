@@ -13,7 +13,7 @@ export const eventFormSchema = z
     dates: z.object({ startDate: day(), startTime: day(), endDate: day(), endTime: day() }),
     // RG-19: « Créneaux fixes » by default
     registrationMode: z.enum(['FIXED', 'FREE', 'BOTH'], {
-      errorMap: () => ({ message: 'FIELD_REGISTRATION_MODE_INVALID' }),
+      error: 'FIELD_REGISTRATION_MODE_INVALID',
     }),
     // Slots already checked by the slot form (RG-07)
     slots: z.array(z.custom<SlotValues>()),

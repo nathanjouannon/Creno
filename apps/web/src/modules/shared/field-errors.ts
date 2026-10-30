@@ -14,14 +14,12 @@ function codeOf(issue: ZodIssue): FieldErrorCode {
   switch (issue.code) {
     case 'unrecognized_keys':
       return 'FIELD_UNKNOWN';
-    case 'invalid_string':
-      return issue.validation === 'email'
+    case 'invalid_format':
+      return issue.format === 'email'
         ? 'FIELD_EMAIL_INVALID'
-        : issue.validation === 'datetime'
+        : issue.format === 'datetime'
           ? 'FIELD_DATE_INVALID'
           : 'FIELD_REQUIRED';
-    case 'invalid_date':
-      return 'FIELD_DATE_INVALID';
     default:
       // Missing, empty or mistyped value
       return 'FIELD_REQUIRED';

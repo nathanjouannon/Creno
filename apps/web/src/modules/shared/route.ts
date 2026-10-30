@@ -107,7 +107,7 @@ function parse<S extends ZodTypeAny | undefined>(schema: S, value: unknown): Inf
   if (!schema) return undefined as Infer<S>;
   const result = schema.safeParse(value);
   if (!result.success) throw result.error;
-  return result.data;
+  return result.data as Infer<S>;
 }
 
 /**

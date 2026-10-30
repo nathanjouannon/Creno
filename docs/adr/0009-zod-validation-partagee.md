@@ -15,4 +15,5 @@ Zod. Un schéma par entrée (formulaire, requête d'API, paramètre de route), d
 
 ## Conséquences
 - (+) Une seule source de vérité, types garantis.
+- Version : Zod 4 (4.6.6 au moins) depuis #83 ; les messages se passent par le paramètre `error` (codes du catalogue, inchangés), et le formulaire utilise `@hookform/resolvers` 5.
 - (-) Les schémas Zod et le contrat OpenAPI (ADR-0011) doivent rester identiques ; la méthode est fixée par l'ADR-0014 (contrat écrit d'abord, puis généré depuis Zod et vérifié en CI).

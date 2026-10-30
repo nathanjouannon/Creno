@@ -3,7 +3,7 @@ import './openapi';
 
 // Schemas never carry a message: they return a field code of docs/api/errors.md, section 3 (ADR-0009).
 // A missing value or a value of the wrong type is a missing value for the user.
-const required = { required_error: 'FIELD_REQUIRED', invalid_type_error: 'FIELD_REQUIRED' };
+const required = { error: 'FIELD_REQUIRED' };
 
 export const requiredString = () => z.string(required).trim().min(1, 'FIELD_REQUIRED');
 
@@ -15,7 +15,7 @@ export const idParam = () =>
 export const entityId = () => z.number().int();
 
 export const roleSchema = z
-  .enum(['USER', 'ADMIN'], { errorMap: () => ({ message: 'FIELD_ROLE_INVALID' }) })
+  .enum(['USER', 'ADMIN'], { error: 'FIELD_ROLE_INVALID' })
   .describe("Rôle de l'utilisateur")
   .openapi('Role');
 

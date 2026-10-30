@@ -49,7 +49,7 @@ export const loginInputSchema = z
   .object({
     email: requiredString(),
     password: z
-      .string({ required_error: 'FIELD_REQUIRED', invalid_type_error: 'FIELD_REQUIRED' })
+      .string({ error: 'FIELD_REQUIRED' })
       .min(1, 'FIELD_REQUIRED'),
   })
   .strict()
@@ -71,7 +71,7 @@ export const updateProfileInputSchema = z
     lastName: requiredString(),
     email: emailSchema,
     currentPassword: z
-      .string({ invalid_type_error: 'FIELD_REQUIRED' })
+      .string({ error: 'FIELD_REQUIRED' })
       .optional()
       .describe("Exigé seulement quand l'e-mail change (RG-18) ; jamais renvoyé"),
   })
