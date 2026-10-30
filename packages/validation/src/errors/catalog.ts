@@ -297,6 +297,11 @@ export const fieldErrorCatalog = {
     cause:
       "RG-07 (F-21) : description d'un créneau de plus de 500 caractères ; portée par le champ `description`",
   },
+  FIELD_TOO_LONG: {
+    message: 'Ce texte est trop long.',
+    cause:
+      "RG-01, RG-06, RG-17 : au-delà de la longueur maximale du champ (prénom et nom 50, e-mail 254, mot de passe 128, nom du club 120, titre 100, lieu 200, description d'événement 2 000) ; le formulaire empêche de la dépasser",
+  },
   FIELD_FREE_SLOT_OUT_OF_EVENT: {
     message: "Les horaires doivent rester dans les dates de l'événement.",
     cause:

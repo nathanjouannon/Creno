@@ -19,6 +19,15 @@ const renderForm = () =>
 beforeEach(() => vi.resetAllMocks());
 
 describe('ProfileForm (F-20, RG-18)', () => {
+  it('RG-01: the fields stop at their maximum length (#79)', async () => {
+    renderForm();
+    expect(screen.getByLabelText('Prénom')).toHaveAttribute('maxlength', '50');
+    expect(screen.getByLabelText('Nom')).toHaveAttribute('maxlength', '50');
+    expect(screen.getByLabelText('E-mail')).toHaveAttribute('maxlength', '254');
+    await userEvent.type(screen.getByLabelText('E-mail'), 'x');
+    expect(screen.getByLabelText('Mot de passe actuel')).toHaveAttribute('maxlength', '128');
+  });
+
   it('[F-20 S1] shows the saved values and no password field', () => {
     renderForm();
     expect(screen.getByLabelText('Prénom')).toHaveValue('Léa');

@@ -14,7 +14,7 @@ Règles d'usage :
 
 | Terme (FR) | Code | Définition | Règles | À ne pas employer |
 | --- | --- | --- | --- | --- |
-| Utilisateur | `User` | Une personne ayant un compte Créno. Il n'existe pas de concept « compte » distinct : créer ou supprimer un compte = créer ou supprimer un `User`. Attributs : nom (`lastName`), prénom (`firstName`), e-mail unique (`email`), mot de passe (stocké haché, `passwordHash`), rôle. | RG-01, RG-11 | `Account`, `Member`, `Volunteer` comme noms de classe ou de table |
+| Utilisateur | `User` | Une personne ayant un compte Créno. Il n'existe pas de concept « compte » distinct : créer ou supprimer un compte = créer ou supprimer un `User`. Attributs : nom (`lastName`) et prénom (`firstName`), 50 caractères au plus chacun, e-mail unique (`email`, 254 caractères au plus), mot de passe (10 à 128 caractères, stocké haché, `passwordHash`), rôle. | RG-01, RG-11 | `Account`, `Member`, `Volunteer` comme noms de classe ou de table |
 | Rôle | `Role` | Droit attaché à un utilisateur : `USER` ou `ADMIN`. Un seul rôle par utilisateur. | RG-04 | « profil », « type d'utilisateur », « permission » |
 | Administrateur | `ADMIN` (valeur de `Role`) | Utilisateur qui gère les événements, créneaux, invitations et utilisateurs. Il y en a toujours au moins un ; seul l'intéressé peut retirer son propre droit. | RG-04 | `Admin` comme entité à part, « super-utilisateur » |
 | Utilisateur (rôle simple) | `USER` (valeur de `Role`) | Utilisateur sans droit d'administration : consulte les événements, s'inscrit et se désinscrit. | | « bénévole » comme valeur de rôle |
@@ -36,7 +36,7 @@ Règles d'usage :
 
 | Terme (FR) | Code | Définition | Règles | À ne pas employer |
 | --- | --- | --- | --- | --- |
-| Événement | `Event` | Occasion organisée par le club (compétition, journée de ski…). Attributs : titre (`title`), description, lieu (`location`), début (`startsAt`), fin (`endsAt`, après le début). Mode d'inscription (`registrationMode`). Peut exister sans créneau. | RG-06, RG-09, RG-10, RG-19 | « activité », « sortie » |
+| Événement | `Event` | Occasion organisée par le club (compétition, journée de ski…). Attributs : titre (`title`, 100 caractères au plus), description (texte brut de 2 000 caractères au plus), lieu (`location`, 200 caractères au plus), début (`startsAt`), fin (`endsAt`, après le début). Mode d'inscription (`registrationMode`). Peut exister sans créneau. | RG-06, RG-09, RG-10, RG-19 | « activité », « sortie » |
 | Créneau (fixe) | `Slot` | Plage horaire définie par l'administrateur pendant laquelle des bénévoles sont attendus. On dit « créneau fixe » seulement pour le distinguer d'un créneau libre ; « créneau » seul désigne toujours un `Slot`. Appartient à un seul événement ; attributs : début (`startsAt`), fin (`endsAt`), capacité (`capacity`), description facultative (`description`, texte brut de 500 caractères au plus). | RG-07, RG-08, RG-10 | `Shift`, « tranche », « session », « poste » ; `Slot` pour un créneau libre |
 | Mode d'inscription | `registrationMode` (`FIXED`, `FREE`, `BOTH`) | Réglage d'un événement : créneaux fixes seulement (défaut), créneaux libres seulement, ou les deux. En `BOTH`, les créneaux fixes sont proposés à titre indicatif. Changer de mode est refusé tant que l'événement contient un type de créneau que le nouveau mode n'accepte pas. | RG-19 | `type`, `mode` seul, « formule » |
 | Créneau libre | `freeSlot` | Plage choisie par le bénévole lui-même (heure de début et de fin) dans les dates d'un événement, 30 minutes au moins. C'est une `Registration` sans créneau fixe : `slotId` vide, rattachée à l'événement (`eventId`) avec ses propres `startsAt` et `endsAt`. Sans limite de places, jamais « complet ». Un utilisateur peut en avoir plusieurs par événement, sans recouvrement. | RG-19, RG-20 | `Slot` (réservé aux créneaux fixes), `customSlot`, `range`, `freeRange`, « plage libre » |
@@ -55,7 +55,7 @@ Règles d'usage :
 
 | Terme (FR) | Code | Définition | Règles | À ne pas employer |
 | --- | --- | --- | --- | --- |
-| Club | `Club` | L'association propriétaire de l'instance. Une seule ligne par instance, créée à l'installation. Attributs : nom (`name`), fuseau horaire (`timezone`). | RG-16, RG-17 | « organisation », « tenant », « association » comme nom de table |
+| Club | `Club` | L'association propriétaire de l'instance. Une seule ligne par instance, créée à l'installation. Attributs : nom (`name`, 120 caractères au plus), fuseau horaire (`timezone`). | RG-16, RG-17 | « organisation », « tenant », « association » comme nom de table |
 | Installation | `setup` | Première configuration d'une instance : une page, utilisable une seule fois, crée le club et le premier administrateur. | RG-04, RG-17 | « configuration initiale », « onboarding » |
 
 ### États dans le temps (calculés, jamais stockés)

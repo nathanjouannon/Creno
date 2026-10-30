@@ -1,6 +1,6 @@
 'use client';
 
-import { updateProfileInputSchema } from '@creno/validation';
+import { FIELD_MAX_LENGTH, updateProfileInputSchema } from '@creno/validation';
 import { useRouter } from 'next/navigation';
 import { useFormContext } from 'react-hook-form';
 import { Form } from '@/components/Form';
@@ -26,7 +26,7 @@ function CurrentPasswordField({ savedEmail }: { savedEmail: string }) {
       help="Nécessaire pour changer d'e-mail."
       required
     >
-      <PasswordInput autoComplete="current-password" />
+      <PasswordInput autoComplete="current-password" maxLength={FIELD_MAX_LENGTH.password} />
     </FormField>
   );
 }
@@ -63,13 +63,13 @@ export function ProfileForm({ user }: Props) {
       }}
     >
       <FormField name="lastName" label="Nom" required>
-        <TextInput autoComplete="family-name" />
+        <TextInput autoComplete="family-name" maxLength={FIELD_MAX_LENGTH.lastName} />
       </FormField>
       <FormField name="firstName" label="Prénom" required>
-        <TextInput autoComplete="given-name" />
+        <TextInput autoComplete="given-name" maxLength={FIELD_MAX_LENGTH.firstName} />
       </FormField>
       <FormField name="email" label="E-mail" required>
-        <EmailInput autoComplete="email" />
+        <EmailInput autoComplete="email" maxLength={FIELD_MAX_LENGTH.email} />
       </FormField>
       <CurrentPasswordField savedEmail={user.email} />
     </Form>

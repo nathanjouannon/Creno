@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { ZodTypeAny } from 'zod';
 import {
+  FIELD_MAX_LENGTH,
   acceptInvitationInputSchema,
+  resetPasswordInputSchema,
   eventInputSchema,
   eventUpdateSchema,
   freeSlotInputSchema,
@@ -242,5 +244,188 @@ describe('registration mode and free slots (F-22, RG-19, RG-20)', () => {
     expect(freeSlotInputSchema.safeParse(withUser).error?.issues[0]?.code).toBe(
       'unrecognized_keys',
     );
+  });
+});
+
+describe('maximum lengths (RG-01, RG-06, RG-17, #79)', () => {
+  const event = { title: 'Tournoi', startsAt: slot.startsAt, endsAt: slot.endsAt };
+  const club = { name: 'Club', timezone: 'Europe/Paris' };
+  const text = (length: number) => 'a'.repeat(length);
+  // An address of `length` characters
+  const address = (length: number) => `${text(length - '@club.fr'.length)}@club.fr`;
+
+  // [label, schema, input with the value, field, maximum, value of a given length]
+  const cases: [
+    string,
+    ZodTypeAny,
+    (value: string) => unknown,
+    string,
+    number,
+    (n: number) => string,
+  ][] = [
+    [
+      'first name (invitation)',
+      acceptInvitationInputSchema,
+      (v) => ({ ...person, firstName: v }),
+      'firstName',
+      FIELD_MAX_LENGTH.firstName,
+      text,
+    ],
+    [
+      'last name (invitation)',
+      acceptInvitationInputSchema,
+      (v) => ({ ...person, lastName: v }),
+      'lastName',
+      FIELD_MAX_LENGTH.lastName,
+      text,
+    ],
+    [
+      'e-mail (invitation)',
+      acceptInvitationInputSchema,
+      (v) => ({ ...person, email: v }),
+      'email',
+      FIELD_MAX_LENGTH.email,
+      address,
+    ],
+    [
+      'password (invitation)',
+      acceptInvitationInputSchema,
+      (v) => ({ ...person, password: v }),
+      'password',
+      FIELD_MAX_LENGTH.password,
+      text,
+    ],
+    [
+      'password (reset)',
+      resetPasswordInputSchema,
+      (v) => ({ password: v }),
+      'password',
+      FIELD_MAX_LENGTH.password,
+      text,
+    ],
+    [
+      'first name (profile)',
+      updateProfileInputSchema,
+      (v) => ({ firstName: v, lastName: 'B', email: 'lea@club.fr' }),
+      'firstName',
+      FIELD_MAX_LENGTH.firstName,
+      text,
+    ],
+    [
+      'current password (profile)',
+      updateProfileInputSchema,
+      (v) => ({ firstName: 'L', lastName: 'B', email: 'lea@club.fr', currentPassword: v }),
+      'currentPassword',
+      FIELD_MAX_LENGTH.password,
+      text,
+    ],
+    [
+      'club name (installation)',
+      setupInputSchema,
+      (v) => ({ club: { ...club, name: v }, admin: person }),
+      'club.name',
+      FIELD_MAX_LENGTH.clubName,
+      text,
+    ],
+    [
+      'first name (installation)',
+      setupInputSchema,
+      (v) => ({ club, admin: { ...person, firstName: v } }),
+      'admin.firstName',
+      FIELD_MAX_LENGTH.firstName,
+      text,
+    ],
+    [
+      'e-mail (login)',
+      loginInputSchema,
+      (v) => ({ email: v, password: 'x' }),
+      'email',
+      FIELD_MAX_LENGTH.email,
+      address,
+    ],
+    [
+      'password (login)',
+      loginInputSchema,
+      (v) => ({ email: 'lea@club.fr', password: v }),
+      'password',
+      FIELD_MAX_LENGTH.password,
+      text,
+    ],
+    [
+      'title (creation)',
+      eventInputSchema,
+      (v) => ({ ...event, title: v }),
+      'title',
+      FIELD_MAX_LENGTH.eventTitle,
+      text,
+    ],
+    [
+      'location (creation)',
+      eventInputSchema,
+      (v) => ({ ...event, location: v }),
+      'location',
+      FIELD_MAX_LENGTH.eventLocation,
+      text,
+    ],
+    [
+      'description (creation)',
+      eventInputSchema,
+      (v) => ({ ...event, description: v }),
+      'description',
+      FIELD_MAX_LENGTH.eventDescription,
+      text,
+    ],
+    [
+      'title (update)',
+      eventUpdateSchema,
+      (v) => ({ title: v }),
+      'title',
+      FIELD_MAX_LENGTH.eventTitle,
+      text,
+    ],
+    [
+      'location (update)',
+      eventUpdateSchema,
+      (v) => ({ location: v }),
+      'location',
+      FIELD_MAX_LENGTH.eventLocation,
+      text,
+    ],
+    [
+      'description (update)',
+      eventUpdateSchema,
+      (v) => ({ description: v }),
+      'description',
+      FIELD_MAX_LENGTH.eventDescription,
+      text,
+    ],
+  ];
+
+  it.each(cases)(
+    '%s: N characters accepted, N + 1 refused with FIELD_TOO_LONG',
+    (_, schema, input, field, max, value) => {
+      expect(fieldCodes(schema, input(value(max)))).toEqual({});
+      expect(fieldCodes(schema, input(value(max + 1)))).toEqual({ [field]: 'FIELD_TOO_LONG' });
+    },
+  );
+
+  it('the figures are the ones of the rules', () => {
+    expect(FIELD_MAX_LENGTH).toEqual({
+      firstName: 50,
+      lastName: 50,
+      email: 254,
+      password: 128,
+      clubName: 120,
+      eventTitle: 100,
+      eventLocation: 200,
+      eventDescription: 2000,
+      slotDescription: 500,
+    });
+  });
+
+  it('trimmed fields are measured after trimming', () => {
+    expect(
+      fieldCodes(acceptInvitationInputSchema, { ...person, firstName: `  ${text(50)}  ` }),
+    ).toEqual({});
   });
 });

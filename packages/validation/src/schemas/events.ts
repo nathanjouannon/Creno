@@ -5,6 +5,7 @@ import {
   endsAfterStarts,
   endsAfterStartsIssue,
   entityId,
+  FIELD_MAX_LENGTH,
   idParam,
   outDateTime,
 } from './common';
@@ -68,7 +69,7 @@ const slotDescription = () =>
   z
     .string()
     .trim()
-    .max(500, 'FIELD_DESCRIPTION_TOO_LONG')
+    .max(FIELD_MAX_LENGTH.slotDescription, 'FIELD_DESCRIPTION_TOO_LONG')
     .nullable()
     .describe('Texte brut de 500 caractères au plus ; vide ou `null` = sans description (RG-07)');
 
@@ -159,6 +160,27 @@ export const freeSlotInputSchema = z
 
 const text = () => z.string().nullable();
 
+// RG-06 (#79): the title is trimmed, the description and the location are stored as typed
+const eventTitle = () =>
+  z
+    .string({ required_error: 'FIELD_REQUIRED', invalid_type_error: 'FIELD_REQUIRED' })
+    .trim()
+    .min(1, 'FIELD_REQUIRED')
+    .max(FIELD_MAX_LENGTH.eventTitle, 'FIELD_TOO_LONG')
+    .describe('100 caractères au plus (RG-06)');
+const eventDescription = () =>
+  z
+    .string()
+    .max(FIELD_MAX_LENGTH.eventDescription, 'FIELD_TOO_LONG')
+    .nullable()
+    .describe('Texte brut de 2 000 caractères au plus (RG-06)');
+const eventLocation = () =>
+  z
+    .string()
+    .max(FIELD_MAX_LENGTH.eventLocation, 'FIELD_TOO_LONG')
+    .nullable()
+    .describe('200 caractères au plus (RG-06)');
+
 export const eventSummarySchema = z
   .object({
     id: entityId(),
@@ -187,12 +209,9 @@ export const eventDetailSchema = eventSummarySchema
 // RG-06: the end comes after the start; slots are optional.
 export const eventInputSchema = z
   .object({
-    title: z
-      .string({ required_error: 'FIELD_REQUIRED', invalid_type_error: 'FIELD_REQUIRED' })
-      .trim()
-      .min(1, 'FIELD_REQUIRED'),
-    description: text().optional(),
-    location: text().optional(),
+    title: eventTitle(),
+    description: eventDescription().optional(),
+    location: eventLocation().optional(),
     startsAt: dateTime(),
     endsAt: dateTime().describe('Après `startsAt` (RG-06)'),
     registrationMode: registrationModeSchema
@@ -209,9 +228,9 @@ export const eventInputSchema = z
 
 export const eventUpdateSchema = z
   .object({
-    title: z.string({ invalid_type_error: 'FIELD_REQUIRED' }).trim().min(1, 'FIELD_REQUIRED'),
-    description: text(),
-    location: text(),
+    title: eventTitle(),
+    description: eventDescription(),
+    location: eventLocation(),
     startsAt: dateTime(),
     endsAt: dateTime(),
     registrationMode: registrationModeSchema,
