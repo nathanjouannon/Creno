@@ -34,14 +34,24 @@ export function createLoginService(deps: Dependencies) {
      */
     async login(input: LoginInput, log: Logger) {
       const key = identifierHash(input.email, secret);
-      const now = clock.now();
 
-      // RG-03: blocked even with the right password; attempts during the block do not extend it
-      const attempt = await repository.findAttempt(key);
-      if (isLocked(attempt, now) && attempt?.lockedUntil) {
+      // RG-03: the attempt is counted as a failure *before* the password is checked, one attempt at a time per
+      // address. Simultaneous attempts therefore check at most 5 passwords before the block (#78); a success
+      // removes the count below. Blocked even with the right password; attempts during the block do not extend it.
+      const reserved = await repository.inAttemptTransaction(key, async (tx) => {
+        const current = await tx.find();
+        const now = clock.now();
+        if (isLocked(current, now) && current?.lockedUntil) {
+          return { lockedUntil: current.lockedUntil, state: current };
+        }
+        const next = afterFailure(current, now);
+        await tx.save(next);
+        return { lockedUntil: null, state: next };
+      });
+      if (reserved.lockedUntil) {
         log.warn('login refused: address blocked');
         throw new AppError('AUTH_ACCOUNT_LOCKED', {
-          lockedUntil: attempt.lockedUntil.toISOString(),
+          lockedUntil: reserved.lockedUntil.toISOString(),
         });
       }
 
@@ -52,11 +62,7 @@ export function createLoginService(deps: Dependencies) {
       );
 
       if (!user || !correct) {
-        const state = await repository.inAttemptTransaction(async (tx) => {
-          const next = afterFailure(await tx.find(key), clock.now());
-          await tx.save(key, next);
-          return next;
-        });
+        const { state } = reserved;
         log.warn('login failed', { userId: user?.id, failedCount: state.failedCount });
         if (state.lockedUntil) log.warn('login blocked for 15 minutes', { userId: user?.id });
         throw new AppError('AUTH_INVALID_CREDENTIALS');
