@@ -36,7 +36,7 @@
     "@axe-core/playwright": "^4.14.0",
     "@creno/tokens": "workspace:*",
     "@eslint/js": "^9.0.0",
-    "@next/eslint-plugin-next": "^15.5.28",
+    "@next/eslint-plugin-next": "^16.4.3",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
