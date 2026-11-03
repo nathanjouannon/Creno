@@ -26,7 +26,7 @@
     "test:e2e": "pnpm --filter @creno/web test:e2e"
   },
   "devDependencies": {
-    "@redocly/cli": "^2.71.1",
+    "@redocly/cli": "^2.72.1",
     "prettier": "^3.3.0",
     "typescript": "^5.6.0"
   },
