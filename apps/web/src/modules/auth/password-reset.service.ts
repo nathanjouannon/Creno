@@ -1,5 +1,11 @@
 import { AppError } from '@creno/validation';
-import { generateLinkToken, hashLinkToken, type Clock } from '@/modules/shared';
+import {
+  generateLinkToken,
+  hashLinkToken,
+  type Clock,
+  type Logger,
+  type SessionUser,
+} from '@/modules/shared';
 import { identifierHash } from './login-attempt';
 import type { PasswordResetRepository } from './password-reset.repository';
 
@@ -34,13 +40,14 @@ export function createPasswordResetService({
   return {
     /**
      * F-10, RG-12: a new link for the user, valid 3 days, which replaces the earlier ones. The token is returned
-     * once, here; only its hash is stored.
+     * once, here; only its hash is stored. security.md, section 4: who generated it for whom is logged (#81).
      */
-    async create(userId: number) {
+    async create(actor: SessionUser, userId: number, log: Logger) {
       if (!(await repository.userExists(userId))) throw new AppError('USER_NOT_FOUND');
       const token = generateLinkToken();
       const expiresAt = new Date(clock.now().getTime() + RESET_VALIDITY_MS);
       await repository.replaceTokens(userId, hashLinkToken(token), expiresAt);
+      log.info('password reset link created', { actorId: actor.id, userId });
       return {
         url: new URL(`/reinitialisation/${token}`, appUrl).toString(),
         expiresAt: expiresAt.toISOString(),
@@ -56,7 +63,7 @@ export function createPasswordResetService({
     /**
      * F-02, RG-12, RG-03: changes the password once. No session is opened: the user signs in afterwards.
      */
-    async reset(token: string, password: string) {
+    async reset(token: string, password: string, log: Logger) {
       const record = await findUsable(token);
       // Hashed before the transaction: argon2 takes tens of milliseconds
       const passwordHash = await hashPassword(password);
@@ -68,6 +75,8 @@ export function createPasswordResetService({
         attemptKey: identifierHash(record.user.email, secret),
       });
       if (!done) throw new AppError('AUTH_RESET_LINK_INVALID');
+      // security.md, section 4 (#81)
+      log.info('password reset used', { userId: record.user.id });
     },
   };
 }

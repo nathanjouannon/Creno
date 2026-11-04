@@ -1,4 +1,5 @@
 import { AppError, type SetupInput } from '@creno/validation';
+import type { Logger } from '@/modules/shared';
 import type { ClubRepository, InstalledUser } from './club.repository';
 
 interface Dependencies {
@@ -27,7 +28,7 @@ export function createClubService({
      * F-19, RG-17, RG-04, RG-16: creates the club and the first administrator, then signs them in.
      * Once installed, the installation does not exist any more (NOT_FOUND), whoever asks first or second.
      */
-    async install(input: SetupInput) {
+    async install(input: SetupInput, log: Logger) {
       if (await isInstalled()) throw new AppError('NOT_FOUND');
 
       // Hashed before the transaction: argon2 takes tens of milliseconds and must not hold the database
@@ -43,6 +44,7 @@ export function createClubService({
       });
       // RG-17: another installation won the race
       if (!created) throw new AppError('NOT_FOUND');
+      log.info('instance installed', { userId: created.id }); // security.md, section 4 (#81)
 
       return { user: toUserView(created), sessionCookie: await openSession(created) };
     },

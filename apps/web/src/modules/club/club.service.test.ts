@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { SetupInput } from '@creno/validation';
 import type { ClubRepository, InstalledUser } from './club.repository';
+import { createLogger } from '@/modules/shared';
 import { createClubService } from './club.service';
+
+const log = createLogger({ write: () => {} });
 
 const input: SetupInput = {
   club: { name: 'Ski Club des Arcs', timezone: 'Europe/Paris' },
@@ -42,7 +45,7 @@ function build(overrides: Partial<ClubRepository> = {}) {
 describe('club service: installation (F-19, RG-17)', () => {
   it('[F-19 S1] RG-04: creates the club and an ADMIN with a hashed password, and signs them in', async () => {
     const { service, repository, hashPassword } = build();
-    const result = await service.install(input);
+    const result = await service.install(input, log);
 
     expect(hashPassword).toHaveBeenCalledWith('0123456789');
     expect(repository.createClubAndAdmin).toHaveBeenCalledWith({
@@ -61,14 +64,14 @@ describe('club service: installation (F-19, RG-17)', () => {
     const { service, repository, hashPassword } = build({
       countUsers: vi.fn().mockResolvedValue(1),
     });
-    await expect(service.install(input)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(service.install(input, log)).rejects.toMatchObject({ code: 'NOT_FOUND' });
     expect(hashPassword).not.toHaveBeenCalled();
     expect(repository.createClubAndAdmin).not.toHaveBeenCalled();
   });
 
   it('[F-19 S5] RG-17: answers NOT_FOUND when another installation won the race (repository returns null)', async () => {
     const { service } = build({ createClubAndAdmin: vi.fn().mockResolvedValue(null) });
-    await expect(service.install(input)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(service.install(input, log)).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
   it('RG-17: the instance is installed from the first user on', async () => {
@@ -84,5 +87,15 @@ describe('club service: installation (F-19, RG-17)', () => {
       club,
     );
     await expect(build().service.getClub()).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+});
+
+describe('club service: security events (security.md, section 4, #81)', () => {
+  it('logs the installation with the id of the first administrator, nothing personal', async () => {
+    const lines: Record<string, unknown>[] = [];
+    const logger = createLogger({ write: (line) => lines.push(JSON.parse(line)) });
+    await build().service.install(input, logger);
+    expect(lines).toEqual([expect.objectContaining({ msg: 'instance installed', userId: 1 })]);
+    expect(JSON.stringify(lines)).not.toMatch(/exemple|Ski Club|0123456789/);
   });
 });
