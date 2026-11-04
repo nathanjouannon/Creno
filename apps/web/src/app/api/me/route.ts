@@ -19,7 +19,7 @@ export const PATCH = route(
 );
 
 // F-11, RG-11: the confirmation is the interface's job (openapi.yaml); the cookie is erased with the account.
-export const DELETE = route({ auth: 'user' }, async ({ user }) => {
-  await getMembersService().deleteAccount(user);
+export const DELETE = route({ auth: 'user' }, async ({ user, log }) => {
+  await getMembersService().deleteAccount(user, log);
   return { status: 204, headers: { 'Set-Cookie': getAuthService().closeSession() } };
 });

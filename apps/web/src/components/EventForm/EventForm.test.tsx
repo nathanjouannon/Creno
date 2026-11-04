@@ -24,6 +24,14 @@ async function fillEvent(title = 'Course de ski') {
 const save = () => userEvent.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
 describe('EventForm (C4, C5)', () => {
+  it('RG-06: the fields stop at their maximum length, and the description says it (#79)', () => {
+    render(<EventForm timeZone="Europe/Paris" />);
+    expect(screen.getByLabelText('Titre')).toHaveAttribute('maxlength', '100');
+    expect(screen.getByLabelText('Description')).toHaveAttribute('maxlength', '2000');
+    expect(screen.getByLabelText('Lieu')).toHaveAttribute('maxlength', '200');
+    expect(screen.getByText('Texte simple, 2 000 caractères au plus.')).toBeInTheDocument();
+  });
+
   it('[F-04 S2] an empty title shows « Le titre est obligatoire. » and sends nothing', async () => {
     render(<EventForm timeZone="Europe/Paris" />);
     await fillEvent('');

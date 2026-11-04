@@ -1,5 +1,11 @@
 import { AppError } from '@creno/validation';
-import { generateLinkToken, hashLinkToken, type Clock } from '@/modules/shared';
+import {
+  generateLinkToken,
+  hashLinkToken,
+  type Clock,
+  type Logger,
+  type SessionUser,
+} from '@/modules/shared';
 import { identifierHash } from './login-attempt';
 import type { PasswordResetRepository } from './password-reset.repository';
 
@@ -73,7 +79,7 @@ export function createPasswordResetService({
     /**
      * F-02, RG-12, RG-03: changes the password once. No session is opened: the user signs in afterwards.
      */
-    async reset(token: string, password: string) {
+    async reset(token: string, password: string, log: Logger) {
       const record = await findUsable(token);
       // Hashed before the transaction: argon2 takes tens of milliseconds
       const passwordHash = await hashPassword(password);
@@ -85,6 +91,8 @@ export function createPasswordResetService({
         attemptKey: identifierHash(record.user.email, secret),
       });
       if (!done) throw new AppError('AUTH_RESET_LINK_INVALID');
+      // security.md, section 4 (#81)
+      log.info('password reset used', { userId: record.user.id });
     },
   };
 }

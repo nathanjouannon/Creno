@@ -22,16 +22,21 @@ function build(
 ) {
   const attempts = new Map<string, AttemptState>();
   const hasUser = options.user !== null;
+  // Like the row lock of the repository: the transactions of one address run one after the other
+  let queue: Promise<unknown> = Promise.resolve();
   const repository = {
-    findAttempt: vi.fn(async () => options.attempt ?? null),
     findUserByEmail: vi.fn(async () => (hasUser ? (options.user ?? user) : null)),
     clearAttempts: vi.fn(async () => {}),
-    inAttemptTransaction: vi.fn(async (work: (tx: unknown) => Promise<unknown>) =>
-      work({
-        find: async (hash: string) => attempts.get(hash) ?? options.attempt ?? null,
-        save: async (hash: string, state: AttemptState) => void attempts.set(hash, state),
-      }),
-    ),
+    inAttemptTransaction: vi.fn((hash: string, work: (tx: unknown) => Promise<unknown>) => {
+      const run = queue.then(() =>
+        work({
+          find: async () => attempts.get(hash) ?? options.attempt ?? null,
+          save: async (state: AttemptState) => void attempts.set(hash, state),
+        }),
+      );
+      queue = run.catch(() => {});
+      return run;
+    }),
   } as unknown as LoginRepository;
   const verifyPassword = vi.fn(async () => options.passwordOk ?? true);
   const service = createLoginService({
@@ -98,7 +103,7 @@ describe('login service (F-02, RG-03)', () => {
 
   it('[F-02 S3] RG-03: while blocked, even the right password gets AUTH_ACCOUNT_LOCKED with the end of the block, and nothing is written or checked', async () => {
     const lockedUntil = new Date('2027-01-14T09:10:00Z');
-    const { service, repository, verifyPassword } = build({
+    const { service, repository, verifyPassword, attempts } = build({
       attempt: { failedCount: 5, lockedUntil },
     });
     await expect(service.login(input, log)).rejects.toMatchObject({
@@ -106,8 +111,38 @@ describe('login service (F-02, RG-03)', () => {
       details: { lockedUntil: '2027-01-14T09:10:00.000Z' },
     });
     expect(verifyPassword).not.toHaveBeenCalled();
-    expect(repository.inAttemptTransaction).not.toHaveBeenCalled();
+    expect(attempts.size).toBe(0);
     expect(repository.clearAttempts).not.toHaveBeenCalled();
+  });
+
+  it('RG-03: of 10 simultaneous attempts, only 5 passwords are checked before the block (#78)', async () => {
+    const { service, verifyPassword } = build({ passwordOk: false });
+    const codes = await Promise.all(
+      Array.from({ length: 10 }, () =>
+        service.login(input, log).then(
+          () => 'OK',
+          (error: { code: string }) => error.code,
+        ),
+      ),
+    );
+    expect(verifyPassword).toHaveBeenCalledTimes(5);
+    expect(codes.filter((c) => c === 'AUTH_INVALID_CREDENTIALS')).toHaveLength(5);
+    expect(codes.filter((c) => c === 'AUTH_ACCOUNT_LOCKED')).toHaveLength(5);
+  });
+
+  it('RG-03: the attempt is counted before the password is checked, and a success removes the count', async () => {
+    const { service, repository, verifyPassword, attempts } = build({
+      attempt: { failedCount: 4, lockedUntil: null },
+    });
+    verifyPassword.mockImplementation(async () => {
+      // Already counted while the password is being checked
+      expect([...attempts.values()]).toEqual([
+        { failedCount: 5, lockedUntil: new Date('2027-01-14T09:15:00Z') },
+      ]);
+      return true;
+    });
+    await expect(service.login(input, log)).resolves.toMatchObject({ sessionCookie: 'session-7-v2' });
+    expect(repository.clearAttempts).toHaveBeenCalledOnce();
   });
 
   it('RG-03: the block is the same for an address without account', async () => {

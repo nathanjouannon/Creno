@@ -12,8 +12,8 @@ export const GET = route({ auth: 'optional', params: tokenParamsSchema }, async 
 // No session is opened: the user signs in with the new password.
 export const POST = route(
   { auth: 'optional', params: tokenParamsSchema, body: resetPasswordInputSchema },
-  async ({ params, body }) => {
-    await getPasswordResetService().reset(params.token, body.password);
+  async ({ params, body, log }) => {
+    await getPasswordResetService().reset(params.token, body.password, log);
     return { status: 204 };
   },
 );

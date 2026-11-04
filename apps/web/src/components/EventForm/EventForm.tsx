@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { FIELD_MAX_LENGTH } from '@creno/validation';
 import { useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/Button';
@@ -170,13 +171,17 @@ export function EventForm({ timeZone, event }: Props) {
         required
         messages={{ FIELD_REQUIRED: 'Le titre est obligatoire.' }}
       >
-        <TextInput />
+        <TextInput maxLength={FIELD_MAX_LENGTH.eventTitle} />
       </FormField>
-      <FormField name="description" label="Description">
-        <Textarea />
+      <FormField
+        name="description"
+        label="Description"
+        help="Texte simple, 2 000 caractères au plus."
+      >
+        <Textarea maxLength={FIELD_MAX_LENGTH.eventDescription} />
       </FormField>
       <FormField name="location" label="Lieu">
-        <TextInput />
+        <TextInput maxLength={FIELD_MAX_LENGTH.eventLocation} />
       </FormField>
       <DateTimeRange name="dates" legend="Dates de l'événement" />
       <RegistrationSection timeZone={timeZone} event={event} />
