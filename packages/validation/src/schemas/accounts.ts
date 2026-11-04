@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   emailSchema,
   entityId,
+  FIELD_MAX_LENGTH,
   idParam,
   outDateTime,
   passwordSchema,
@@ -30,11 +31,13 @@ export const clubSchema = z
 
 export const setupInputSchema = z
   .object({
-    club: z.object({ name: requiredString(), timezone: timezoneSchema }).strict(),
+    club: z
+      .object({ name: requiredString(FIELD_MAX_LENGTH.clubName), timezone: timezoneSchema })
+      .strict(),
     admin: z
       .object({
-        firstName: requiredString(),
-        lastName: requiredString(),
+        firstName: requiredString(FIELD_MAX_LENGTH.firstName),
+        lastName: requiredString(FIELD_MAX_LENGTH.lastName),
         email: emailSchema,
         password: passwordSchema,
       })
@@ -47,18 +50,19 @@ export type SetupInput = z.infer<typeof setupInputSchema>;
 
 export const loginInputSchema = z
   .object({
-    email: requiredString(),
+    email: requiredString(FIELD_MAX_LENGTH.email),
     password: z
       .string({ required_error: 'FIELD_REQUIRED', invalid_type_error: 'FIELD_REQUIRED' })
-      .min(1, 'FIELD_REQUIRED'),
+      .min(1, 'FIELD_REQUIRED')
+      .max(FIELD_MAX_LENGTH.password, 'FIELD_TOO_LONG'),
   })
   .strict()
   .openapi('LoginInput');
 
 export const acceptInvitationInputSchema = z
   .object({
-    firstName: requiredString(),
-    lastName: requiredString(),
+    firstName: requiredString(FIELD_MAX_LENGTH.firstName),
+    lastName: requiredString(FIELD_MAX_LENGTH.lastName),
     email: emailSchema,
     password: passwordSchema,
   })
@@ -67,11 +71,12 @@ export const acceptInvitationInputSchema = z
 
 export const updateProfileInputSchema = z
   .object({
-    firstName: requiredString(),
-    lastName: requiredString(),
+    firstName: requiredString(FIELD_MAX_LENGTH.firstName),
+    lastName: requiredString(FIELD_MAX_LENGTH.lastName),
     email: emailSchema,
     currentPassword: z
       .string({ invalid_type_error: 'FIELD_REQUIRED' })
+      .max(FIELD_MAX_LENGTH.password, 'FIELD_TOO_LONG')
       .optional()
       .describe("Exigé seulement quand l'e-mail change (RG-18) ; jamais renvoyé"),
   })

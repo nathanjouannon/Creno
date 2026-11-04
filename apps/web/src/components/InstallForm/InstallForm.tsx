@@ -1,6 +1,6 @@
 'use client';
 
-import { setupInputSchema } from '@creno/validation';
+import { FIELD_MAX_LENGTH, setupInputSchema } from '@creno/validation';
 import { useRouter } from 'next/navigation';
 import { Form } from '@/components/Form';
 import { FormField } from '@/components/FormField';
@@ -40,7 +40,7 @@ export function InstallForm({ timezones }: Props) {
       <fieldset className="flex flex-col gap-md">
         <legend className="mb-sm text-large font-medium">Le club</legend>
         <FormField name="club.name" label="Nom du club" required>
-          <TextInput autoComplete="organization" />
+          <TextInput autoComplete="organization" maxLength={FIELD_MAX_LENGTH.clubName} />
         </FormField>
         <FormField name="club.timezone" label="Fuseau horaire" required>
           <SelectInput options={timezones} />
@@ -49,13 +49,13 @@ export function InstallForm({ timezones }: Props) {
       <fieldset className="flex flex-col gap-md">
         <legend className="mb-sm text-large font-medium">Premier administrateur</legend>
         <FormField name="admin.lastName" label="Nom" required>
-          <TextInput autoComplete="family-name" />
+          <TextInput autoComplete="family-name" maxLength={FIELD_MAX_LENGTH.lastName} />
         </FormField>
         <FormField name="admin.firstName" label="Prénom" required>
-          <TextInput autoComplete="given-name" />
+          <TextInput autoComplete="given-name" maxLength={FIELD_MAX_LENGTH.firstName} />
         </FormField>
         <FormField name="admin.email" label="E-mail" required>
-          <EmailInput />
+          <EmailInput maxLength={FIELD_MAX_LENGTH.email} />
         </FormField>
         <FormField
           name="admin.password"
@@ -63,7 +63,7 @@ export function InstallForm({ timezones }: Props) {
           help="10 caractères au minimum."
           required
         >
-          <PasswordInput autoComplete="new-password" />
+          <PasswordInput autoComplete="new-password" maxLength={FIELD_MAX_LENGTH.password} />
         </FormField>
       </fieldset>
       <PrivacyNotice />

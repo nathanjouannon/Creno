@@ -1,6 +1,6 @@
 'use client';
 
-import { resetPasswordInputSchema } from '@creno/validation';
+import { FIELD_MAX_LENGTH, resetPasswordInputSchema } from '@creno/validation';
 import { useRouter } from 'next/navigation';
 import { Form } from '@/components/Form';
 import { FormField } from '@/components/FormField';
@@ -41,7 +41,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         help="10 caractères au minimum."
         required
       >
-        <PasswordInput autoComplete="new-password" />
+        <PasswordInput autoComplete="new-password" maxLength={FIELD_MAX_LENGTH.password} />
       </FormField>
     </Form>
   );
