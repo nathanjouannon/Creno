@@ -19,6 +19,12 @@ export interface AttemptTransaction {
 
 const RETRIES = 6;
 
+/**
+ * Prisma turns an insensitive `equals` into ILIKE, where `%` and `_` are wildcards: escaped, the typed address only
+ * matches itself, so a variant such as `name%` cannot reach an account with a fresh RG-03 counter (#76).
+ */
+export const escapeLikePattern = (value: string) => value.replace(/[\\%_]/g, '\\$&');
+
 // A serialization failure (two failures at the same moment) or a duplicate key (two first failures) is replayed
 const isConflict = (error: unknown) =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -29,7 +35,7 @@ export function createLoginRepository(prisma: PrismaClient) {
     /** The address is compared without case (RG-01). */
     findUserByEmail: (email: string): Promise<LoginUser | null> =>
       prisma.user.findFirst({
-        where: { email: { equals: email, mode: 'insensitive' } },
+        where: { email: { equals: escapeLikePattern(email), mode: 'insensitive' } },
         select: {
           id: true,
           firstName: true,
