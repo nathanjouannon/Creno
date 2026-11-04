@@ -52,7 +52,7 @@ const codeOf = async (action: Promise<unknown>) => {
 describe('create', () => {
   it('[F-10 S7] RG-12: a link valid 3 days, token stored hashed', async () => {
     const { service, repository, replaceTokens } = build();
-    const link = await service.create(7);
+    const link = await service.create(admin, 7, log);
     expect(link.expiresAt).toBe(new Date(now.getTime() + RESET_VALIDITY_MS).toISOString());
     expect(RESET_VALIDITY_MS).toBe(3 * 24 * 3600 * 1000);
     const token = link.url.replace('https://creno.example.org/reinitialisation/', '');
@@ -62,13 +62,13 @@ describe('create', () => {
 
   it('refuses an unknown user', async () => {
     const { service, replaceTokens } = build({}, null);
-    expect(await codeOf(service.create(7))).toBe('USER_NOT_FOUND');
+    expect(await codeOf(service.create(admin, 7, log))).toBe('USER_NOT_FOUND');
     expect(replaceTokens).not.toHaveBeenCalled();
   });
 
   it('RG-12: never a link for an administrator, whoever asks (#82)', async () => {
     const { service, replaceTokens } = build({}, 'ADMIN');
-    expect(await codeOf(service.create(7))).toBe('USER_RESET_FORBIDDEN');
+    expect(await codeOf(service.create(admin, 7, log))).toBe('USER_RESET_FORBIDDEN');
     expect(replaceTokens).not.toHaveBeenCalled();
   });
 });

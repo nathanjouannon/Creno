@@ -55,9 +55,14 @@ export function createPasswordResetService({
   }
 
   return {
-    /** F-10, RG-12: from the member's page, never for an administrator (#82). */
-    create(userId: number) {
-      return createLink(userId, { forAdministrator: false });
+    /**
+     * F-10, RG-12: from the member's page, never for an administrator (#82). security.md, section 4: who generated
+     * the link for whom is logged, never the token (#81).
+     */
+    async create(actor: SessionUser, userId: number, log: Logger) {
+      const link = await createLink(userId, { forAdministrator: false });
+      log.info('password reset link created', { actorId: actor.id, userId });
+      return link;
     },
 
     /**
