@@ -67,7 +67,7 @@ La procédure complète, avec les commandes exactes, est écrite dans `README.md
 
 ## 5. Reverse proxy, sauvegardes, supervision
 
-**Reverse proxy : Caddy.** Il termine le HTTPS (certificats Let's Encrypt automatiques), redirige le HTTP vers le HTTPS et pose les en-têtes de `security.md` (HSTS, CSP, `nosniff`, `Referrer-Policy`, `frame-ancestors`). Les limites de débit par adresse IP sont appliquées par l'application, ce qui évite un module Caddy supplémentaire et suffit pour une seule instance. Caddy transmet l'adresse IP du client dans un en-tête lu quand `TRUST_PROXY` vaut `true`.
+**Reverse proxy : Caddy.** Il termine le HTTPS (certificats Let's Encrypt automatiques), redirige le HTTP vers le HTTPS et pose les en-têtes de `security.md` (HSTS, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) ; la CSP des pages vient de l'application (nonce par page), Caddy n'en pose une que sur les réponses qui n'en ont pas. Les limites de débit par adresse IP sont appliquées par l'application, ce qui évite un module Caddy supplémentaire et suffit pour une seule instance. Caddy transmet l'adresse IP du client dans un en-tête lu quand `TRUST_PROXY` vaut `true`.
 
 **Sauvegardes**
 - Une sauvegarde par jour par `pg_dump` (format `custom`), chiffrée avec **`age`** pour la clé publique `BACKUP_ENCRYPTION_KEY`, conservée sur le serveur dans `backups/` (décision du 2026-10-26) : 7 jours glissants, plus la première de chaque mois gardée 12 mois (`backups/monthly/`). Script : `deploy/backup.sh`, lancé chaque nuit par `cron` (commande dans `README.md`).
