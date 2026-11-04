@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { fakeAuthenticator, resetAuthenticator, setAuthenticator } from './auth';
 import { resetRateLimits } from './rate-limit';
-import { route, routeTemplate } from './route';
+import { MAX_BODY_BYTES, route, routeTemplate } from './route';
 
 const post = (body?: unknown, url = 'http://localhost/api/things') =>
   new Request(url, {
