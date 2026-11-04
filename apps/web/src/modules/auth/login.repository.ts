@@ -18,6 +18,12 @@ export interface AttemptTransaction {
   save(state: AttemptState): Promise<void>;
 }
 
+/**
+ * Prisma turns an insensitive `equals` into ILIKE, where `%` and `_` are wildcards: escaped, the typed address only
+ * matches itself, so a variant such as `name%` cannot reach an account with a fresh RG-03 counter (#76).
+ */
+export const escapeLikePattern = (value: string) => value.replace(/[\\%_]/g, '\\$&');
+
 export function createLoginRepository(prisma: PrismaClient) {
   return {
     /** The address is compared without case (RG-01). */
