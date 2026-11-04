@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { createContext, useContext, useRef, useState, type ReactNode } from 'react';
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
 import type { ZodTypeAny } from 'zod';
+import type { $ZodType } from 'zod/v4/core';
 import { Alert } from '@/components/Alert';
 import { Button } from '@/components/Button';
 import type { ApiError, ApiResult } from '@/lib/api-client';
@@ -54,7 +55,8 @@ export function Form({
   children,
 }: Props) {
   const methods = useForm({
-    resolver: zodResolver(schema) as Resolver<FieldValues>,
+    // The forms' schemas have their own value types; the form itself only handles field values
+    resolver: zodResolver(schema as $ZodType<FieldValues, FieldValues>) as Resolver<FieldValues>,
     defaultValues,
     // Errors appear at the first submission, then follow the typing
     mode: 'onSubmit',

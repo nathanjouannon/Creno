@@ -52,7 +52,7 @@ export const loginInputSchema = z
   .object({
     email: requiredString(FIELD_MAX_LENGTH.email),
     password: z
-      .string({ required_error: 'FIELD_REQUIRED', invalid_type_error: 'FIELD_REQUIRED' })
+      .string({ error: 'FIELD_REQUIRED' })
       .min(1, 'FIELD_REQUIRED')
       .max(FIELD_MAX_LENGTH.password, 'FIELD_TOO_LONG'),
   })
@@ -75,7 +75,7 @@ export const updateProfileInputSchema = z
     lastName: requiredString(FIELD_MAX_LENGTH.lastName),
     email: emailSchema,
     currentPassword: z
-      .string({ invalid_type_error: 'FIELD_REQUIRED' })
+      .string({ error: 'FIELD_REQUIRED' })
       .max(FIELD_MAX_LENGTH.password, 'FIELD_TOO_LONG')
       .optional()
       .describe("Exigé seulement quand l'e-mail change (RG-18) ; jamais renvoyé"),

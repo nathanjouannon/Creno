@@ -15,7 +15,7 @@ export const configSchema = z.object({
   APP_URL: z.string().url(),
   // Production-only variables (Caddy, backups).
   DOMAIN: z.string().min(1).optional(),
-  TRUST_PROXY: booleanString.default('false'),
+  TRUST_PROXY: booleanString.default(false),
   BACKUP_ENCRYPTION_KEY: z.string().min(1).optional(),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   NODE_ENV: z.enum(['development', 'production', 'test']),
