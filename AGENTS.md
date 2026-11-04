@@ -24,6 +24,7 @@ Noms indicatifs, fixés par T-001 à T-006 ; mets ce fichier à jour s'ils chang
 | Contrat d'API | `pnpm api:generate` (écrit `docs/api/`), `pnpm api:check` (échoue si périmé), `pnpm api:lint` (Redocly) |
 | Qualité | `pnpm lint`, `pnpm typecheck` |
 | Tests | `pnpm test` (`test:unit`, `test:integration`), `pnpm test:e2e` |
+| Lien de secours (mot de passe oublié d'un administrateur, RG-12) | `pnpm user:reset-link <e-mail>` |
 | Production | `docker compose up -d` ; procédure complète dans `README.md` |
 
 ## Règles « ne jamais faire »

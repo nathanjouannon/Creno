@@ -55,5 +55,20 @@ export function getPasswordResetService(): PasswordResetService {
   return passwordReset;
 }
 
+/**
+ * The rescue command (`scripts/reset-link.ts`, RG-12, #82), run on the server outside the web application: it only
+ * needs `APP_URL` to build the link. The sign-in secret only keys the block that `reset` lifts, never called here.
+ */
+export function getRescueLinkCreator(appUrl: string) {
+  const service = createPasswordResetService({
+    repository: createPasswordResetRepository(getPrisma()),
+    clock,
+    appUrl,
+    secret: '',
+    hashPassword,
+  });
+  return (email: string) => service.createRescueLink(email);
+}
+
 /** The authenticator the route envelope uses by default (shared/auth.ts). */
 export const authenticateRequest = (request: Request) => getAuthService().resolveSession(request);

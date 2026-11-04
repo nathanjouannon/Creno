@@ -17,6 +17,7 @@ Données à protéger : nom, prénom et adresse e-mail des utilisateurs, mots de
 | Injection SQL | Haute | Prisma, requêtes paramétrées uniquement ; jamais de SQL assemblé par concaténation |
 | XSS via titre, description, lieu ou noms saisis | Haute | Échappement par React, `dangerouslySetInnerHTML` interdit, CSP stricte (section 4), validation Zod |
 | Fuite de secret dans le dépôt | Haute | Secrets hors Git, scan automatique en intégration continue (section 2) |
+| Un administrateur prend le compte d'un autre en ouvrant lui-même un lien de réinitialisation | Moyenne | Aucun lien pour un administrateur, ni généré ni utilisable après une promotion (RG-12, #82) ; procédure de secours sur le serveur ; génération et utilisation des liens journalisées (#81). Limite connue : un administrateur peut ainsi prendre le compte d'un simple membre (RG-18, RG-11), qui s'en aperçoit en ne pouvant plus se connecter ; risque accepté |
 | Lien de réinitialisation intercepté | Haute | Usage unique, valable 3 jours, jeton haché en base, un nouveau lien invalide les précédents (RG-12) ; transmis hors application par l'administrateur, canal à sa charge |
 | Lien d'invitation diffusé trop largement | Moyenne | Valable jusqu'au début de l'événement seulement (RG-02) ; limite connue : il est réutilisable et non révocable, sauf en supprimant l'événement ; risque accepté |
 | Révélation de l'existence d'un compte | Moyenne | Message de connexion unique « E-mail ou mot de passe incorrect » ; blocage identique que le compte existe ou non (ADR-0013) ; limite connue : le formulaire d'invitation indique qu'une adresse a déjà un compte (écran A3), réservé aux personnes détenant un lien d'invitation valide ; risque accepté |
@@ -56,7 +57,7 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 | Donner le droit administrateur à un autre membre | non | non | oui |
 | Retirer son propre droit administrateur (s'il en reste un autre, RG-04) | non | non | oui |
 | Retirer le droit administrateur d'un autre | non | non | non |
-| Générer un lien de réinitialisation de mot de passe (RG-12) | non | non | oui |
+| Générer un lien de réinitialisation de mot de passe pour un utilisateur qui n'est pas administrateur (RG-12) | non | non | oui |
 
 ## 4. Règles pour le code
 

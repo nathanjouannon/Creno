@@ -483,6 +483,11 @@ Scénario 8 : un nouveau lien invalide le précédent (RG-12)
 - When : l'administrateur génère un nouveau lien pour ce membre
 - Then : l'ancien lien affiche « Ce lien n'est plus valide, demande un nouveau lien à un administrateur » et seul le nouveau fonctionne
 
+Scénario 9 : pas de lien pour un administrateur (RG-12, RG-04)
+- Given : deux administrateurs, A et B ; un membre C qui a un lien de réinitialisation en cours
+- When : A ouvre la fiche de B, puis donne le droit administrateur à C
+- Then : la fiche de B ne propose pas « Générer un lien de réinitialisation » (l'API refuse avec `USER_RESET_FORBIDDEN`), et le lien de C n'est plus valide ; un administrateur qui a oublié son mot de passe passe par la procédure de secours du serveur
+
 ### « Suppression de son compte » (F-11)
 
 En tant qu'**utilisateur**, je veux supprimer mon compte et mes données afin de quitter le club en maîtrisant mes données personnelles.

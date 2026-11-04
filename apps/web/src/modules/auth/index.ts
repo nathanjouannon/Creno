@@ -2,6 +2,7 @@ export {
   getAuthService,
   getLoginService,
   getPasswordResetService,
+  getRescueLinkCreator,
   authenticateRequest,
 } from './auth.container';
 export { getPageUser, requirePageUser } from './page-session';

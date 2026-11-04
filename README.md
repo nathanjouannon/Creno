@@ -159,6 +159,14 @@ curl https://<domaine>/health
 
 puis supprimer la clé privée du serveur. Le script arrête l'application, recharge la base et redémarre. **Tester sans risque** (à faire avant la première mise en service, puis tous les 6 mois) : `RESTORE_DB=creno_essai deploy/restore.sh <sauvegarde> <clé>` recharge la sauvegarde dans une base d'essai sans toucher à la production ; la vérifier avec `docker compose exec db psql -U <POSTGRES_USER> -d creno_essai -c "select count(*) from users"`, puis `docker compose exec db dropdb -U <POSTGRES_USER> creno_essai`.
 
+**Mot de passe oublié par un administrateur** (RG-12) : l'application ne génère pas de lien pour un administrateur. Sur le serveur, depuis le dossier du dépôt :
+
+```
+docker compose --profile tools run --rm purge pnpm user:reset-link <e-mail de l'administrateur>
+```
+
+La commande affiche un lien à usage unique, valable 3 jours, à transmettre à l'intéressé par un canal sûr. Il choisit un nouveau mot de passe ; ses sessions ouvertes sont fermées.
+
 **Alerte de disponibilité** : créer un moniteur gratuit (par exemple UptimeRobot, offre gratuite) de type HTTP(s) sur `https://<domaine>/health`, intervalle 5 minutes, alerte par e-mail à un responsable. `/health` répond 200 si l'application et la base répondent, 503 sinon.
 
 **Journaux** : chaque conteneur garde au plus 5 fichiers de 10 Mo (`docker-compose.yml`) ; lire avec `docker compose logs --tail 100 app`. Aucun mot de passe, jeton ni e-mail complet n'y figure.

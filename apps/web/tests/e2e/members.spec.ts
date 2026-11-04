@@ -102,18 +102,20 @@ test.describe('members (F-10)', () => {
     await expect(page.getByRole('heading', { name: 'Accès refusé' })).toBeVisible();
   });
 
-  test("[F-10 S4] RG-04: another administrator's page has no way to withdraw their right", async ({
+  test("[F-10 S4] RG-04, RG-12: another administrator's page has no way to withdraw their right nor to reset their password", async ({
     page,
   }) => {
     await makeAdmin('Marie', 'Durand', 'marie@exemple.fr');
     await signInAsAdmin(page);
     await openMember(page, /Durand Marie/);
     await expect(page.getByText('marie@exemple.fr · Administrateur')).toBeVisible();
-    await expect(page.getByText('Aucune action pour lui retirer son droit.')).toBeVisible();
+    await expect(
+      page.getByText('Aucune action pour lui retirer son droit ni réinitialiser son mot de passe.'),
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: /Retirer|Donner/ })).toHaveCount(0);
     await expect(
       page.getByRole('button', { name: 'Générer un lien de réinitialisation' }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await checkScreen(page);
   });
 

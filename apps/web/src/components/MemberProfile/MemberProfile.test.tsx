@@ -41,15 +41,16 @@ describe('MemberProfile', () => {
     expect(h.onGenerateLink).toHaveBeenCalledOnce();
   });
 
-  it('[F-10 S4] RG-04: another administrator: a link only, and no way to withdraw their right', () => {
+  it('[F-10 S4] RG-04, RG-12: another administrator: no way to withdraw their right nor to reset their password (#82)', () => {
     render(
       <MemberProfile member={member({ role: 'ADMIN' })} variant="other-admin" {...handlers()} />,
     );
+    expect(screen.queryByRole('button')).toBeNull();
     expect(
-      screen.getByRole('button', { name: 'Générer un lien de réinitialisation' }),
+      screen.getByText(
+        'Aucune action pour lui retirer son droit ni réinitialiser son mot de passe.',
+      ),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Retirer|Donner/ })).toBeNull();
-    expect(screen.getByText('Aucune action pour lui retirer son droit.')).toBeInTheDocument();
   });
 
   it('[F-10 S3] my own page: only « Retirer mon droit administrateur »', async () => {
