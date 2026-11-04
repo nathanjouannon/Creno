@@ -169,7 +169,7 @@ const text = () => z.string().nullable();
 // RG-06 (#79): the title is trimmed, the description and the location are stored as typed
 const eventTitle = () =>
   z
-    .string({ required_error: 'FIELD_REQUIRED', invalid_type_error: 'FIELD_REQUIRED' })
+    .string({ error: 'FIELD_REQUIRED' })
     .trim()
     .min(1, 'FIELD_REQUIRED')
     .max(FIELD_MAX_LENGTH.eventTitle, 'FIELD_TOO_LONG')
@@ -215,12 +215,9 @@ export const eventDetailSchema = eventSummarySchema
 // RG-06: the end comes after the start; slots are optional.
 export const eventInputSchema = z
   .object({
-    title: z
-      .string({ error: 'FIELD_REQUIRED' })
-      .trim()
-      .min(1, 'FIELD_REQUIRED'),
-    description: text().optional(),
-    location: text().optional(),
+    title: eventTitle(),
+    description: eventDescription().optional(),
+    location: eventLocation().optional(),
     startsAt: dateTime(),
     endsAt: dateTime().describe('Après `startsAt` (RG-06)'),
     // zod-to-openapi 8 drops the default of a named schema, so the contract gets it explicitly
@@ -240,9 +237,9 @@ export const eventInputSchema = z
 
 export const eventUpdateSchema = z
   .object({
-    title: z.string({ error: 'FIELD_REQUIRED' }).trim().min(1, 'FIELD_REQUIRED'),
-    description: text(),
-    location: text(),
+    title: eventTitle(),
+    description: eventDescription(),
+    location: eventLocation(),
     startsAt: dateTime(),
     endsAt: dateTime(),
     registrationMode: registrationModeSchema,
