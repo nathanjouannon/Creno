@@ -23,7 +23,8 @@ interface Props {
 
 /**
  * A member's page (D2, D4, D5), the actions depending on the variant (design/components.md, "MemberProfile"):
- * nobody gets a button to withdraw the right of another administrator (RG-04).
+ * nobody gets a button to withdraw the right of another administrator (RG-04), nor to reset their password (RG-12,
+ * #82: the link would let an administrator act as the other one).
  */
 export function MemberProfile({
   member,
@@ -60,10 +61,9 @@ export function MemberProfile({
         </>
       ) : null}
       {variant === 'other-admin' ? (
-        <>
-          {linkButton}
-          <p className="text-small text-text-muted">Aucune action pour lui retirer son droit.</p>
-        </>
+        <p className="text-small text-text-muted">
+          Aucune action pour lui retirer son droit ni réinitialiser son mot de passe.
+        </p>
       ) : null}
       {variant === 'me-admin' ? (
         <Button variant="secondary" disabled={loading} onClick={onWithdrawAdmin}>

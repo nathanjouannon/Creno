@@ -3,6 +3,7 @@ import type { ZodTypeAny } from 'zod';
 import {
   EVENT_SLOTS_MAX,
   acceptInvitationInputSchema,
+  resetPasswordInputSchema,
   eventInputSchema,
   eventUpdateSchema,
   freeSlotInputSchema,

@@ -1,5 +1,11 @@
 import { AppError } from '@creno/validation';
-import { generateLinkToken, hashLinkToken, type Clock } from '@/modules/shared';
+import {
+  generateLinkToken,
+  hashLinkToken,
+  type Clock,
+  type Logger,
+  type SessionUser,
+} from '@/modules/shared';
 import { identifierHash } from './login-attempt';
 import type { PasswordResetRepository } from './password-reset.repository';
 
@@ -31,20 +37,42 @@ export function createPasswordResetService({
     return record;
   }
 
+  /** RG-12: a link valid 3 days that replaces the earlier ones; the token is returned once, only its hash is stored. */
+  async function createLink(userId: number, { forAdministrator }: { forAdministrator: boolean }) {
+    const token = generateLinkToken();
+    const expiresAt = new Date(clock.now().getTime() + RESET_VALIDITY_MS);
+    await repository.inLinkTransaction(userId, async (tx) => {
+      const role = await tx.findRole();
+      if (!role) throw new AppError('USER_NOT_FOUND');
+      // RG-12 (#82): otherwise an administrator could open the link themselves and act as another one
+      if (role === 'ADMIN' && !forAdministrator) throw new AppError('USER_RESET_FORBIDDEN');
+      await tx.replaceTokens(hashLinkToken(token), expiresAt);
+    });
+    return {
+      url: new URL(`/reinitialisation/${token}`, appUrl).toString(),
+      expiresAt: expiresAt.toISOString(),
+    };
+  }
+
   return {
     /**
-     * F-10, RG-12: a new link for the user, valid 3 days, which replaces the earlier ones. The token is returned
-     * once, here; only its hash is stored.
+     * F-10, RG-12: from the member's page, never for an administrator (#82). security.md, section 4: who generated
+     * the link for whom is logged, never the token (#81).
      */
-    async create(userId: number) {
-      if (!(await repository.userExists(userId))) throw new AppError('USER_NOT_FOUND');
-      const token = generateLinkToken();
-      const expiresAt = new Date(clock.now().getTime() + RESET_VALIDITY_MS);
-      await repository.replaceTokens(userId, hashLinkToken(token), expiresAt);
-      return {
-        url: new URL(`/reinitialisation/${token}`, appUrl).toString(),
-        expiresAt: expiresAt.toISOString(),
-      };
+    async create(actor: SessionUser, userId: number, log: Logger) {
+      const link = await createLink(userId, { forAdministrator: false });
+      log.info('password reset link created', { actorId: actor.id, userId });
+      return link;
+    },
+
+    /**
+     * RG-12 (#82): the rescue procedure, run on the server by someone who has access to it, for an administrator who
+     * forgot their password (README.md). Same link and same rules, without the role check of a request.
+     */
+    async createRescueLink(email: string) {
+      const userId = await repository.findUserIdByEmail(email);
+      if (userId === null) throw new AppError('USER_NOT_FOUND');
+      return createLink(userId, { forAdministrator: true });
     },
 
     /** F-02, RG-12: lets the page choose between the form and the message. */
@@ -56,7 +84,7 @@ export function createPasswordResetService({
     /**
      * F-02, RG-12, RG-03: changes the password once. No session is opened: the user signs in afterwards.
      */
-    async reset(token: string, password: string) {
+    async reset(token: string, password: string, log: Logger) {
       const record = await findUsable(token);
       // Hashed before the transaction: argon2 takes tens of milliseconds
       const passwordHash = await hashPassword(password);
@@ -68,6 +96,8 @@ export function createPasswordResetService({
         attemptKey: identifierHash(record.user.email, secret),
       });
       if (!done) throw new AppError('AUTH_RESET_LINK_INVALID');
+      // security.md, section 4 (#81)
+      log.info('password reset used', { userId: record.user.id });
     },
   };
 }

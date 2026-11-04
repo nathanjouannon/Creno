@@ -12,7 +12,8 @@ CREATE TYPE registration_mode AS ENUM ('FIXED', 'FREE', 'BOTH');
 -- Club (RG-16, RG-17). Une seule ligne, créée par la page d'installation avec le premier administrateur.
 CREATE TABLE club (
     id          INTEGER     PRIMARY KEY DEFAULT 1 CHECK (id = 1),  -- une seule ligne possible
-    name        TEXT        NOT NULL CHECK (length(btrim(name)) > 0),
+    name        TEXT        NOT NULL CHECK (length(btrim(name)) > 0)
+                            CONSTRAINT club_name_length_check CHECK (char_length(name) <= 120),  -- RG-17
     timezone    TEXT        NOT NULL,  -- fuseau horaire IANA de l'instance, ex. 'Europe/Paris'
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -31,9 +32,11 @@ CREATE TABLE login_attempts (
 -- Utilisateur (RG-01, RG-04). La suppression d'un compte supprime la ligne entière (RG-11).
 CREATE TABLE users (
     id                  INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    last_name           TEXT        NOT NULL CHECK (length(btrim(last_name)) > 0),
-    first_name          TEXT        NOT NULL CHECK (length(btrim(first_name)) > 0),
-    email               TEXT        NOT NULL,
+    last_name           TEXT        NOT NULL CHECK (length(btrim(last_name)) > 0)
+                                    CONSTRAINT users_last_name_length_check CHECK (char_length(last_name) <= 50),  -- RG-01
+    first_name          TEXT        NOT NULL CHECK (length(btrim(first_name)) > 0)
+                                    CONSTRAINT users_first_name_length_check CHECK (char_length(first_name) <= 50),
+    email               TEXT        NOT NULL CONSTRAINT users_email_length_check CHECK (char_length(email) <= 254),
     password_hash       TEXT        NOT NULL,  -- le mot de passe en clair fait au moins 10 caractères (RG-01), vérifié avant hachage
     role                user_role   NOT NULL DEFAULT 'USER',
     token_version       INTEGER     NOT NULL DEFAULT 0,  -- augmente à la réinitialisation du mot de passe : invalide les jetons JWT (RG-12)
@@ -60,9 +63,10 @@ CREATE INDEX reset_tokens_user_id_idx ON reset_tokens (user_id);
 -- Règle non exprimable ici : un mode n'accepte que ses types de créneaux (aucun créneau libre en FIXED, aucun créneau fixe en FREE), vérifié par le service.
 CREATE TABLE events (
     id           INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    title        TEXT        NOT NULL CHECK (length(btrim(title)) > 0),
-    description  TEXT,
-    location     TEXT,
+    title        TEXT        NOT NULL CHECK (length(btrim(title)) > 0)
+                             CONSTRAINT events_title_length_check CHECK (char_length(title) <= 100),  -- RG-06
+    description  TEXT        CONSTRAINT events_description_length_check CHECK (description IS NULL OR char_length(description) <= 2000),
+    location     TEXT        CONSTRAINT events_location_length_check CHECK (location IS NULL OR char_length(location) <= 200),
     starts_at    TIMESTAMPTZ NOT NULL,
     ends_at      TIMESTAMPTZ NOT NULL,
     registration_mode registration_mode NOT NULL DEFAULT 'FIXED',

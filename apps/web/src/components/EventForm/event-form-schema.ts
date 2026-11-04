@@ -1,3 +1,4 @@
+import { FIELD_MAX_LENGTH } from '@creno/validation';
 import { z } from 'zod';
 import type { SlotValues } from '@/components/SlotForm';
 
@@ -7,9 +8,13 @@ const day = () => z.string().min(1, 'FIELD_DATE_INVALID');
 // Messages are field codes (ADR-0009).
 export const eventFormSchema = z
   .object({
-    title: z.string().trim().min(1, 'FIELD_REQUIRED'),
-    description: z.string(),
-    location: z.string(),
+    title: z
+      .string()
+      .trim()
+      .min(1, 'FIELD_REQUIRED')
+      .max(FIELD_MAX_LENGTH.eventTitle, 'FIELD_TOO_LONG'),
+    description: z.string().max(FIELD_MAX_LENGTH.eventDescription, 'FIELD_TOO_LONG'),
+    location: z.string().max(FIELD_MAX_LENGTH.eventLocation, 'FIELD_TOO_LONG'),
     dates: z.object({ startDate: day(), startTime: day(), endDate: day(), endTime: day() }),
     // RG-19: « Créneaux fixes » by default
     registrationMode: z.enum(['FIXED', 'FREE', 'BOTH'], {

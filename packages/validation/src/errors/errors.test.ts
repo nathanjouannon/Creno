@@ -37,6 +37,7 @@ describe('error catalog', () => {
     ['AUTH_ACCOUNT_LOCKED', 423],
     ['FORBIDDEN', 403],
     ['SLOT_FULL', 409],
+    ['PAYLOAD_TOO_LARGE', 413],
     ['RATE_LIMITED', 429],
     ['INTERNAL_ERROR', 500],
     ['SERVICE_UNAVAILABLE', 503],

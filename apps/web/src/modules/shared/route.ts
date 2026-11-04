@@ -90,8 +90,35 @@ export function toErrorResponse(error: unknown, requestId: string, log: Logger):
   return Response.json(body, { status, headers });
 }
 
+/**
+ * security.md, section 4: the largest body the API reads, enough for an event with a hundred slots and their
+ * descriptions. Next.js puts no limit on Route Handlers, so without it one anonymous request could fill the memory.
+ */
+export const MAX_BODY_BYTES = 128 * 1024;
+
+/** The body as text, read chunk by chunk and given up as soon as it exceeds the limit, whatever Content-Length says. */
+async function readLimitedText(request: Request): Promise<string> {
+  if (Number(request.headers.get('content-length')) > MAX_BODY_BYTES)
+    throw new AppError('PAYLOAD_TOO_LARGE');
+  if (!request.body) return '';
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_BODY_BYTES) {
+      await reader.cancel();
+      throw new AppError('PAYLOAD_TOO_LARGE');
+    }
+    chunks.push(value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
+}
+
 async function readBody(request: Request): Promise<unknown> {
-  const text = await request.text();
+  const text = await readLimitedText(request);
   try {
     return text ? JSON.parse(text) : {};
   } catch {
@@ -101,6 +128,30 @@ async function readBody(request: Request): Promise<unknown> {
 
 function readQuery(request: Request): Record<string, string> {
   return Object.fromEntries(new URL(request.url).searchParams);
+}
+
+/**
+ * The route as declared, such as `/api/password-resets/[token]`, for the logs (security.md, section 4, #81): each
+ * segment holding a route parameter is replaced by its name, so a link token in the URL is never written.
+ */
+export function routeTemplate(request: Request, params: Record<string, string | string[]>): string {
+  const names = new Map<string, string>();
+  for (const [name, value] of Object.entries(params)) {
+    if (typeof value === 'string') names.set(value, name);
+  }
+  return new URL(request.url).pathname
+    .split('/')
+    .map((segment) => {
+      let value = segment;
+      try {
+        value = decodeURIComponent(segment);
+      } catch {
+        // A malformed escape is kept as it is; it matches no parameter
+      }
+      const name = names.get(value);
+      return name ? `[${name}]` : segment;
+    })
+    .join('/');
 }
 
 function parse<S extends ZodTypeAny | undefined>(schema: S, value: unknown): Infer<S> {
@@ -126,7 +177,12 @@ export function route<
   const handle = async (request: Request, nextContext?: NextRouteContext): Promise<Response> => {
     const requestId = newRequestId();
     const startedAt = clock.now().getTime();
-    let log = getLogger().child({ requestId, method: request.method });
+    const rawParams = nextContext?.params ? await nextContext.params : {};
+    let log = getLogger().child({
+      requestId,
+      method: request.method,
+      route: routeTemplate(request, rawParams),
+    });
     let response: Response;
     let code: ErrorCode | undefined;
 
@@ -140,7 +196,6 @@ export function route<
       if (config.auth === 'admin' && user?.role !== 'ADMIN') throw new AppError('FORBIDDEN');
       if (user) log = log.child({ userId: user.id });
 
-      const rawParams = nextContext?.params ? await nextContext.params : {};
       const params = parse(config.params, rawParams);
       const query = parse(config.query, readQuery(request));
       const body = parse(config.body, config.body ? await readBody(request) : undefined);

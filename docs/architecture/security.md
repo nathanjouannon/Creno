@@ -17,6 +17,7 @@ Données à protéger : nom, prénom et adresse e-mail des utilisateurs, mots de
 | Injection SQL | Haute | Prisma, requêtes paramétrées uniquement ; jamais de SQL assemblé par concaténation |
 | XSS via titre, description, lieu ou noms saisis | Haute | Échappement par React, `dangerouslySetInnerHTML` interdit, CSP stricte (section 4), validation Zod |
 | Fuite de secret dans le dépôt | Haute | Secrets hors Git, scan automatique en intégration continue (section 2) |
+| Un administrateur prend le compte d'un autre en ouvrant lui-même un lien de réinitialisation | Moyenne | Aucun lien pour un administrateur, ni généré ni utilisable après une promotion (RG-12, #82) ; procédure de secours sur le serveur ; génération et utilisation des liens journalisées (#81). Limite connue : un administrateur peut ainsi prendre le compte d'un simple membre (RG-18, RG-11), qui s'en aperçoit en ne pouvant plus se connecter ; risque accepté |
 | Lien de réinitialisation intercepté | Haute | Usage unique, valable 3 jours, jeton haché en base, un nouveau lien invalide les précédents (RG-12) ; transmis hors application par l'administrateur, canal à sa charge |
 | Lien d'invitation diffusé trop largement | Moyenne | Valable jusqu'au début de l'événement seulement (RG-02) ; limite connue : il est réutilisable et non révocable, sauf en supprimant l'événement ; risque accepté |
 | Révélation de l'existence d'un compte | Moyenne | Message de connexion unique « E-mail ou mot de passe incorrect » ; blocage identique que le compte existe ou non (ADR-0013) ; limite connue : le formulaire d'invitation indique qu'une adresse a déjà un compte (écran A3), réservé aux personnes détenant un lien d'invitation valide ; risque accepté |
@@ -56,7 +57,7 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 | Donner le droit administrateur à un autre membre | non | non | oui |
 | Retirer son propre droit administrateur (s'il en reste un autre, RG-04) | non | non | oui |
 | Retirer le droit administrateur d'un autre | non | non | non |
-| Générer un lien de réinitialisation de mot de passe (RG-12) | non | non | oui |
+| Générer un lien de réinitialisation de mot de passe pour un utilisateur qui n'est pas administrateur (RG-12) | non | non | oui |
 
 ## 4. Règles pour le code
 
@@ -69,11 +70,13 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 
 **Validation et données**
 - Toute entrée externe (formulaire, paramètre de route, corps de requête) est validée par un schéma Zod avant tout traitement (ADR-0009).
+- Un corps de requête de plus de 128 Kio est refusé (`413 PAYLOAD_TOO_LARGE`) avant d'être lu en entier : la limite par adresse IP compte les requêtes, pas leur taille. Caddy refuse en plus tout corps de plus de 1 Mo (#77).
 - Prisma uniquement pour accéder à la base ; le SQL brut est interdit sauf requêtes paramétrées dans une migration revue.
 - Aucune donnée saisie n'est insérée dans du HTML sans échappement ; `dangerouslySetInnerHTML` interdit.
 
 **En-têtes HTTP** (posés par l'application ou le reverse proxy)
 - `Strict-Transport-Security` (HSTS), `Content-Security-Policy` stricte (`default-src 'self'`, pas de script en ligne hors nonce), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `frame-ancestors 'none'`, `Permissions-Policy` sans capteurs.
+- La CSP des pages est posée par l'application (middleware), avec un nonce aléatoire par page que Next.js reporte sur ses scripts : `script-src 'self' 'nonce-…' 'strict-dynamic'`, sans `'unsafe-inline'` (#80). Toutes les pages sont donc rendues à la requête. Caddy pose la même politique, sans nonce, sur les réponses qui n'en ont pas (API, fichiers statiques).
 - HTTPS obligatoire partout ; redirection du HTTP vers le HTTPS.
 
 **Limites de débit** (réponse `429 RATE_LIMITED` avec `Retry-After`, `api/errors.md`)
@@ -88,7 +91,8 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 **Journaux**
 - Format JSON sur la sortie standard, avec un identifiant de requête et l'identifiant interne de l'utilisateur.
 - Jamais de mot de passe, de jeton, ni d'e-mail en clair (affiché masqué, par exemple `a***@d***.fr`).
-- Événements de sécurité journalisés : échec et blocage de connexion, génération et utilisation d'un lien de réinitialisation, changement de rôle, suppression de compte, installation.
+- Événements de sécurité journalisés : échec et blocage de connexion, génération et utilisation d'un lien de réinitialisation, changement de rôle, suppression de compte, installation. Chacun est une ligne dont le message nomme l'action (`login failed`, `login blocked for 15 minutes`, `password reset link created`, `password reset used`, `role changed`, `account deleted`, `instance installed`), avec les seuls identifiants internes (`userId`, et `actorId` pour l'auteur d'une action sur autrui) (#81).
+- La ligne écrite pour chaque requête nomme la route par son modèle (`/api/password-resets/[token]`), jamais par le chemin réel, qui peut contenir un jeton de lien.
 - Pas de détail technique (trace, SQL) dans les réponses d'erreur, seulement dans les journaux.
 
 **Données et RGPD**
@@ -109,7 +113,7 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 - **Adresse IP** : lue dans `X-Forwarded-For` seulement si `TRUST_PROXY` vaut `true`, en prenant la dernière valeur (celle ajoutée par Caddy, qui écrase ce que le client envoie). Sinon aucun en-tête n'est cru et tous les appels partagent le même compteur (usage local).
 - **Limites de débit** : fenêtre fixe d'une minute, compteurs en mémoire (une seule instance, `architecture.md`) ; `/setup`, `/auth/login`, `/password-resets/*` et `/invitations/*` partagent le budget de 10, le reste de l'API 100 ; `/health` n'est pas limité. Les compteurs sont perdus au redémarrage.
 - **`Origin`** : toute requête `POST`, `PUT`, `PATCH` ou `DELETE` dont l'en-tête `Origin` est absent ou différent de `APP_URL` est refusée (`FORBIDDEN_ORIGIN`). Les clients qui ne sont pas des navigateurs doivent donc envoyer cet en-tête.
-- **Blocage de connexion (T-009)** : la ligne de `login_attempts` est indexée par un HMAC-SHA256 de l'adresse normalisée (espaces retirés, minuscules), calculé avec `AUTH_SECRET` : la table ne permet pas de retrouver une adresse, même en essayant des adresses connues. Le cinquième échec consécutif bloque 15 minutes ; une tentative pendant le blocage ne le prolonge pas ; à la fin du blocage le compteur repart de zéro ; un succès supprime la ligne. La lecture, la décision et l'écriture du compteur forment une transaction sérialisable rejouée en cas de conflit : deux échecs simultanés sont tous comptés. Une adresse sans compte coûte le même temps qu'un mot de passe faux (vérification contre une empreinte factice). Les échecs et blocages sont journalisés avec l'identifiant interne de l'utilisateur quand il existe, jamais l'adresse saisie ni le mot de passe.
+- **Blocage de connexion (T-009)** : la ligne de `login_attempts` est indexée par un HMAC-SHA256 de l'adresse normalisée (espaces retirés, minuscules), calculé avec `AUTH_SECRET` : la table ne permet pas de retrouver une adresse, même en essayant des adresses connues. Le cinquième échec consécutif bloque 15 minutes ; une tentative pendant le blocage ne le prolonge pas ; à la fin du blocage le compteur repart de zéro ; un succès supprime la ligne. La tentative est comptée comme un échec **avant** la vérification du mot de passe, sous le verrou de la ligne de l'adresse : les tentatives d'une même adresse passent l'une après l'autre, chacune lit le compteur laissé par la précédente, et des tentatives simultanées ne vérifient jamais plus de 5 mots de passe avant le blocage (#78) ; un succès supprime ensuite la ligne. Une adresse sans compte coûte le même temps qu'un mot de passe faux (vérification contre une empreinte factice). Les échecs et blocages sont journalisés avec l'identifiant interne de l'utilisateur quand il existe, jamais l'adresse saisie ni le mot de passe.
 - **Retour à la page demandée** : l'adresse de la page de connexion accepte `?suite=<chemin>`. Seul un chemin de l'application est suivi (jamais un autre site, ni `/connexion`, `/installation`, `/api`).
 
 ## 6. Points à confirmer

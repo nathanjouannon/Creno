@@ -18,6 +18,7 @@ info:
     - Les états calculés (`status`, `started`, `full`, `remainingPlaces`) sont fournis par le serveur, jamais stockés (glossaire).
     - Le serveur ne renvoie pas d'avertissement de créneau hors des dates de l'événement (RG-07) : c'est l'interface qui l'affiche, la création n'est jamais refusée pour ce motif.
     - Une requête qui modifie des données est refusée (`403 FORBIDDEN_ORIGIN`) si son en-tête `Origin` n'est pas celui de l'application (`security.md`).
+    - Un corps de requête de plus de 128 Kio est refusé (`413 PAYLOAD_TOO_LARGE`) avant toute validation (`security.md`).
     - Limites de débit par adresse IP : 10 requêtes par minute sur `/setup`, `/auth/login`, `/password-resets/*` et `/invitations/*` ; 100 par minute sur le reste (`429 RATE_LIMITED` avec `Retry-After`).
     - Aucun événement asynchrone ni file de messages au MVP (ADR-0008), voir `events.md`.
     - Extensions : `x-auth` (`public`, `user` ou `admin`) donne le rôle requis par l'opération (RG-14) ; `x-error-codes` liste les codes de `errors.md` que la réponse peut porter.
@@ -151,12 +152,14 @@ components:
     Password:
       type: string
       minLength: 10
-      description: 10 caractères minimum, aucune autre règle de complexité (RG-01). Jamais renvoyé.
+      maxLength: 128
+      description: 10 à 128 caractères, aucune autre règle de complexité (RG-01). Jamais renvoyé.
     Email:
       type: string
       minLength: 1
+      maxLength: 254
       format: email
-      description: Unique sans tenir compte de la casse ; les espaces autour sont retirés (RG-01)
+      description: Unique sans tenir compte de la casse ; les espaces autour sont retirés ; 254 caractères au plus (RG-01)
     User:
       type: object
       properties:
@@ -201,6 +204,7 @@ components:
             name:
               type: string
               minLength: 1
+              maxLength: 120
             timezone:
               type: string
               minLength: 1
@@ -215,9 +219,11 @@ components:
             firstName:
               type: string
               minLength: 1
+              maxLength: 50
             lastName:
               type: string
               minLength: 1
+              maxLength: 50
             email:
               $ref: "#/components/schemas/Email"
             password:
@@ -238,9 +244,11 @@ components:
         email:
           type: string
           minLength: 1
+          maxLength: 254
         password:
           type: string
           minLength: 1
+          maxLength: 128
       required:
         - email
         - password
@@ -251,9 +259,11 @@ components:
         firstName:
           type: string
           minLength: 1
+          maxLength: 50
         lastName:
           type: string
           minLength: 1
+          maxLength: 50
         email:
           $ref: "#/components/schemas/Email"
         password:
@@ -487,14 +497,20 @@ components:
         title:
           type: string
           minLength: 1
+          maxLength: 100
+          description: 100 caractères au plus (RG-06)
         description:
           type:
             - string
             - "null"
+          maxLength: 2000
+          description: Texte brut de 2 000 caractères au plus (RG-06)
         location:
           type:
             - string
             - "null"
+          maxLength: 200
+          description: 200 caractères au plus (RG-06)
         startsAt:
           type: string
           format: date-time
@@ -525,14 +541,20 @@ components:
         title:
           type: string
           minLength: 1
+          maxLength: 100
+          description: 100 caractères au plus (RG-06)
         description:
           type:
             - string
             - "null"
+          maxLength: 2000
+          description: Texte brut de 2 000 caractères au plus (RG-06)
         location:
           type:
             - string
             - "null"
+          maxLength: 200
+          description: 200 caractères au plus (RG-06)
         startsAt:
           type: string
           format: date-time
@@ -571,13 +593,16 @@ components:
         firstName:
           type: string
           minLength: 1
+          maxLength: 50
         lastName:
           type: string
           minLength: 1
+          maxLength: 50
         email:
           $ref: "#/components/schemas/Email"
         currentPassword:
           type: string
+          maxLength: 128
           description: Exigé seulement quand l'e-mail change (RG-18) ; jamais renvoyé
       required:
         - firstName
@@ -889,6 +914,7 @@ paths:
       description: |-
         Administrateur seulement. Valable 3 jours, à usage unique. Générer un nouveau lien invalide les précédents.
         Le jeton n'est stocké que haché : l'URL n'est renvoyée qu'ici, une seule fois.
+        Jamais pour un administrateur (`USER_RESET_FORBIDDEN`) : il passe par la procédure de secours du serveur ; devenir administrateur invalide aussi les liens en cours (RG-12).
       x-auth: admin
       parameters:
         - schema:
@@ -907,7 +933,12 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthenticated"
         "403":
-          $ref: "#/components/responses/Forbidden"
+          description: "`FORBIDDEN` (pas administrateur) ou `USER_RESET_FORBIDDEN` (cible administrateur, RG-12)"
+          x-error-codes:
+            - FORBIDDEN
+            - USER_RESET_FORBIDDEN
+          content:
+            application/json: *a3
         "404":
           $ref: "#/components/responses/UserNotFound"
   /events/{eventId}/invitations:
