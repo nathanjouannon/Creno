@@ -69,6 +69,7 @@ Trois situations : visiteur (non connecté), utilisateur (`USER`), administrateu
 
 **Validation et données**
 - Toute entrée externe (formulaire, paramètre de route, corps de requête) est validée par un schéma Zod avant tout traitement (ADR-0009).
+- Un corps de requête de plus de 128 Kio est refusé (`413 PAYLOAD_TOO_LARGE`) avant d'être lu en entier : la limite par adresse IP compte les requêtes, pas leur taille. Caddy refuse en plus tout corps de plus de 1 Mo (#77).
 - Prisma uniquement pour accéder à la base ; le SQL brut est interdit sauf requêtes paramétrées dans une migration revue.
 - Aucune donnée saisie n'est insérée dans du HTML sans échappement ; `dangerouslySetInnerHTML` interdit.
 

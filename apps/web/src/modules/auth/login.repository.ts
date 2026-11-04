@@ -23,7 +23,7 @@ export function createLoginRepository(prisma: PrismaClient) {
     /** The address is compared without case (RG-01). */
     findUserByEmail: (email: string): Promise<LoginUser | null> =>
       prisma.user.findFirst({
-        where: { email: { equals: email, mode: 'insensitive' } },
+        where: { email: { equals: escapeLikePattern(email), mode: 'insensitive' } },
         select: {
           id: true,
           firstName: true,

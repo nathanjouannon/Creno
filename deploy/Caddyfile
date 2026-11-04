@@ -12,6 +12,11 @@
 		-Server
 	}
 
+	# Second barrier behind the application's 128 KiB limit on request bodies (security.md, section 4): answers 413.
+	request_body {
+		max_size 1MB
+	}
+
 	# Caddy sets X-Forwarded-For from the real client address and drops any value sent by the client (TRUST_PROXY).
 	reverse_proxy app:3000
 }
