@@ -90,8 +90,35 @@ export function toErrorResponse(error: unknown, requestId: string, log: Logger):
   return Response.json(body, { status, headers });
 }
 
+/**
+ * security.md, section 4: the largest body the API reads, enough for an event with a hundred slots and their
+ * descriptions. Next.js puts no limit on Route Handlers, so without it one anonymous request could fill the memory.
+ */
+export const MAX_BODY_BYTES = 128 * 1024;
+
+/** The body as text, read chunk by chunk and given up as soon as it exceeds the limit, whatever Content-Length says. */
+async function readLimitedText(request: Request): Promise<string> {
+  if (Number(request.headers.get('content-length')) > MAX_BODY_BYTES)
+    throw new AppError('PAYLOAD_TOO_LARGE');
+  if (!request.body) return '';
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_BODY_BYTES) {
+      await reader.cancel();
+      throw new AppError('PAYLOAD_TOO_LARGE');
+    }
+    chunks.push(value);
+  }
+  return new TextDecoder().decode(Buffer.concat(chunks));
+}
+
 async function readBody(request: Request): Promise<unknown> {
-  const text = await request.text();
+  const text = await readLimitedText(request);
   try {
     return text ? JSON.parse(text) : {};
   } catch {

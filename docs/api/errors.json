@@ -211,6 +211,13 @@
       "details": "`freeSlotId`",
       "clientAction": "Recharger l'événement"
     },
+    "PAYLOAD_TOO_LARGE": {
+      "status": 413,
+      "message": "Requête trop volumineuse.",
+      "cause": "Corps de requête au-delà de 128 Kio (`architecture/security.md`, section 4)",
+      "details": "",
+      "clientAction": "Message générique ; ne devrait pas arriver depuis l'interface"
+    },
     "RATE_LIMITED": {
       "status": 429,
       "message": "Trop de requêtes, réessaie plus tard.",
