@@ -1,3 +1,4 @@
+import '@/lib/zod-jitless';
 import { z } from 'zod';
 
 // The values of the slot form: a day and two times in the club's zone (RG-16), the limit as typed (empty = unlimited).
