@@ -5,7 +5,6 @@ import { createContext, useContext, useRef, useState, type ReactNode } from 'rea
 import { FormProvider, useForm, type FieldValues, type Resolver } from 'react-hook-form';
 import type { ZodTypeAny } from 'zod';
 import type { $ZodType } from 'zod/v4/core';
-import '@/lib/zod-jitless';
 import { Alert } from '@/components/Alert';
 import { Button } from '@/components/Button';
 import type { ApiError, ApiResult } from '@/lib/api-client';

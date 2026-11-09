@@ -1,4 +1,3 @@
-import '@/lib/zod-jitless';
 import { FREE_SLOT_MIN_MINUTES } from '@creno/validation';
 import { z } from 'zod';
 

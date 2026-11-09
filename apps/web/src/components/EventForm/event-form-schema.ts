@@ -1,4 +1,3 @@
-import '@/lib/zod-jitless';
 import { FIELD_MAX_LENGTH } from '@creno/validation';
 import { z } from 'zod';
 import type { SlotValues } from '@/components/SlotForm';
