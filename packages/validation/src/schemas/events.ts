@@ -59,7 +59,7 @@ export const slotSchema = z
 
 const capacity = () =>
   z
-    .number({ invalid_type_error: 'FIELD_CAPACITY_TOO_LOW' })
+    .number({ error: 'FIELD_CAPACITY_TOO_LOW' })
     .int('FIELD_CAPACITY_TOO_LOW')
     .min(1, 'FIELD_CAPACITY_TOO_LOW')
     .nullable();
@@ -103,12 +103,18 @@ export const slotUpdateSchema = z
 // RG-19, F-22: FIXED (fixed slots only, the default), FREE (free slots only) or BOTH.
 export const registrationModeSchema = z
   .enum(['FIXED', 'FREE', 'BOTH'], {
-    errorMap: () => ({ message: 'FIELD_REGISTRATION_MODE_INVALID' }),
+    error: 'FIELD_REGISTRATION_MODE_INVALID',
   })
   .describe(
     "Mode d'inscription (RG-19) : `FIXED` créneaux fixes seulement (défaut), `FREE` créneaux libres seulement, `BOTH` les deux (les créneaux fixes sont alors indicatifs)",
   )
   .openapi('RegistrationMode');
+
+/**
+ * RG-06 (#83): slots sent with a new event, at most. More can be added afterwards, one request each. The bound also
+ * stops validation before the slots are read one by one, so a huge array costs nothing (GHSA-mrhx-c7xc-m3w5).
+ */
+export const EVENT_SLOTS_MAX = 100;
 
 /** RG-20: the minimum length of a free slot. */
 export const FREE_SLOT_MIN_MINUTES = 30;
@@ -163,7 +169,7 @@ const text = () => z.string().nullable();
 // RG-06 (#79): the title is trimmed, the description and the location are stored as typed
 const eventTitle = () =>
   z
-    .string({ required_error: 'FIELD_REQUIRED', invalid_type_error: 'FIELD_REQUIRED' })
+    .string({ error: 'FIELD_REQUIRED' })
     .trim()
     .min(1, 'FIELD_REQUIRED')
     .max(FIELD_MAX_LENGTH.eventTitle, 'FIELD_TOO_LONG')
@@ -214,13 +220,16 @@ export const eventInputSchema = z
     location: eventLocation().optional(),
     startsAt: dateTime(),
     endsAt: dateTime().describe('Après `startsAt` (RG-06)'),
-    registrationMode: registrationModeSchema
-      .default('FIXED')
-      .describe("Mode d'inscription (RG-19) ; `FIXED` s'il est absent"),
+    // zod-to-openapi 8 drops the default of a named schema, so the contract gets it explicitly
+    registrationMode: registrationModeSchema.default('FIXED').openapi({
+      default: 'FIXED',
+      description: "Mode d'inscription (RG-19) ; `FIXED` s'il est absent",
+    }),
     slots: z
       .array(slotInputSchema)
+      .max(EVENT_SLOTS_MAX, 'FIELD_TOO_MANY_SLOTS')
       .default([])
-      .describe('Créneaux fixes ; refusés en mode `FREE` (RG-19)'),
+      .describe('Créneaux fixes, 100 au plus ; refusés en mode `FREE` (RG-19)'),
   })
   .strict()
   .refine(endsAfterStarts, endsAfterStartsIssue)

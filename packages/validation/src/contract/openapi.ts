@@ -13,8 +13,10 @@ import {
   eventSummarySchema,
   eventUpdateSchema,
   fieldErrorSchema,
+  freeSlotSchema,
   loginInputSchema,
   passwordSchema,
+  registrationModeSchema,
   roleSchema,
   setupInputSchema,
   shareableLinkSchema,
@@ -59,8 +61,8 @@ const TAGS = [
   'Supervision',
 ];
 const NAMED_SCHEMAS = [
-  errorSchema,
   fieldErrorSchema,
+  errorSchema,
   roleSchema,
   passwordSchema,
   emailSchema,
@@ -71,14 +73,16 @@ const NAMED_SCHEMAS = [
   acceptInvitationInputSchema,
   shareableLinkSchema,
   eventStatusSchema,
+  registrationModeSchema,
   eventSummarySchema,
+  attendeeSchema,
+  slotSchema,
+  freeSlotSchema,
   eventDetailSchema,
+  slotInputSchema,
   eventInputSchema,
   eventUpdateSchema,
-  slotInputSchema,
   slotUpdateSchema,
-  slotSchema,
-  attendeeSchema,
 ];
 
 const errorBody = { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } };
@@ -162,9 +166,10 @@ export function buildOpenApiDocument(): object {
   }
   for (const route of routes) registry.registerPath(pathOf(route));
 
+  // Named schemas first, in this order, then what the routes reference (zod-to-openapi 8 only takes typed definitions)
   const document = new OpenApiGeneratorV31([
+    ...NAMED_SCHEMAS.map((schema) => ({ type: 'schema' as const, schema })),
     ...registry.definitions,
-    ...NAMED_SCHEMAS,
   ]).generateDocument({
     openapi: '3.1.0',
     info: { title: 'API Créno', version: '0.1.0', description: DESCRIPTION },
