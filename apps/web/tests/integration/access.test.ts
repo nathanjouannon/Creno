@@ -67,8 +67,8 @@ describe('access control of every implemented route (RG-14)', () => {
     if (!loader) continue; // not built yet: the ticket that builds it is covered here automatically
 
     it(`${definition.method.toUpperCase()} ${definition.path} (${definition.auth}) refuses who may not call it`, async () => {
-      const module = await loader();
-      const handler = module[definition.method.toUpperCase()];
+      const routeModule = await loader();
+      const handler = routeModule[definition.method.toUpperCase()];
       if (!handler) return; // another method of the same path, built by a later ticket
       expect(
         await accessProblems(
